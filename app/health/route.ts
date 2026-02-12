@@ -1,0 +1,18 @@
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json(
+    {
+      ok: true,
+      service: "conjoinnetwork-site",
+      version: process.env.npm_package_version || "0.1.0",
+      timestamp: new Date().toISOString()
+    },
+    {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-store"
+      }
+    }
+  );
+}
