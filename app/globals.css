@@ -1,26 +1,187 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "./styles/tokens.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-page-bg);
+  --color-foreground: var(--color-text-primary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+body {
+  background: var(--color-page-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+  line-height: 1.65;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+p {
+  color: var(--color-text-secondary);
+}
+
+a,
+button {
+  transition: box-shadow 180ms ease, border-color 180ms ease, color 180ms ease, transform 180ms ease,
+    background-color 180ms ease;
+}
+
+.interactive-btn,
+.interactive-link,
+.interactive-card {
+  position: relative;
+}
+
+.interactive-btn::after,
+.interactive-link::after,
+.interactive-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms ease;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 26%, transparent);
+}
+
+.interactive-btn:hover::after,
+.interactive-btn:focus-visible::after,
+.interactive-link:hover::after,
+.interactive-link:focus-visible::after,
+.interactive-card:hover::after,
+.interactive-card:focus-within::after {
+  opacity: 1;
+}
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 32%, transparent);
+}
+
+.type-h1 {
+  font-size: clamp(2.15rem, 4.9vw, 3.75rem);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.type-h2 {
+  font-size: clamp(1.55rem, 3.1vw, 1.875rem);
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.type-body {
+  font-size: 1rem;
+  line-height: 1.75rem;
+}
+
+.type-muted {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.hero-panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--brand-microsoft) 22%, var(--color-border));
+  background:
+    radial-gradient(circle at 88% 12%, #0f70f31c, transparent 44%),
+    radial-gradient(circle at 12% 92%, #14b8a614, transparent 38%),
+    linear-gradient(180deg, #ffffff, #f9fbff);
+  box-shadow: var(--shadow-soft);
+  background-size: 120% 120%;
+  animation: hero-breathe 22s ease-in-out infinite;
+}
+
+.hero-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(380px circle at 52% 36%, rgba(255, 255, 255, 0.22), transparent 68%);
+  opacity: 0.45;
+}
+
+.scroll-cue {
+  animation: scroll-hint 1.8s ease-in-out infinite;
+}
+
+.cta-pulse {
+  animation: cta-pulse 2.2s ease-in-out infinite;
+}
+
+@keyframes hero-breathe {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes scroll-hint {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translateY(2px);
+    opacity: 1;
+  }
+}
+
+@keyframes cta-pulse {
+  0%,
+  100% {
+    box-shadow: 0 8px 20px -14px rgba(0, 113, 227, 0.9);
+  }
+  50% {
+    box-shadow: 0 10px 24px -12px rgba(0, 113, 227, 0.55);
+  }
+}
+
+@keyframes section-fade {
+  from {
+    opacity: 0.92;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.section-revealed {
+  animation: section-fade 300ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-panel,
+  .scroll-cue,
+  .cta-pulse,
+  .section-revealed {
+    animation: none;
+  }
 }
