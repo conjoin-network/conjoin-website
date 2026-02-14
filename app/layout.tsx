@@ -106,7 +106,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
       >
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_94%,transparent)] backdrop-blur">
+          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/96">
             <Container className="min-h-[68px] py-2.5 md:min-h-[82px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
@@ -118,8 +118,8 @@ export default function RootLayout({
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
-                      width={36}
-                      height={36}
+                      width={38}
+                      height={38}
                       className="brand-image"
                       priority
                     />
@@ -164,8 +164,8 @@ export default function RootLayout({
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
-                        width={40}
-                        height={40}
+                        width={46}
+                        height={46}
                         className="brand-image"
                         priority
                       />
@@ -201,7 +201,7 @@ export default function RootLayout({
           </header>
           <main className="flex-1">{children}</main>
           <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
-            <Container className="space-y-6 py-10 text-sm text-[var(--color-text-secondary)]">
+            <Container className="space-y-6 pb-24 pt-10 text-sm text-[var(--color-text-secondary)] md:py-10">
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="space-y-2">
                   <p className="font-semibold text-[var(--color-text-primary)]">{ORG_NAME}</p>

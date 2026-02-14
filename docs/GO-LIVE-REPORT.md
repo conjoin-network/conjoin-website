@@ -519,3 +519,140 @@ Runtime behavior if env is missing:
    - `www` `CNAME` -> `cname.vercel-dns.com`
 7. Post-deploy verify:
    - `/`, `/request-quote`, `/contact`, `/robots.txt`, `/sitemap.xml`
+
+## 15) Final Pre-Go-Live UI + QA Pass (14 Feb 2026)
+
+### UI fixes completed
+
+- Floating WhatsApp CTA adjusted for mobile safe areas:
+  - anchored right with stronger bottom offsets
+  - raised on form routes
+  - lifted near footer to avoid overlap
+  - hidden while mobile menu is open
+- Header cleanup:
+  - removed blur-heavy look from top bar
+  - softened search icon button surface/shadow
+  - increased logo size on mobile and desktop for better first visibility
+- Mobile menu + footer:
+  - drawer set to full `100dvh` with safe-area bottom padding
+  - footer given extra mobile bottom padding so floating CTA never covers links
+- Design consistency:
+  - primary button style unified to gradient `#2563EB → #1E40AF`
+  - card radius/shadow made more consistent through shared card surface rules
+- Carousel pause control overlap:
+  - desktop pause control remains at top
+  - mobile pause control moved to bottom-left to avoid content overlap
+
+### Request Quote flow validation
+
+- Step 1 brand selection now resolves reliably:
+  - quick chips for Microsoft/Seqrite remain primary
+  - typed input resolves by exact or prefix match
+  - `Next` enables as soon as valid brand is resolved
+- Product options remain brand-filtered in Step 2.
+- Live summary remains synced through all steps.
+
+### API/CRM validation completed
+
+- RFQ submit tests:
+  - Microsoft + Business Premium: `200 OK`, lead created (`LD-20260214-8892`)
+  - Seqrite + Endpoint Security: `200 OK`, lead created (`LD-20260214-3800`)
+- Admin workflow:
+  - login success (`/api/admin/login`)
+  - lead list visible (`/api/admin/leads`)
+  - status patch persisted (`/api/admin/leads/[id]`)
+- WhatsApp webhook fallback:
+  - returns `503` with clear message when verify token is not configured (graceful behavior)
+
+### Route and link QA
+
+- Smoke checks passed (`npm run qa:smoke`).
+- Internal-link crawl checked `79` links with `0` failures.
+- Final route checks returned `200`:
+  - `/`, `/brands`, `/knowledge`, `/search`, `/request-quote`, `/thank-you`
+  - `/microsoft`, `/seqrite`, `/cisco`
+  - `/campaigns/microsoft-365`, `/campaigns/seqrite-endpoint`, `/campaigns/cisco-security`
+  - `/locations/chandigarh`, `/sitemap.xml`, `/robots.txt`
+
+### Commands executed in this pass
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm run qa:smoke
+PORT=4310 npm run dev
+```
+
+## 16) Final Go-Live Hardening Run (14 Feb 2026)
+
+### Quote wizard + mobile fixes
+
+- Fixed brand selection reliability on `/request-quote`:
+  - quick select chips prioritize Microsoft and Seqrite
+  - typed brand input resolves by exact/prefix match
+  - no dead-click issue on dropdown options
+- Added step-specific validation copy:
+  - clear messages when brand/product/quantity/deployment/contact fields are missing
+- Added stronger visual progress:
+  - step labels rendered with active state and completed states
+- Added sticky action row on mobile so `Back`/`Next`/`Submit` remains visible while scrolling.
+- Header/search cleanup:
+  - removed heavy search button underlay around logo area
+  - cleaner white top bar look
+  - logo sizing improved for mobile and desktop readability
+- Floating WhatsApp overlap hardening:
+  - safe-area aware offsets
+  - lifted near footer and hidden when mobile menu is open
+  - prevents footer/menu link obstruction.
+
+### End-to-end lead QA completed
+
+1. Microsoft RFQ (`/api/quote`):
+   - Payload: Business Premium, 25 users, Chandigarh
+   - Result: `200`, lead created `LD-20260214-1178`
+   - Visible in admin: ✅
+2. Seqrite RFQ (`/api/quote`):
+   - Payload: Endpoint Security, 100 endpoints, Mohali
+   - Result: `200`, lead created `LD-20260214-4694`
+   - Visible in admin: ✅
+3. Generic procurement (`/api/lead` via contact flow):
+   - Payload: contact lead, requirement + users
+   - Result: `200`, lead created `LD-20260214-5579`
+   - Visible in admin: ✅
+
+Admin status persistence:
+
+- Updated lead status through `/api/admin/leads/[id]` to `QUOTED`.
+- Re-fetch verified persisted status + note in lead timeline.
+
+### QA automation updates
+
+- Added `/scripts/qa-golive.mjs` for broader go-live checks:
+  - desktop + mobile user-agent route checks
+  - runtime error marker scan in HTML
+  - key route health for quote/search/brand/location/SEO endpoints
+- Added npm scripts:
+  - `npm run port:free`
+  - `npm run dev:4310`
+  - `npm run start:4310`
+  - `npm run qa:golive`
+
+### URLs tested in this run
+
+- `/`
+- `/search`
+- `/brands`
+- `/microsoft`
+- `/seqrite`
+- `/cisco`
+- `/locations/chandigarh`
+- `/request-quote`
+- `/thank-you`
+- `/contact`
+- `/robots.txt`
+- `/sitemap.xml`
+
+### Remaining known issues
+
+- None blocking for quote flow, mobile header, or go-live lead capture.

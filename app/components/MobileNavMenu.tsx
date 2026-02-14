@@ -55,7 +55,7 @@ export default function MobileNavMenu() {
         >
           <div
             ref={drawerRef}
-            className="mobile-nav-sheet absolute inset-x-0 top-0 h-full w-full translate-x-0 bg-[var(--color-surface)] px-4 pb-6 pt-4 shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
+            className="mobile-nav-sheet absolute inset-x-0 top-0 h-[100dvh] w-full translate-x-0 bg-[var(--color-surface)] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
@@ -70,7 +70,7 @@ export default function MobileNavMenu() {
               </button>
             </div>
 
-            <nav className="mt-4 flex max-h-[calc(100dvh-7.5rem)] flex-col gap-1 overflow-y-auto">
+            <nav className="mt-4 flex max-h-[calc(100dvh-8rem)] flex-col gap-1 overflow-y-auto pr-1">
               {PRIMARY_NAV_LINKS.map((link) => {
                 const active = isNavActive(pathname, link);
                 return (

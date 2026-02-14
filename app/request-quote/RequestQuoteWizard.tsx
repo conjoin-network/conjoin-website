@@ -51,10 +51,7 @@ const primaryBrands: LeadBrand[] = ["Microsoft", "Seqrite", "Cisco", "Other"];
 const quickSelectBrands: LeadBrand[] = ["Microsoft", "Seqrite"];
 const brandSearchOptions: Array<{ label: string; brand: LeadBrand; note: string }> = [
   { label: "Microsoft", brand: "Microsoft", note: "Microsoft 365 licensing and migration" },
-  { label: "Microsoft 365", brand: "Microsoft", note: "Business and enterprise suites" },
-  { label: "Microsoft Azure", brand: "Microsoft", note: "Azure cloud and security workloads" },
   { label: "Seqrite", brand: "Seqrite", note: "Endpoint and EDR/XDR security stack" },
-  { label: "Seqrite Endpoint Security", brand: "Seqrite", note: "Endpoint protection and policy controls" },
   { label: "Cisco", brand: "Cisco", note: "Networking, security and collaboration solutions" },
   { label: "Other OEM", brand: "Other", note: "Generic procurement scope for additional brands" }
 ];
@@ -81,6 +78,37 @@ function normalizeBrand(raw: string) {
   return { brand: "Other" as const, brandLabel: raw.trim() };
 }
 
+function resolveBrandFromQuery(raw: string) {
+  const query = raw.trim();
+  if (!query) {
+    return null;
+  }
+  const queryLower = query.toLowerCase();
+
+  const fromCatalog = brandSearchOptions.find(
+    (option) =>
+      option.label.toLowerCase() === queryLower ||
+      option.brand.toLowerCase() === queryLower ||
+      option.label.toLowerCase().startsWith(queryLower)
+  );
+  if (fromCatalog) {
+    return {
+      brand: fromCatalog.brand,
+      label: fromCatalog.brand === "Other" ? fromCatalog.label : fromCatalog.brand
+    };
+  }
+
+  const normalized = normalizeBrand(query);
+  if (!normalized.brand) {
+    return null;
+  }
+
+  return {
+    brand: normalized.brand,
+    label: normalized.brand === "Other" ? normalized.brandLabel : normalized.brand
+  };
+}
+
 function headingForStep(step: number, brand: LeadBrand | "") {
   if (step === 1) {
     return "Choose brand";
@@ -101,6 +129,36 @@ function headingForStep(step: number, brand: LeadBrand | "") {
     return "Deployment type";
   }
   return "Contact details";
+}
+
+function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
+  if (currentStep === 1) {
+    return "Select a brand to continue. Use the Microsoft or Seqrite quick select for fastest flow.";
+  }
+
+  if (currentStep === 2) {
+    if (brand === "Microsoft") {
+      return "Select a Microsoft product before continuing.";
+    }
+    if (brand === "Seqrite") {
+      return "Select a Seqrite product before continuing.";
+    }
+    return "Select a product before continuing.";
+  }
+
+  if (currentStep === 3) {
+    return "Enter a valid quantity to continue.";
+  }
+
+  if (currentStep === 4) {
+    return "Choose a deployment type to continue.";
+  }
+
+  if (currentStep === 5) {
+    return "Complete name, company, email, phone and city before submit.";
+  }
+
+  return "Please complete required fields to continue.";
 }
 
 export default function RequestQuoteWizard() {
@@ -260,16 +318,17 @@ export default function RequestQuoteWizard() {
   }
 
   function selectBrand(brand: LeadBrand, label?: string) {
+    const nextLabel = brand === "Other" ? (label?.trim() || "Other OEM") : brand;
     patch({
       brand,
-      brandLabel: label || brand,
+      brandLabel: nextLabel,
       category: "",
       product: "",
       quantity: "",
       servers: "",
       deployment: ""
     });
-    setBrandQuery(label || brand);
+    setBrandQuery(nextLabel);
     setBrandListOpen(false);
     setActiveBrandIndex(0);
     setProductQuery("");
@@ -285,7 +344,7 @@ export default function RequestQuoteWizard() {
 
   function canContinue(currentStep: number) {
     if (currentStep === 1) {
-      return Boolean(state.brand);
+      return Boolean(state.brand || resolveBrandFromQuery(brandQuery)?.brand);
     }
 
     if (currentStep === 2) {
@@ -308,8 +367,15 @@ export default function RequestQuoteWizard() {
   }
 
   function next() {
+    if (step === 1 && !state.brand) {
+      const resolved = resolveBrandFromQuery(brandQuery);
+      if (resolved?.brand) {
+        selectBrand(resolved.brand, resolved.label);
+      }
+    }
+
     if (!canContinue(step)) {
-      setNotice("Please complete required fields to continue.");
+      setNotice(validationMessageForStep(step, state.brand));
       return;
     }
 
@@ -324,7 +390,7 @@ export default function RequestQuoteWizard() {
 
   async function submit() {
     if (!canContinue(5) || !state.brand) {
-      setNotice("Please complete required fields before submit.");
+      setNotice(validationMessageForStep(5, state.brand));
       return;
     }
 
@@ -457,6 +523,27 @@ export default function RequestQuoteWizard() {
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-alt-bg)]">
                 <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(step / steps.length) * 100}%`, background: accent }} />
               </div>
+              <ol className="grid gap-2 text-[11px] uppercase tracking-[0.08em] text-[var(--color-text-secondary)] sm:grid-cols-5">
+                {steps.map((label, index) => {
+                  const stepNumber = index + 1;
+                  const active = stepNumber === step;
+                  const done = stepNumber < step;
+                  return (
+                    <li
+                      key={`step-${label}`}
+                      className={`rounded-lg border px-2 py-1 text-center ${
+                        active
+                          ? "border-[var(--color-primary)] text-[var(--color-text-primary)]"
+                          : done
+                            ? "border-[var(--color-border)] text-[var(--color-text-primary)]"
+                            : "border-[var(--color-border)]"
+                      }`}
+                    >
+                      {label}
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
 
             {step === 1 ? (
@@ -532,7 +619,7 @@ export default function RequestQuoteWizard() {
                       ) : (
                         filteredBrandOptions.map((option, index) => {
                           const active = index === activeBrandIndex;
-                          const selected = state.brand === option.brand && state.brandLabel === option.label;
+                          const selected = state.brand === option.brand;
                           return (
                             <li key={`${option.label}-${index}`} role="option" aria-selected={selected}>
                               <button
@@ -795,12 +882,16 @@ export default function RequestQuoteWizard() {
             ) : null}
 
             {notice ? (
-              <p className={`rounded-xl border px-3 py-2 text-sm ${status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+              <p
+                role="alert"
+                aria-live="polite"
+                className={`rounded-xl border px-3 py-2 text-sm ${status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}
+              >
                 {notice}
               </p>
             ) : null}
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="sticky bottom-2 z-20 flex items-center justify-between gap-3 rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_95%,transparent)] p-2 md:static md:border-0 md:bg-transparent md:p-0">
               <button
                 type="button"
                 onClick={back}

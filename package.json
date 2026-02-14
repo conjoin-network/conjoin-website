@@ -4,13 +4,17 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
+    "port:free": "lsof -ti :4310 | xargs kill -9 2>/dev/null || true",
+    "dev:4310": "npm run port:free && PORT=4310 next dev --webpack",
     "dev:stable": "NEXT_DISABLE_TURBOPACK=1 next dev",
     "audit:forbidden": "node scripts/audit-forbidden-strings.mjs",
     "build": "npm run audit:forbidden && next build",
     "start": "next start",
+    "start:4310": "npm run port:free && PORT=4310 next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "qa:smoke": "bash scripts/ensure-workdir.sh && node scripts/qa-smoke.mjs"
+    "qa:smoke": "bash scripts/ensure-workdir.sh && node scripts/qa-smoke.mjs",
+    "qa:golive": "bash scripts/ensure-workdir.sh && node scripts/qa-golive.mjs"
   },
   "dependencies": {
     "next": "16.1.6",

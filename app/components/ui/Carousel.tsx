@@ -94,7 +94,7 @@ export default function Carousel({
       aria-roledescription="carousel"
       aria-label="Conjoin featured service lines"
     >
-      <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 md:p-4">
+      <div className="absolute inset-x-0 top-0 z-20 hidden items-center justify-between p-3 md:flex md:p-4">
         <button
           type="button"
           onClick={() => setIsPlaying((value) => !value)}
@@ -123,6 +123,15 @@ export default function Carousel({
           </button>
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setIsPlaying((value) => !value)}
+        className="interactive-btn absolute bottom-4 left-4 z-20 inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold text-[var(--color-text-primary)] md:hidden"
+        aria-label={isPlaying ? "Pause autoplay" : "Play autoplay"}
+      >
+        {isPlaying ? "Pause" : "Play"}
+      </button>
 
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;

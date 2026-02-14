@@ -87,18 +87,19 @@ WHATSAPP_PHONE_NUMBER_ID=""
 ```bash
 npm ci
 npm run lint
+npm run typecheck
 npm run build
-lsof -ti :4310 | xargs kill -9 2>/dev/null || true
-PORT=4310 npm run dev
+npm run dev:4310
 ```
 
 Open [http://localhost:4310](http://localhost:4310).
 
 ### QA Note
-If port `4310` is busy before smoke tests, run:
+Run go-live checks while local server is running:
 
 ```bash
-lsof -ti :4310 | xargs kill -9 || true
+npm run qa:smoke
+npm run qa:golive
 ```
 
 ### Stable Dev Fallback
@@ -112,6 +113,12 @@ Optional cleanup before retrying:
 
 ```bash
 rm -rf .next
+```
+
+### Production-mode local check
+
+```bash
+npm run start:4310
 ```
 
 ## Compliance Notes

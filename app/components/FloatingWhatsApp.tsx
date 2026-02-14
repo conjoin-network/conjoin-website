@@ -44,7 +44,7 @@ export default function FloatingWhatsApp() {
         setNearFooter(entries.some((entry) => entry.isIntersecting));
       },
       {
-        rootMargin: "0px 0px 120px 0px",
+        rootMargin: "0px 0px 200px 0px",
         threshold: 0
       }
     );
@@ -68,7 +68,7 @@ export default function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
-      className={`floating-whatsapp interactive-btn fixed right-4 z-40 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
+      className={`floating-whatsapp interactive-btn fixed z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
     >
       WhatsApp
     </a>
