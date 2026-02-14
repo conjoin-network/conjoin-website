@@ -94,8 +94,8 @@ const heroSlides = [
     title: "Secure service line",
     description: "Endpoint, email, and backup resilience for business continuity.",
     panel: (
-      <div className="flex h-full flex-col justify-between rounded-3xl p-6" style={withThemeStyles("secure")}>
-        <div className="space-y-3">
+      <div className="flex h-full flex-col rounded-3xl p-5 md:p-6" style={withThemeStyles("secure")}>
+        <div className="space-y-2">
           <span
             className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold"
             style={{
@@ -105,21 +105,49 @@ const heroSlides = [
           >
             Secure
           </span>
-          <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Security and resilience operations</h2>
+          <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Security and Resilience Operations</h2>
           <p className="text-sm text-[var(--color-text-secondary)]">Policy-first rollout for endpoint, email, and recovery governance.</p>
         </div>
-        <div className="flex items-center justify-between gap-4">
+
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {[
+            {
+              title: "Endpoint Protection",
+              bullets: ["EDR / XDR", "Device Control", "Policy Enforcement"]
+            },
+            {
+              title: "Email Security",
+              bullets: ["Anti-Phishing", "SPF / DKIM / DMARC", "Microsoft 365 Protection"]
+            },
+            {
+              title: "Backup & Recovery",
+              bullets: ["M365 Backup", "Endpoint Backup", "Disaster Recovery"]
+            }
+          ].map((block) => (
+            <div
+              key={block.title}
+              className="interactive-card rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_96%,transparent)] p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+            >
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{block.title}</h3>
+              <ul className="mt-2 space-y-1.5 text-xs text-[var(--color-text-secondary)]">
+                {block.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-center gap-2">
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--brand-seqrite)]" />
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3">
           <ButtonLink href="/solutions/secure" variant="secondary" className="min-h-10 px-4 text-xs">
             View details
           </ButtonLink>
-          <Image
-            src="/brand/conjoin-logo.png"
-            alt="Conjoin secure service line"
-            width={120}
-            height={120}
-            sizes="120px"
-            className="h-auto w-auto"
-          />
+          <ButtonLink href="/request-quote?brand=Seqrite&source=/" variant="primary" className="min-h-10 px-4 text-xs">
+            Request Quote
+          </ButtonLink>
         </div>
       </div>
     )
@@ -164,9 +192,9 @@ const heroSlides = [
 export default function Home() {
   return (
     <div>
-      <Section className="pb-10 pt-10 md:pb-12 md:pt-12">
+      <Section className="pb-9 pt-6 md:pb-11 md:pt-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-stretch">
-          <header className="space-y-6 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-7 shadow-[var(--shadow-soft)] md:p-8">
+          <header className="space-y-5 rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-soft)] md:p-8">
             <h1 className="text-[clamp(2rem,5vw,2.8rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-[var(--color-text-primary)]">
               Partner-led IT service lines for modern business operations.
             </h1>
@@ -191,7 +219,7 @@ export default function Home() {
             </ul>
           </header>
 
-          <Carousel slides={heroSlides} autoplayMs={3000} className="h-full" heightClassName="min-h-[360px] md:min-h-[420px]" />
+          <Carousel slides={heroSlides} autoplayMs={2000} className="h-full" heightClassName="min-h-[350px] md:min-h-[405px]" />
         </div>
       </Section>
 

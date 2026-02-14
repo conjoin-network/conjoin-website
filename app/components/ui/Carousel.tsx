@@ -26,7 +26,6 @@ export default function Carousel({
   heightClassName = "min-h-[420px]"
 }: CarouselProps) {
   const [index, setIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
@@ -41,7 +40,7 @@ export default function Carousel({
   }, []);
 
   useEffect(() => {
-    if (!isPlaying || isHovering || isHidden || slides.length <= 1) {
+    if (isHovering || isHidden || slides.length <= 1) {
       return;
     }
 
@@ -50,7 +49,7 @@ export default function Carousel({
     }, autoplayMs);
 
     return () => window.clearInterval(timer);
-  }, [autoplayMs, isHidden, isHovering, isPlaying, slides.length]);
+  }, [autoplayMs, isHidden, isHovering, slides.length]);
 
   function goNext() {
     setIndex((current) => (current + 1) % slides.length);
@@ -86,7 +85,7 @@ export default function Carousel({
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] ${heightClassName} ${className}`.trim()}
+      className={`relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[linear-gradient(155deg,#ffffff,#f8fbff)] ${heightClassName} ${className}`.trim()}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onTouchStart={(event) => onTouchStart(event.touches[0]?.clientX ?? 0)}
@@ -94,16 +93,12 @@ export default function Carousel({
       aria-roledescription="carousel"
       aria-label="Conjoin featured service lines"
     >
-      <div className="absolute inset-x-0 top-0 z-20 hidden items-center justify-between p-3 md:flex md:p-4">
-        <button
-          type="button"
-          onClick={() => setIsPlaying((value) => !value)}
-          className="interactive-btn inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold text-[var(--color-text-primary)]"
-          aria-label={isPlaying ? "Pause autoplay" : "Play autoplay"}
-        >
-          {isPlaying ? "Pause" : "Play"}
-        </button>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_16%_18%,rgba(37,99,235,0.08),transparent_42%),radial-gradient(circle_at_84%_82%,rgba(30,64,175,0.06),transparent_38%)]"
+      />
 
+      <div className="absolute inset-x-0 top-0 z-20 hidden justify-end p-3 md:flex md:p-4">
         <div className="hidden items-center gap-2 md:flex">
           <button
             type="button"
@@ -124,22 +119,13 @@ export default function Carousel({
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setIsPlaying((value) => !value)}
-        className="interactive-btn absolute bottom-4 left-4 z-20 inline-flex min-h-10 items-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs font-semibold text-[var(--color-text-primary)] md:hidden"
-        aria-label={isPlaying ? "Pause autoplay" : "Play autoplay"}
-      >
-        {isPlaying ? "Pause" : "Play"}
-      </button>
-
       {slides.map((slide, slideIndex) => {
         const active = slideIndex === index;
         return (
           <article
             key={slide.id}
             aria-hidden={!active}
-            className={`absolute inset-0 transition-all duration-300 ${
+            className={`absolute inset-0 z-10 transition-all duration-300 ${
               active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-1 opacity-0"
             }`}
           >

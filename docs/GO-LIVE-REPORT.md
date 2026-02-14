@@ -656,3 +656,50 @@ Admin status persistence:
 ### Remaining known issues
 
 - None blocking for quote flow, mobile header, or go-live lead capture.
+
+## 17) Hero Slider Go-Live Design Hardening (14 Feb 2026)
+
+### UI hardening completed
+
+- Removed hero slider pause controls entirely (desktop + mobile).
+- Hero slider remains auto-play and loops every 2 seconds.
+- Kept arrow navigation as clean desktop controls.
+- Tightened homepage hero spacing to remove top-heavy empty area.
+- Added subtle gradient/pattern wash behind carousel panel to avoid flat white surfaces.
+- Replaced empty secure slide body with structured product clarity cards under:
+  - **Security and Resilience Operations**
+  - **Endpoint Protection** (EDR/XDR, Device Control, Policy Enforcement)
+  - **Email Security** (Anti-Phishing, SPF/DKIM/DMARC, Microsoft 365 Protection)
+  - **Backup & Recovery** (M365 Backup, Endpoint Backup, Disaster Recovery)
+- Product clarity cards are responsive (3-column desktop, stacked mobile) with:
+  - soft border
+  - light shadow
+  - subtle hover lift
+
+### Stability and UX checks
+
+- Verified no layout shift introduced in hero (fixed carousel height kept).
+- Confirmed no overlap between floating WhatsApp CTA, footer links, and mobile menu.
+- Confirmed `Next` flow in quote wizard remains visible and sticky on mobile.
+
+### Final end-to-end lead checks after this hardening
+
+- Microsoft RFQ: `200`, created `LD-20260214-1210`, visible in admin.
+- Seqrite RFQ: `200`, created `LD-20260214-7929`, visible in admin.
+- Generic procurement lead (`/api/lead`): `200`, created `LD-20260214-9792`, visible in admin.
+- Admin status persistence check: `PATCH /api/admin/leads/[id]` -> `QUOTED` saved.
+
+### URLs validated
+
+- `/`
+- `/request-quote`
+- `/search`
+- `/brands`
+- `/microsoft`
+- `/seqrite`
+- `/cisco`
+- `/contact`
+- `/thank-you`
+- `/locations/chandigarh`
+- `/robots.txt`
+- `/sitemap.xml`

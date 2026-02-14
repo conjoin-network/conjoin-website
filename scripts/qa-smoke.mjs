@@ -65,7 +65,6 @@ async function run() {
     homeFailures.push("Home missing expected 5 service cards.");
   }
 
-  assertContains(homeHtml, 'aria-label="Pause autoplay"', "Carousel play/pause control missing.", homeFailures);
   assertContains(homeHtml, 'aria-label="Previous slide"', "Carousel previous control missing.", homeFailures);
   assertContains(homeHtml, 'aria-label="Next slide"', "Carousel next control missing.", homeFailures);
 
