@@ -1,11 +1,20 @@
 # GO-LIVE V1 (Microsoft + Seqrite Lead Engine)
 
 ## What Is Live
-- Microsoft + Seqrite quote wizard at `/request-quote` with brand-aware steps.
+- Microsoft + Seqrite quote wizard at `/request-quote` with strict 5-step brand-aware flow.
 - Strict field behavior:
-  - Microsoft path: product family + plan + `Users / Seats`.
-  - Seqrite path: product + conditional deployment + `Endpoints` (+ servers only when applicable).
-  - Cisco/other path: requirement category + simple requirement detail fields.
+  - Step 1: Choose Brand.
+  - Step 2: Choose Product (brand-filtered only).
+  - Step 3: Users/Devices.
+  - Step 4: Deployment type (`Cloud`, `On-Prem`, `Hybrid`).
+  - Step 5: Contact details.
+  - Microsoft path uses `Users / Seats` only.
+  - Seqrite path uses `Devices / Endpoints` (+ optional servers where applicable).
+  - Cisco/Other path stays neutral and category-first.
+- Structured product registry now drives valid options:
+  - `data/product-registry.json`
+  - `lib/product-registry.ts`
+  - `lib/quote-catalog.ts`
 - Attribution capture on `/api/quote`:
   - `brand`, `category`, `plan`, `deployment`, quantity fields, `city`, `timeline`, `source`, UTM values, `pagePath`, `referrer`.
 - Thank-you confirmation at `/thank-you` with WhatsApp continuation CTA.

@@ -12,7 +12,8 @@ import {
   ORG_NAME,
   ORG_POSTAL_ADDRESS,
   getOrgContactPoints,
-  getOrgEmails
+  getOrgEmails,
+  getOrgPhones
 } from "@/lib/contact";
 import {
   LOCATION_PAGES,
@@ -56,6 +57,7 @@ export default async function LocationPage({
     url: absoluteUrl(`/locations/${location.slug}`),
     areaServed: ORG_AREA_SERVED,
     address: ORG_POSTAL_ADDRESS,
+    telephone: getOrgPhones(),
     email: getOrgEmails(),
     contactPoint: getOrgContactPoints()
   };

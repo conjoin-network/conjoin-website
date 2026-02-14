@@ -3,9 +3,9 @@ import RequestQuoteWizard from "@/app/request-quote/RequestQuoteWizard";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
-  title: "Request Quote | Microsoft, Seqrite and OEM Procurement",
+  title: "Request Quote | Microsoft & Seqrite 5-Step RFQ",
   description:
-    "Step-by-step quote wizard for Microsoft users/seats, Seqrite endpoints/servers, and generic OEM procurement requirements.",
+    "Five-step RFQ wizard: choose brand, choose product, users/devices, deployment type, and contact details.",
   path: "/request-quote"
 });
 

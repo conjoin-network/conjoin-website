@@ -1,0 +1,316 @@
+{
+  "Microsoft": {
+    "brand": "Microsoft",
+    "categories": [
+      {
+        "name": "Microsoft 365",
+        "description": "Productivity and collaboration subscriptions for business and enterprise teams.",
+        "products": [
+          {
+            "name": "Business Basic",
+            "description": "Core Microsoft 365 services for email, collaboration and web apps.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Business Standard",
+            "description": "Business productivity suite with desktop apps and collaboration services.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Business Premium",
+            "description": "Business suite with productivity plus security and device management scope.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Apps for Business",
+            "description": "Desktop productivity apps for organizations with existing mail/collaboration stack.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Enterprise E3",
+            "description": "Enterprise productivity and security baseline for larger organizations.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Enterprise E5",
+            "description": "Enterprise suite with advanced security, compliance and analytics scope.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Frontline (F3)",
+            "description": "Frontline workforce plan for task-based and shift-based staff.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Microsoft 365 Add-ons",
+        "description": "Add-on components to extend security, AI and identity capabilities.",
+        "products": [
+          {
+            "name": "Microsoft Defender",
+            "description": "Security add-on options for endpoint and threat protection scenarios.",
+            "licenseModel": "Per user / seat or per endpoint subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Copilot for Microsoft 365",
+            "description": "AI productivity add-on for supported Microsoft 365 plan pathways.",
+            "licenseModel": "Per user / seat add-on subscription",
+            "deploymentOptions": ["Cloud"]
+          },
+          {
+            "name": "Entra ID",
+            "description": "Identity and access add-on options for policy and governance controls.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Intune",
+            "description": "Device and endpoint management add-on for policy-controlled access.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Exchange Online",
+            "description": "Business email service for mailbox and transport management requirements.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Teams Phone",
+            "description": "Calling and telephony add-on pathway for Microsoft Teams deployments.",
+            "licenseModel": "Per user / seat add-on subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Azure",
+        "description": "Microsoft cloud infrastructure and security service pathways.",
+        "products": [
+          {
+            "name": "Azure VM",
+            "description": "Compute infrastructure for virtual machine workloads and hosted apps.",
+            "licenseModel": "Consumption-based or reserved capacity",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Azure Backup",
+            "description": "Backup and recovery service options for workloads and business continuity.",
+            "licenseModel": "Consumption-based service subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Azure Security",
+            "description": "Cloud security controls for posture, threat response and governance.",
+            "licenseModel": "Consumption-based service subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Azure AD Premium",
+            "description": "Identity and access management controls under Azure/Entra licensing pathways.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Security",
+        "description": "Microsoft security and compliance components for modern IT environments.",
+        "products": [
+          {
+            "name": "Defender for Business",
+            "description": "Security protection for small and mid-sized business endpoint environments.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Defender for Endpoint",
+            "description": "Advanced endpoint security and response capability for enterprise teams.",
+            "licenseModel": "Per user / seat or per endpoint subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Purview",
+            "description": "Compliance, information protection and data governance product family.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Intune",
+            "description": "Unified endpoint management for policy-driven access and compliance.",
+            "licenseModel": "Per user / seat subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      }
+    ]
+  },
+  "Seqrite": {
+    "brand": "Seqrite",
+    "categories": [
+      {
+        "name": "Endpoint Protection",
+        "description": "Core endpoint security portfolio for SMB, mid-market and enterprise teams.",
+        "products": [
+          {
+            "name": "Endpoint Security",
+            "description": "Endpoint protection baseline for desktops, laptops and managed devices.",
+            "licenseModel": "Per endpoint annual subscription",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Endpoint Security Cloud",
+            "description": "Cloud-managed endpoint protection with centralized policy control.",
+            "licenseModel": "Per endpoint annual subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Extended Detection",
+        "description": "Threat detection and response layers for managed security operations.",
+        "products": [
+          {
+            "name": "EDR",
+            "description": "Endpoint detection and response for incident visibility and action.",
+            "licenseModel": "Per endpoint annual subscription",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "XDR",
+            "description": "Cross-domain detection and response model for broader security telemetry.",
+            "licenseModel": "Per endpoint / workload annual subscription",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Modern Security Controls",
+        "description": "Device management and trust architecture components for governance.",
+        "products": [
+          {
+            "name": "MDM",
+            "description": "Mobile and endpoint device management for policy and lifecycle control.",
+            "licenseModel": "Per managed device annual subscription",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Zero Trust",
+            "description": "Policy-led security framework implementation and control pathways.",
+            "licenseModel": "Subscription with policy and control scope",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Data Privacy",
+            "description": "Data handling and policy controls for privacy and compliance outcomes.",
+            "licenseModel": "Subscription based on protected endpoints and modules",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Enterprise Suite",
+            "description": "Bundle pathway for combined endpoint, detection and governance controls.",
+            "licenseModel": "Per endpoint annual subscription bundle",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          }
+        ]
+      },
+      {
+        "name": "Email and Gateway Security",
+        "description": "Email and perimeter controls for business risk and policy governance.",
+        "products": [
+          {
+            "name": "Email Security",
+            "description": "Email protection controls for phishing, malware and content governance.",
+            "licenseModel": "Per user / mailbox annual subscription",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Gateway / UTM",
+            "description": "Gateway and UTM security controls for branch and perimeter requirements.",
+            "licenseModel": "Appliance and subscription pathway",
+            "deploymentOptions": ["On-Prem", "Hybrid", "Cloud"]
+          },
+          {
+            "name": "Cloud Security",
+            "description": "Cloud workload and access security controls for managed environments.",
+            "licenseModel": "Subscription based on protected workloads and endpoints",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      }
+    ]
+  },
+  "Cisco": {
+    "brand": "Cisco",
+    "categories": [
+      {
+        "name": "Cisco Solutions",
+        "description": "Category-first procurement pathways for networking, collaboration and security.",
+        "products": [
+          {
+            "name": "Firewall",
+            "description": "Security perimeter and policy control requirement category.",
+            "licenseModel": "Appliance + subscription pathway",
+            "deploymentOptions": ["On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Switching",
+            "description": "Campus and branch network switching requirement category.",
+            "licenseModel": "Hardware + support subscription pathway",
+            "deploymentOptions": ["On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Wi-Fi",
+            "description": "Enterprise wireless and controller requirement category.",
+            "licenseModel": "Hardware + subscription pathway",
+            "deploymentOptions": ["On-Prem", "Hybrid", "Cloud"]
+          },
+          {
+            "name": "Collaboration",
+            "description": "Meetings, calling and collaboration infrastructure category.",
+            "licenseModel": "Subscription and workload-based pathway",
+            "deploymentOptions": ["Cloud", "Hybrid", "On-Prem"]
+          }
+        ]
+      }
+    ]
+  },
+  "Other": {
+    "brand": "Other",
+    "categories": [
+      {
+        "name": "General OEM Requirement",
+        "description": "Generic procurement route for brands outside the current directory.",
+        "products": [
+          {
+            "name": "Security",
+            "description": "Security requirement category for firewall, endpoint or SOC pathways.",
+            "licenseModel": "Commercial model depends on OEM and scope",
+            "deploymentOptions": ["Cloud", "On-Prem", "Hybrid"]
+          },
+          {
+            "name": "Networking",
+            "description": "Network infrastructure requirement category for branch or campus deployments.",
+            "licenseModel": "Commercial model depends on OEM and scope",
+            "deploymentOptions": ["On-Prem", "Hybrid", "Cloud"]
+          },
+          {
+            "name": "Cloud & Productivity",
+            "description": "Cloud workloads and productivity subscription requirement category.",
+            "licenseModel": "Commercial model depends on OEM and scope",
+            "deploymentOptions": ["Cloud", "Hybrid"]
+          }
+        ]
+      }
+    ]
+  }
+}

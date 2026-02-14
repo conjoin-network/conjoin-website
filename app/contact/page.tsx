@@ -16,6 +16,7 @@ import {
   SUPPORT_EMAIL,
   getOrgContactPoints,
   getOrgEmails,
+  getOrgPhones,
   mailto,
   tel
 } from "@/lib/contact";
@@ -36,6 +37,7 @@ export default function ContactPage() {
     url: absoluteUrl("/contact"),
     areaServed: ORG_AREA_SERVED,
     address: ORG_POSTAL_ADDRESS,
+    telephone: getOrgPhones(),
     email: getOrgEmails(),
     contactPoint: getOrgContactPoints()
   };

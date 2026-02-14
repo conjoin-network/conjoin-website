@@ -1,4 +1,13 @@
-export type LeadBrand = "Microsoft" | "Seqrite" | "Cisco" | "Other";
+import {
+  getBrandCategories,
+  getBrandProducts,
+  getDeploymentOptionsForProduct,
+  hasProduct,
+  type DirectoryBrand,
+  type DeploymentType
+} from "@/lib/product-registry";
+
+export type LeadBrand = DirectoryBrand;
 export type LeadStatus = "NEW" | "IN_PROGRESS" | "QUOTED" | "WON" | "LOST";
 export type LeadPriority = "HOT" | "WARM" | "COLD";
 
@@ -18,116 +27,53 @@ type CatalogNode = {
   label: string;
   plans: string[];
   quantityLabel: string;
-  deploymentOptions?: string[];
+  deploymentOptions?: DeploymentType[];
   supportsServers?: boolean;
 };
 
+const QUANTITY_LABELS: Record<LeadBrand, string> = {
+  Microsoft: "Users/Seats",
+  Seqrite: "Devices/Endpoints",
+  Cisco: "Users/Devices",
+  Other: "Users/Devices"
+};
+
+const SEQRITE_SERVER_PRODUCTS = new Set(["Endpoint Security", "EDR", "XDR", "Enterprise Suite"]);
+
+function unique<T>(items: T[]) {
+  return Array.from(new Set(items));
+}
+
+function categoryToNode(brand: LeadBrand, categoryName: string): CatalogNode {
+  const plans = getBrandProducts(brand)
+    .filter((item) => item.category === categoryName)
+    .map((item) => item.product);
+
+  const deploymentOptions = unique(
+    getBrandProducts(brand)
+      .filter((item) => item.category === categoryName)
+      .flatMap((item) => item.deploymentOptions)
+  );
+
+  return {
+    label: categoryName,
+    plans,
+    quantityLabel: QUANTITY_LABELS[brand],
+    deploymentOptions,
+    supportsServers: brand === "Seqrite"
+  };
+}
+
 export const QUOTE_CATALOG: Record<LeadBrand, CatalogNode[]> = {
-  Microsoft: [
-    {
-      label: "Microsoft 365 Business",
-      plans: ["Business Basic", "Business Standard", "Business Premium"],
-      quantityLabel: "Users/Seats"
-    },
-    {
-      label: "Microsoft 365 Enterprise",
-      plans: ["Enterprise E3", "Enterprise E5"],
-      quantityLabel: "Users/Seats"
-    },
-    {
-      label: "Microsoft Security Add-ons",
-      plans: [
-        "Defender for Business",
-        "Defender for Endpoint",
-        "Entra ID",
-        "Intune"
-      ],
-      quantityLabel: "Users/Seats"
-    }
-  ],
-  Seqrite: [
-    {
-      label: "Endpoint Security",
-      plans: ["Essentials", "Advanced", "Complete"],
-      quantityLabel: "Endpoints",
-      deploymentOptions: ["Cloud", "On-Prem"],
-      supportsServers: true
-    },
-    {
-      label: "EDR",
-      plans: ["EDR Essentials", "EDR Advanced"],
-      quantityLabel: "Endpoints"
-    }
-  ],
-  Cisco: [
-    {
-      label: "Firewall",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Switching",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Wi-Fi",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Collaboration",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Endpoint",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "EDR",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    }
-  ],
-  Other: [
-    {
-      label: "Firewall",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Switching",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Wi-Fi",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Collaboration",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "Endpoint",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    },
-    {
-      label: "EDR",
-      plans: ["New deployment", "Refresh / upgrade", "Renewal / support"],
-      quantityLabel: "Users"
-    }
-  ]
+  Microsoft: getBrandCategories("Microsoft").map((category) => categoryToNode("Microsoft", category.name)),
+  Seqrite: getBrandCategories("Seqrite").map((category) => categoryToNode("Seqrite", category.name)),
+  Cisco: getBrandCategories("Cisco").map((category) => categoryToNode("Cisco", category.name)),
+  Other: getBrandCategories("Other").map((category) => categoryToNode("Other", category.name))
 };
 
 export const ADD_ON_OPTIONS = ["DLP", "Patch", "EDR", "Encryption"] as const;
 
-export const LAST_VERIFIED_DATE = "12 Feb 2026";
+export const LAST_VERIFIED_DATE = "14 Feb 2026";
 
 export function getStageTwoOptions(brand: LeadBrand) {
   return QUOTE_CATALOG[brand].map((node) => node.label);
@@ -138,39 +84,94 @@ export function getPlans(brand: LeadBrand, label: string) {
   return node ? node.plans : [];
 }
 
-export function getQuantityLabel(brand: LeadBrand, label: string) {
+export function getQuantityLabel(brand: LeadBrand, label?: string) {
+  if (!label) {
+    return QUANTITY_LABELS[brand] ?? "Quantity";
+  }
+
   const node = QUOTE_CATALOG[brand].find((item) => item.label === label);
-  return node?.quantityLabel ?? "Quantity";
+  return node?.quantityLabel ?? QUANTITY_LABELS[brand] ?? "Quantity";
 }
 
-export function getDeploymentOptions(brand: LeadBrand, label: string) {
+export function getCategoryForPlan(brand: LeadBrand, plan: string) {
+  const lookup = plan.trim().toLowerCase();
+  if (!lookup) {
+    return "";
+  }
+
+  const categories = getStageTwoOptions(brand);
+  const match = categories.find((category) => getPlans(brand, category).some((candidate) => candidate.toLowerCase() === lookup));
+  return match ?? "";
+}
+
+export function getProductOptions(brand: LeadBrand) {
+  return getBrandProducts(brand);
+}
+
+export function getDeploymentOptions(brand: LeadBrand, label: string, plan?: string) {
+  if (plan) {
+    return getDeploymentOptionsForProduct(brand, label, plan);
+  }
+
   const node = QUOTE_CATALOG[brand].find((item) => item.label === label);
   return node?.deploymentOptions ?? [];
 }
 
-export function supportsServers(brand: LeadBrand, label: string, deployment?: string) {
-  const node = QUOTE_CATALOG[brand].find((item) => item.label === label);
-  if (!node?.supportsServers) {
+export function supportsServers(brand: LeadBrand, label: string, deployment?: string, plan?: string) {
+  if (brand !== "Seqrite") {
     return false;
+  }
+
+  const resolvedPlan = (plan ?? "").trim();
+  if (resolvedPlan && !SEQRITE_SERVER_PRODUCTS.has(resolvedPlan)) {
+    return false;
+  }
+
+  if (!resolvedPlan) {
+    const plans = getPlans(brand, label);
+    if (!plans.some((candidate) => SEQRITE_SERVER_PRODUCTS.has(candidate))) {
+      return false;
+    }
   }
 
   if (!deployment) {
     return true;
   }
 
-  return deployment.toLowerCase() === "on-prem";
+  const next = deployment.trim().toLowerCase();
+  return next === "on-prem" || next === "hybrid";
 }
 
 export function isValidSelection(brand: LeadBrand, stageTwo: string, plan: string, deployment?: string) {
-  const node = QUOTE_CATALOG[brand].find((item) => item.label === stageTwo);
-  if (!node) {
+  const category = stageTwo.trim();
+  const product = plan.trim();
+
+  if (!category || !product) {
     return false;
   }
 
-  const deploymentOptions = node.deploymentOptions ?? [];
-  if (deploymentOptions.length > 0 && !deploymentOptions.includes(deployment ?? "")) {
+  if (!hasProduct(brand, category, product)) {
     return false;
   }
 
-  return node.plans.includes(plan);
+  const deploymentOptions = getDeploymentOptions(brand, category, product);
+  if (deploymentOptions.length === 0) {
+    return true;
+  }
+
+  if (!deployment) {
+    return false;
+  }
+
+  return deploymentOptions.includes(deployment as DeploymentType);
+}
+
+export function isValidProductSelection(brand: LeadBrand, stageTwo: string, plan: string) {
+  const category = stageTwo.trim();
+  const product = plan.trim();
+  if (!category || !product) {
+    return false;
+  }
+
+  return hasProduct(brand, category, product);
 }

@@ -215,3 +215,63 @@ Files touched in this email consistency pass:
 - `lib/email.ts`
 - `lib/whatsapp.ts`
 - `data/message-queue.json`
+
+## 9) Go-Live Contact + Email QA Pass (14 Feb 2026)
+
+### Website updates
+
+- Removed GST/GSTIN display from public UI.
+- Restored header search action as an icon button on desktop and mobile.
+- Footer upgraded with production contact block and expanded site links:
+  - Products, Brands, Categories, Locations, Compare, Request Quote, Contact
+  - Privacy Policy, Terms, Refund Policy, Sitemap
+- Added legal routes for footer links:
+  - `/privacy-policy`
+  - `/terms`
+  - `/refund-policy`
+- Schema updated to include address + phone numbers from shared contact constants:
+  - Organization JSON-LD (sitewide)
+  - LocalBusiness JSON-LD (`/contact`, `/locations/*`)
+
+### Email QA system
+
+- Added shared email branding + signature source:
+  - `lib/emailBrand.ts`
+  - `lib/emailSignature.ts`
+- Added standardized premium templates:
+  - `lib/emailTemplates.ts`
+- Updated lead notification delivery to use branded HTML templates with consistent sender identity:
+  - From: `Conjoin Leads Desk`
+  - Reply-To: `leads@conjoinnetwork.com`
+- Added customer confirmation email after RFQ submit (in addition to internal lead email).
+- Added dev-only preview route:
+  - `/dev/email-preview` (disabled in production)
+  - Template switcher for `triggeredBy` (`user` / `admin` / `system`)
+  - Copy HTML button for each template
+
+### Email template subjects (finalized)
+
+- Internal lead alert: `[Lead <leadId>] <brand> • <category> • <tier>`
+- Customer RFQ confirmation: `We received your quote request - <brand> | Conjoin Leads Desk`
+- Security/auth template: `<title> | Conjoin Security`
+- Contact acknowledgement: `Contact request received | Conjoin Leads Desk`
+
+### Files changed in this pass
+
+- `app/layout.tsx`
+- `app/contact/page.tsx`
+- `app/locations/[slug]/page.tsx`
+- `app/privacy-policy/page.tsx`
+- `app/terms/page.tsx`
+- `app/refund-policy/page.tsx`
+- `app/dev/email-preview/page.tsx`
+- `app/dev/email-preview/EmailPreviewClient.tsx`
+- `app/api/lead/route.ts`
+- `lib/contact.ts`
+- `lib/site-index.ts`
+- `lib/email.ts`
+- `lib/messaging/index.ts`
+- `lib/emailBrand.ts`
+- `lib/emailSignature.ts`
+- `lib/emailTemplates.ts`
+- `scripts/audit-forbidden-strings.mjs`

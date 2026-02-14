@@ -21,6 +21,7 @@ import {
   SUPPORT_EMAIL,
   getOrgContactPoints,
   getOrgEmails,
+  getOrgPhones,
   mailto,
   tel
 } from "@/lib/contact";
@@ -91,6 +92,7 @@ export default function RootLayout({
     foundingDate: "2014",
     areaServed: ORG_AREA_SERVED,
     address: ORG_POSTAL_ADDRESS,
+    telephone: getOrgPhones(),
     email: getOrgEmails(),
     contactPoint: getOrgContactPoints()
   };
@@ -105,7 +107,7 @@ export default function RootLayout({
       >
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
-            <Container className="min-h-[72px] py-3 md:min-h-[84px] md:py-4">
+            <Container className="min-h-[68px] py-2.5 md:min-h-[82px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
                   href="/"
@@ -117,8 +119,8 @@ export default function RootLayout({
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
-                      width={30}
-                      height={30}
+                      width={36}
+                      height={36}
                       className="brand-image"
                       priority
                     />
@@ -131,6 +133,21 @@ export default function RootLayout({
                   <MainNav />
                 </div>
                 <div className="flex items-center justify-end gap-2 lg:gap-3">
+                  <Link
+                    href="/search"
+                    aria-label="Search"
+                    className="interactive-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] focus-visible:outline-none"
+                  >
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                      <path
+                        d="M9 15a6 6 0 1 1 4.243-1.757L17 17"
+                        stroke="currentColor"
+                        strokeWidth="1.7"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </Link>
                   <ButtonLink href="/request-quote" variant="primary" className="min-h-[42px] whitespace-nowrap">
                     Request Quote
                   </ButtonLink>
@@ -138,29 +155,44 @@ export default function RootLayout({
               </div>
 
               <div className="md:hidden">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-2">
                   <Link
                     href="/"
                     aria-label="ConjoinNetwork Home"
-                    className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1 transition hover:bg-[var(--color-alt-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                    className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1 transition hover:bg-[var(--color-alt-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   >
                     <span className="brand-mark" aria-hidden>
                       <span className="brand-halo" />
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
-                        width={30}
-                        height={30}
+                        width={40}
+                        height={40}
                         className="brand-image"
                         priority
                       />
                     </span>
-                    <span className="max-w-[10rem] text-[10px] font-medium tracking-[0.04em] text-[var(--color-text-secondary)]">
+                    <span className="hidden max-w-[10rem] text-[10px] font-medium tracking-[0.04em] text-[var(--color-text-secondary)] min-[390px]:inline">
                       Procurement Advisory
                     </span>
                   </Link>
                   <div className="flex items-center gap-2">
-                    <ButtonLink href="/request-quote" variant="primary" className="min-h-[42px] px-3 text-xs whitespace-nowrap">
+                    <Link
+                      href="/search"
+                      aria-label="Search"
+                      className="interactive-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] focus-visible:outline-none"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                        <path
+                          d="M9 15a6 6 0 1 1 4.243-1.757L17 17"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Link>
+                    <ButtonLink href="/request-quote" variant="primary" className="min-h-[42px] px-3 text-xs whitespace-nowrap max-[360px]:px-2">
                       Request Quote
                     </ButtonLink>
                     <MobileNavMenu />
@@ -205,6 +237,15 @@ export default function RootLayout({
                 <div className="space-y-2">
                   <p className="font-semibold text-[var(--color-text-primary)]">Site links</p>
                   <div className="flex flex-col gap-1">
+                    <Link href="/products" className="hover:underline">
+                      Products
+                    </Link>
+                    <Link href="/categories" className="hover:underline">
+                      Categories
+                    </Link>
+                    <Link href="/compare/microsoft-365-vs-google-workspace" className="hover:underline">
+                      Compare
+                    </Link>
                     <Link href="/" className="hover:underline">
                       Home
                     </Link>
@@ -225,6 +266,21 @@ export default function RootLayout({
                     </Link>
                     <Link href="/request-quote" className="hover:underline">
                       Request Quote
+                    </Link>
+                    <Link href="/contact" className="hover:underline">
+                      Contact
+                    </Link>
+                    <Link href="/privacy-policy" className="hover:underline">
+                      Privacy Policy
+                    </Link>
+                    <Link href="/terms" className="hover:underline">
+                      Terms
+                    </Link>
+                    <Link href="/refund-policy" className="hover:underline">
+                      Refund Policy
+                    </Link>
+                    <Link href="/sitemap.xml" className="hover:underline">
+                      Sitemap
                     </Link>
                   </div>
                 </div>

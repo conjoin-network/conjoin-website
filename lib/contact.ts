@@ -12,7 +12,7 @@ export const SALES_PHONE_LANDLINE = PHONE_1;
 export const SALES_PHONE_MOBILE = PHONE_2;
 export const SALES_PHONE_NUMBER = PHONE_2;
 export const WHATSAPP_PHONE_NUMBER = PHONE_2;
-export const ORG_NAME = "CONJOIN NETWORK PRIVATE LIMITED";
+export const ORG_NAME = "Conjoin Network Private Limited";
 export const ORG_AREA_SERVED = COVERAGE;
 
 export const ORG_POSTAL_ADDRESS = {

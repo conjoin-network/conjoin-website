@@ -7,16 +7,15 @@ const rootDir = process.cwd();
 const ignoredDirs = new Set([".git", "node_modules", ".next"]);
 const ignoredFiles = new Set(["scripts/audit-forbidden-strings.mjs"]);
 
-const forbiddenTerms = [
-  "conjoinnewtork.com",
-  "conjoinnework.com",
-  "conjoinnewtwork.com",
-  "sales@conjoinnewtork.com",
-  "support@conjoinnewtork.com",
-  "leads@conjoinnewtork.com",
-  "conjoinnetwrok.com",
-  "conjoinnetwork.con"
-];
+const canonicalDomain = "conjoinnetwork.com";
+const canonicalEmails = new Set([
+  `sales@${canonicalDomain}`,
+  `support@${canonicalDomain}`,
+  `leads@${canonicalDomain}`,
+  `manod@${canonicalDomain}`
+]);
+const domainPattern = /\bconjoin[a-z0-9-]*\.(?:com|con)\b/gi;
+const emailPattern = /\b[a-z0-9._%+-]+@conjoin[a-z0-9-]*\.(?:com|con)\b/gi;
 
 function isTextFile(content) {
   return !content.includes("\u0000");
@@ -61,11 +60,24 @@ async function run() {
     const lines = content.split(/\r?\n/);
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index];
-      const normalizedLine = line.toLowerCase();
-      for (const forbidden of forbiddenTerms) {
-        if (normalizedLine.includes(forbidden.toLowerCase())) {
+      const domains = line.match(domainPattern) ?? [];
+      const emails = line.match(emailPattern) ?? [];
+
+      for (const domain of domains) {
+        if (domain.toLowerCase() !== canonicalDomain) {
           findings.push({
-            forbidden,
+            forbidden: domain,
+            file: file.relativePath,
+            line: index + 1,
+            text: line.trim()
+          });
+        }
+      }
+
+      for (const email of emails) {
+        if (!canonicalEmails.has(email.toLowerCase())) {
+          findings.push({
+            forbidden: email,
             file: file.relativePath,
             line: index + 1,
             text: line.trim()

@@ -7,7 +7,7 @@ import {
   QUOTE_CATALOG,
   type LeadBrand,
   getDeploymentOptions,
-  isValidSelection
+  isValidProductSelection
 } from "@/lib/quote-catalog";
 import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
 import { z } from "zod";
@@ -147,12 +147,15 @@ export async function POST(request: Request) {
       return validationError("Please select a valid brand.");
     }
 
-    if (!isValidSelection(brand, category, plan, deployment)) {
+    if (!isValidProductSelection(brand, category, plan)) {
       return validationError("Please select a valid category and plan combination.");
     }
 
-    const deploymentOptions = getDeploymentOptions(brand, category);
+    const deploymentOptions = getDeploymentOptions(brand, category, plan);
     if (deploymentOptions.length > 0 && !deployment) {
+      return validationError("Please select a valid deployment option.");
+    }
+    if (deployment && deploymentOptions.length > 0 && !deploymentOptions.includes(deployment as "Cloud" | "On-Prem" | "Hybrid")) {
       return validationError("Please select a valid deployment option.");
     }
 

@@ -35,6 +35,34 @@ const baseEntries: SiteIndexEntry[] = [
     category: "Guides"
   },
   {
+    title: "Contact",
+    description: "Official sales and support contacts for Conjoin Network Private Limited.",
+    url: "/contact",
+    tags: ["contact", "sales", "support", "phone", "email"],
+    category: "Guides"
+  },
+  {
+    title: "Privacy Policy",
+    description: "Data handling, privacy commitments and customer contact rights.",
+    url: "/privacy-policy",
+    tags: ["privacy", "policy", "data"],
+    category: "Guides"
+  },
+  {
+    title: "Terms",
+    description: "Commercial and service engagement terms for RFQ and project delivery.",
+    url: "/terms",
+    tags: ["terms", "commercial", "service"],
+    category: "Guides"
+  },
+  {
+    title: "Refund Policy",
+    description: "Refund and cancellation policy for subscriptions and services.",
+    url: "/refund-policy",
+    tags: ["refund", "policy", "cancellation"],
+    category: "Guides"
+  },
+  {
     title: "Campaign Microsoft 365",
     description: "Landing page for Microsoft 365 licensing and migration quote requests.",
     url: "/campaigns/microsoft-365",

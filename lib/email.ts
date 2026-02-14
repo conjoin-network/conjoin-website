@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { LEADS_EMAIL, SALES_EMAIL } from "@/lib/contact";
+import { buildCustomerLeadTemplate, buildInternalLeadTemplate } from "@/lib/emailTemplates";
 import type { LeadRecord } from "@/lib/leads";
 
 function getConfiguredTransport() {
@@ -26,52 +27,34 @@ export async function sendLeadNotification(lead: LeadRecord) {
     return { sent: false, reason: "SMTP not configured" };
   }
 
-  const from = process.env.MAIL_FROM ?? process.env.SMTP_USER ?? SALES_EMAIL;
+  const fromAddress = process.env.MAIL_FROM?.trim() || process.env.SMTP_USER?.trim() || SALES_EMAIL;
   const primary = process.env.LEADS_EMAIL ?? LEADS_EMAIL;
   const recipients = primary;
 
-  const subject = `[Lead ${lead.leadId}] ${lead.brand} • ${lead.category} • ${lead.tier}`;
-  const text = [
-    `Lead ID: ${lead.leadId}`,
-    `Status: ${lead.status}`,
-    `Timestamp: ${lead.createdAt}`,
-    "",
-    `Brand: ${lead.brand}`,
-    `Category: ${lead.category}`,
-    `Tier: ${lead.tier}`,
-    `Plan: ${lead.plan ?? lead.tier}`,
-    `Quantity: ${lead.qty}`,
-    `Users/Seats: ${lead.usersSeats ?? "-"}`,
-    `Endpoints: ${lead.endpoints ?? "-"}`,
-    `Servers: ${lead.servers ?? "-"}`,
-    `Cisco Users: ${lead.ciscoUsers ?? "-"}`,
-    `Sites/Locations: ${lead.ciscoSites ?? "-"}`,
-    `Budget Range: ${lead.budgetRange ?? "-"}`,
-    `Other Brand: ${lead.otherBrand ?? "-"}`,
-    `Add-ons: ${lead.addons?.join(", ") || "-"}`,
-    `City: ${lead.city}`,
-    `Timeline: ${lead.timeline ?? "-"}`,
-    `Source Page: ${lead.sourcePage}`,
-    `UTM Source: ${lead.utmSource ?? "-"}`,
-    `UTM Campaign: ${lead.utmCampaign ?? "-"}`,
-    `UTM Medium: ${lead.utmMedium ?? "-"}`,
-    `Page Path: ${lead.pagePath ?? "-"}`,
-    `Referrer: ${lead.referrer ?? "-"}`,
-    "",
-    `Contact: ${lead.contactName}`,
-    `Company: ${lead.company}`,
-    `Email: ${lead.email}`,
-    `Phone: ${lead.phone}`,
-    "",
-    `Notes: ${lead.notes || "-"}`
-  ].join("\n");
+  const internal = buildInternalLeadTemplate(lead);
 
   await transporter.sendMail({
-    from,
+    from: `"${internal.fromName}" <${fromAddress}>`,
+    replyTo: internal.replyTo,
     to: recipients,
-    subject,
-    text
+    subject: internal.subject,
+    text: internal.text,
+    html: internal.html
   });
+
+  const customer = buildCustomerLeadTemplate(lead);
+  try {
+    await transporter.sendMail({
+      from: `"${customer.fromName}" <${fromAddress}>`,
+      replyTo: customer.replyTo,
+      to: lead.email,
+      subject: customer.subject,
+      text: customer.text,
+      html: customer.html
+    });
+  } catch (error) {
+    console.error("Customer confirmation email failed", error instanceof Error ? error.message : "Unknown error");
+  }
 
   return { sent: true };
 }

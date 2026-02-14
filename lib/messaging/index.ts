@@ -26,7 +26,10 @@ export async function sendWhatsApp(input: { message: string; to: string }): Prom
 
 export async function sendEmail(input: { lead: LeadRecord }): Promise<MessagingResult> {
   try {
-    await sendLeadNotification(input.lead);
+    const result = await sendLeadNotification(input.lead);
+    if (!result.sent) {
+      return { ok: false, reason: result.reason ?? "Email send failed" };
+    }
     return { ok: true };
   } catch (error) {
     const reason = error instanceof Error ? error.message : "Unknown email error";

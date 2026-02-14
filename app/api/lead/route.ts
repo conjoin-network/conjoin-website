@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     console.log("NEW LEAD:", payload);
-    // TODO: Send lead notification to leads@conjoinnetwork.com (SMTP/M365 Graph integration).
+    // TODO: Send lead notification to configured leads mailbox (SMTP/M365 Graph integration).
     console.info("LEAD_NOTIFICATION_TODO", JSON.stringify({ destination: LEADS_EMAIL }));
 
     return NextResponse.json({
