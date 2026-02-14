@@ -5,6 +5,7 @@ import Card from "@/app/components/Card";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import {
   ORG_AREA_SERVED,
   ORG_NAME,
@@ -62,46 +63,62 @@ export default function ContactPage() {
       </Section>
 
       <Section tone="alt" className="py-10 md:py-14">
-        <Card className="space-y-3">
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{ORG_OFFICE_BLOCK.title}</h2>
-          <p className="font-semibold text-[var(--color-text-primary)]">{ORG_NAME}</p>
-          {ORG_OFFICE_BLOCK.lines.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+        <div className="grid gap-5 lg:grid-cols-[1fr_minmax(0,1.05fr)]">
+          <Card className="space-y-3">
+            <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{ORG_OFFICE_BLOCK.title}</h2>
+            <p className="font-semibold text-[var(--color-text-primary)]">{ORG_NAME}</p>
+            {ORG_OFFICE_BLOCK.lines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p>
+              Sales:{" "}
+              <a href={mailto(SALES_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                {SALES_EMAIL}
+              </a>
+            </p>
+            <p>
+              Support:{" "}
+              <a href={mailto(SUPPORT_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                {SUPPORT_EMAIL}
+              </a>
+            </p>
+            <p>
+              Phone:{" "}
+              <a href={tel(SALES_PHONE_LANDLINE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                {SALES_PHONE_LANDLINE}
+              </a>
+              {" • "}
+              <a href={tel(SALES_PHONE_MOBILE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                {SALES_PHONE_MOBILE}
+              </a>
+            </p>
+            <div className="flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
+              <Link href="/brands" className="hover:underline">
+                Brands
+              </Link>
+              <Link href="/knowledge" className="hover:underline">
+                Knowledge Hub
+              </Link>
+              <Link href="/locations/chandigarh" className="hover:underline">
+                Locations
+              </Link>
+            </div>
+          </Card>
+
+          <ContactLeadForm />
+        </div>
+      </Section>
+
+      <Section tone="alt" className="pt-0">
+        <div className="text-xs text-[var(--color-text-secondary)]">
           <p>
-            Sales:{" "}
+            If the form is temporarily unavailable, email{" "}
             <a href={mailto(SALES_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
               {SALES_EMAIL}
-            </a>
+            </a>{" "}
+            and we will respond during business hours.
           </p>
-          <p>
-            Support:{" "}
-            <a href={mailto(SUPPORT_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
-              {SUPPORT_EMAIL}
-            </a>
-          </p>
-          <p>
-            Phone:{" "}
-            <a href={tel(SALES_PHONE_LANDLINE)} className="font-semibold text-[var(--color-primary)] hover:underline">
-              {SALES_PHONE_LANDLINE}
-            </a>
-            {" • "}
-            <a href={tel(SALES_PHONE_MOBILE)} className="font-semibold text-[var(--color-primary)] hover:underline">
-              {SALES_PHONE_MOBILE}
-            </a>
-          </p>
-          <div className="flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
-            <Link href="/brands" className="hover:underline">
-              Brands
-            </Link>
-            <Link href="/knowledge" className="hover:underline">
-              Knowledge Hub
-            </Link>
-            <Link href="/locations/chandigarh" className="hover:underline">
-              Locations
-            </Link>
-          </div>
-        </Card>
+        </div>
       </Section>
 
       <Section className="py-10 md:py-14">

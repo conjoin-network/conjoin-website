@@ -22,7 +22,7 @@ export default function RefundPolicyPage() {
             { href: "/request-quote", label: "Request Quote" },
             { href: "/contact", label: "Contact", variant: "secondary" }
           ]}
-          bullets={["Case-by-case review", "OEM and distributor policy aligned", "Commercial documentation required"]}
+          bullets={["Case-by-case review", "OEM policy aligned", "Commercial documentation required"]}
         />
       </Section>
 

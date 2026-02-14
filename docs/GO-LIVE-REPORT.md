@@ -275,3 +275,93 @@ Files touched in this email consistency pass:
 - `lib/emailSignature.ts`
 - `lib/emailTemplates.ts`
 - `scripts/audit-forbidden-strings.mjs`
+
+## 10) Mobile Polish + RFQ Blocker Fix (14 Feb 2026)
+
+### What was fixed
+
+- RFQ step-1 brand selector rebuilt with quick chips (`Microsoft`, `Seqrite`) and combobox listbox behavior.
+- Brand selection now uses pointer-safe option handling (`onPointerDown`) so selection does not get lost on input blur.
+- Keyboard controls added for brand picker (`ArrowUp`, `ArrowDown`, `Enter`, `Escape`).
+- Step navigation updated so `Next` is explicitly enabled once required step data is selected.
+- Product registry expanded for Microsoft and Seqrite RFQ paths:
+  - Microsoft additions: `Exchange Online`, `Teams Phone`.
+  - Seqrite additions: `Email Security`, `Gateway / UTM`, `Cloud Security`.
+- Mobile nav updated to full-screen drawer with lock-scroll and clean spacing.
+- Floating WhatsApp CTA now respects safe-area bottom and auto-hides near footer to avoid overlap.
+- Middleware deprecation warning removed by moving `middleware.ts` logic to `proxy.ts`.
+- README updated with a quick `4310` port reset command.
+
+### QA summary
+
+- `npm run lint` ✅
+- `npm run typecheck` ✅
+- `npm run build` ✅
+- `npm run qa:smoke` ✅
+- E2E lead flow simulation:
+  - Microsoft RFQ submit ✅
+  - Seqrite RFQ submit ✅
+  - Admin login + lead visibility ✅
+  - Lead status update (`/api/admin/leads/:id`, `/api/admin/leads/status`) ✅
+  - CSV export (`/api/admin/leads/export`) ✅
+  - WhatsApp send/webhook fallback (missing env) returns graceful `503` message ✅
+
+## 11) GitHub + Vercel Handoff
+
+- GitHub repository: `https://github.com/conjoin-network/conjoin-website.git`
+- Branch for deployment: `main`
+- Vercel project name: `conjoin-website`
+- Vercel deployed URL: `https://conjoin-website.vercel.app` (custom domain target: `https://conjoinnetwork.com`)
+
+### Environment Variables
+
+Required for lead notifications:
+
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `MAIL_FROM` (recommended)
+- `LEADS_EMAIL` (defaults to `leads@conjoinnetwork.com` if missing)
+
+Required for admin access:
+
+- `ADMIN_PASSWORD`
+
+Optional integrations (graceful fallback if not set):
+
+- `WHATSAPP_PROVIDER` (`enabled` to activate send flow; otherwise no-op logs only)
+- `WHATSAPP_ACCESS_TOKEN`
+- `WHATSAPP_PHONE_NUMBER_ID`
+- `WHATSAPP_VERIFY_TOKEN`
+- `NEXT_PUBLIC_SITE_URL`
+- `NEXT_PUBLIC_WHATSAPP_URL`
+
+Runtime behavior if env is missing:
+
+- `/api/quote` and `/api/lead` validate payloads with Zod and return structured `400` on missing required fields.
+- Honeypot (`website`) traps bot submissions and responds safely without creating user-facing errors.
+- Rate limits return `429` with `Retry-After`.
+- If lead notifications are enforced (`REQUIRE_LEAD_NOTIFICATIONS=true`) but SMTP is incomplete, API returns `503` with user-facing message: "Service temporarily unavailable. Please try again shortly."
+
+### DNS Setup for `conjoinnetwork.com`
+
+1. Apex domain (`conjoinnetwork.com`):
+   - Add `A` record to Vercel target (`76.76.21.21`) or use provider-specific Vercel instructions.
+2. `www` subdomain:
+   - Add `CNAME` record to `cname.vercel-dns.com`.
+3. In Vercel project domains:
+   - Add both `conjoinnetwork.com` and `www.conjoinnetwork.com`.
+   - Set preferred canonical host (recommend apex).
+4. Enable HTTPS (automatic via Vercel once DNS propagates).
+
+### Post-Deploy QA Checklist
+
+- Open public routes and verify 200:
+  - `/`, `/request-quote`, `/contact`, `/thank-you`, `/microsoft`, `/seqrite`, `/cisco`
+- Verify `robots.txt` and `sitemap.xml` are publicly reachable.
+- Submit one test from `/request-quote` and one from `/contact`.
+- Confirm both leads appear in `/admin/leads`.
+- Confirm lead email destination is `leads@conjoinnetwork.com`.
+- Confirm WhatsApp CTA link prefill renders correctly.
+- Verify mobile header/menu/search on Android + iPhone viewports.

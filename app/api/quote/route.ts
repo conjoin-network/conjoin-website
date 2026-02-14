@@ -9,6 +9,7 @@ import {
   getDeploymentOptions,
   isValidProductSelection
 } from "@/lib/quote-catalog";
+import { applyRateLimit, getClientIp, isHoneypotTriggered } from "@/lib/request-guards";
 import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
 import { z } from "zod";
 
@@ -42,6 +43,7 @@ type QuotePayload = {
   company?: string;
   email?: string;
   phone?: string;
+  website?: string;
 };
 
 const quotePayloadSchema = z.object({
@@ -74,6 +76,8 @@ const quotePayloadSchema = z.object({
   company: z.string().trim().min(1, "Company name is required."),
   email: z.string().trim().email("Please enter a valid business email."),
   phone: z.string().trim().min(8, "Phone number is required.")
+  ,
+  website: z.string().optional()
 });
 
 function toNumber(value: number | string | undefined) {
@@ -99,7 +103,33 @@ function validationError(message: string) {
   return NextResponse.json({ ok: false, message });
 }
 
+function serviceUnavailable(message = "Service temporarily unavailable. Please try again shortly.") {
+  return NextResponse.json({ ok: false, message }, { status: 503 });
+}
+
+function isSmtpConfigured() {
+  return Boolean(
+    process.env.SMTP_HOST?.trim() &&
+      process.env.SMTP_PORT?.trim() &&
+      process.env.SMTP_USER?.trim() &&
+      process.env.SMTP_PASS?.trim()
+  );
+}
+
 export async function POST(request: Request) {
+  const ip = getClientIp(request);
+  const rate = applyRateLimit({
+    key: `api:quote:${ip}`,
+    limit: 20,
+    windowMs: 10 * 60 * 1000
+  });
+  if (!rate.allowed) {
+    return NextResponse.json(
+      { ok: false, message: "Too many requests. Please retry shortly." },
+      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
+    );
+  }
+
   try {
     const rawPayload = (await request.json()) as QuotePayload;
     const parsed = quotePayloadSchema.safeParse(rawPayload);
@@ -107,6 +137,16 @@ export async function POST(request: Request) {
       return validationError(parsed.error.issues[0]?.message ?? "Please review required fields.");
     }
     const payload = parsed.data;
+
+    if (isHoneypotTriggered(payload.website)) {
+      return NextResponse.json({ ok: true, message: "Request accepted." });
+    }
+
+    const requireNotifications = process.env.REQUIRE_LEAD_NOTIFICATIONS === "true";
+    if (requireNotifications && !isSmtpConfigured()) {
+      console.error("QUOTE_SERVICE_UNAVAILABLE", "SMTP configuration missing while REQUIRE_LEAD_NOTIFICATIONS=true");
+      return serviceUnavailable();
+    }
 
     const brand = normalizeBrand(payload.brand);
     const category = payload.category?.trim() ?? "";
@@ -292,7 +332,8 @@ export async function POST(request: Request) {
       status: lead.status,
       createdAt: lead.createdAt
     });
-  } catch {
-    return validationError("Invalid request payload.");
+  } catch (error) {
+    console.error("QUOTE_ROUTE_ERROR", error);
+    return serviceUnavailable();
   }
 }

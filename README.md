@@ -94,6 +94,13 @@ PORT=4310 npm run dev
 
 Open [http://localhost:4310](http://localhost:4310).
 
+### QA Note
+If port `4310` is busy before smoke tests, run:
+
+```bash
+lsof -ti :4310 | xargs kill -9 || true
+```
+
 ### Stable Dev Fallback
 If you hit the React Client Manifest/Turbopack dev crash, run:
 
