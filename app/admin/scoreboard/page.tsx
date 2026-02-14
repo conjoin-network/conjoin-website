@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import AdminLogoutButton from "@/app/admin/AdminLogoutButton";
 import Container from "@/app/components/Container";
+import { getPortalSessionFromCookies } from "@/lib/admin-session";
 import { buildScoreboard } from "@/lib/admin-metrics";
 import { readLeads } from "@/lib/leads";
 
@@ -13,6 +17,15 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminScoreboardPage() {
+  const cookieStore = await cookies();
+  const session = getPortalSessionFromCookies(cookieStore);
+  if (!session) {
+    redirect("/admin/login");
+  }
+  if (!session.isManagement) {
+    redirect("/admin/leads");
+  }
+
   const leads = await readLeads();
   const board = buildScoreboard(leads);
 
@@ -20,7 +33,10 @@ export default async function AdminScoreboardPage() {
     <div className="py-10 md:py-14">
       <Container className="space-y-6">
         <header className="space-y-1">
-          <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Scoreboard</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Scoreboard</h1>
+            <AdminLogoutButton />
+          </div>
           <p className="text-sm text-[var(--color-text-secondary)]">
             Daily KPI view for lead volume, response discipline, source mix and owner performance.
           </p>
@@ -73,7 +89,7 @@ export default async function AdminScoreboardPage() {
                 <li key={row.name}>
                   <p className="font-medium text-[var(--color-text-primary)]">{row.name}</p>
                   <p className="text-xs text-[var(--color-text-secondary)]">
-                    {row.role} • Total: {row.total} • In-Progress: {row.inProgress} • Won: {row.won}
+                    {row.role} • Total: {row.total} • Contacted: {row.inProgress} • Won: {row.won}
                   </p>
                 </li>
               ))}

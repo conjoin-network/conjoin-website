@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import Link from "next/link";
 import Container from "@/app/components/Container";
+import AdminLogoutButton from "@/app/admin/AdminLogoutButton";
 import AdminLeadsClient from "@/app/admin/leads/AdminLeadsClient";
+import { getPortalSessionFromCookies } from "@/lib/admin-session";
 
 export const metadata: Metadata = {
   title: "CRM Lite | Leads",
@@ -12,7 +16,13 @@ export const metadata: Metadata = {
   }
 };
 
-export default function AdminLeadsPage() {
+export default async function AdminLeadsPage() {
+  const cookieStore = await cookies();
+  const session = getPortalSessionFromCookies(cookieStore);
+  if (!session) {
+    redirect("/admin/login");
+  }
+
   return (
     <div className="py-10 md:py-14">
       <Container className="space-y-4">
@@ -22,17 +32,26 @@ export default function AdminLeadsPage() {
             <Link href="/admin" className="hover:underline">
               Console Home
             </Link>
-            <Link href="/admin/agents" className="hover:underline">
-              Agents
-            </Link>
-            <Link href="/admin/scoreboard" className="hover:underline">
-              Scoreboard
-            </Link>
-            <Link href="/admin/messages" className="hover:underline">
-              Message Queue
-            </Link>
+            {session.isManagement ? (
+              <>
+                <Link href="/admin/agents" className="hover:underline">
+                  Agents
+                </Link>
+                <Link href="/admin/scoreboard" className="hover:underline">
+                  Scoreboard
+                </Link>
+                <Link href="/admin/messages" className="hover:underline">
+                  Message Queue
+                </Link>
+              </>
+            ) : null}
+            <AdminLogoutButton />
           </div>
         </div>
+        <p className="text-xs text-[var(--color-text-secondary)]">
+          Signed in as {session.displayName} ({session.role})
+          {session.assignee ? ` • Assigned scope: ${session.assignee}` : ""}
+        </p>
         <AdminLeadsClient />
       </Container>
     </div>

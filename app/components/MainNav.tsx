@@ -2,55 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ButtonLink } from "@/app/components/Button";
+import { isNavActive, PRIMARY_NAV_LINKS } from "@/lib/nav-links";
 
-type NavItem = {
-  href: string;
-  label: string;
-  match: (pathname: string) => boolean;
-};
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    href: "/microsoft",
-    label: "Microsoft",
-    match: (pathname) => pathname.startsWith("/microsoft")
-  },
-  {
-    href: "/seqrite",
-    label: "Seqrite",
-    match: (pathname) => pathname.startsWith("/seqrite")
-  },
-  {
-    href: "/brands",
-    label: "Brands",
-    match: (pathname) => pathname.startsWith("/brands")
-  },
-  {
-    href: "/locations/chandigarh",
-    label: "Locations",
-    match: (pathname) => pathname.startsWith("/locations")
-  },
-  {
-    href: "/knowledge",
-    label: "Knowledge",
-    match: (pathname) => pathname.startsWith("/knowledge")
-  },
-  {
-    href: "/search",
-    label: "Search",
-    match: (pathname) => pathname.startsWith("/search")
-  }
-];
-
-export default function MainNav() {
+export default function MainNav({ className = "" }: { className?: string }) {
   const pathname = usePathname() ?? "/";
-  const quoteActive = pathname.startsWith("/request-quote");
 
   return (
-    <nav className="flex flex-wrap items-center justify-end gap-2 text-sm text-[var(--color-text-secondary)]">
-      {NAV_ITEMS.map((item) => {
-        const active = item.match(pathname);
+    <nav className={`flex flex-wrap items-center gap-1.5 text-sm text-[var(--color-text-secondary)] ${className}`.trim()}>
+      {PRIMARY_NAV_LINKS.map((item) => {
+        const active = isNavActive(pathname, item);
         return (
           <Link
             key={item.href}
@@ -65,9 +25,6 @@ export default function MainNav() {
           </Link>
         );
       })}
-      <ButtonLink href="/request-quote" variant="primary" className={quoteActive ? "ring-2 ring-[var(--color-primary)]/25" : ""}>
-        Request Quote
-      </ButtonLink>
     </nav>
   );
 }

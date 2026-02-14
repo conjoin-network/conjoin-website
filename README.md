@@ -13,7 +13,8 @@ Corporate, procurement-friendly lead engine for Microsoft, Seqrite and multi-bra
   - `/knowledge`, `/knowledge/[slug]`
   - `/products/[slug]`
   - `/locations/[slug]`
-- CRM-lite dashboard at `/admin/leads` (Basic Auth)
+- CRM-lite dashboard at `/admin/leads` (password login + cookie session)
+- Role-ready admin session with `OWNER`, `MANAGER`, `AGENT`, `SUPPORT`
 - Management dashboards:
   - `/admin/leads`
   - `/admin/agents`
@@ -24,20 +25,39 @@ Corporate, procurement-friendly lead engine for Microsoft, Seqrite and multi-bra
 Create `.env.local`:
 
 ```env
-# Basic Auth for /admin/* and /api/admin/*
-ADMIN_USER="admin"
-ADMIN_PASS="change-me"
+# Portal login for /admin/* and /api/admin/*
+OWNER_USER="owner"
+OWNER_PASS="change-me"
+OWNER_NAME="Owner"
+
+MANAGER_USER=""
+MANAGER_PASS=""
+MANAGER_NAME="Manager"
+MANAGER_CAN_EXPORT="false"
+
+AGENT_USER="agent"
+AGENT_PASS="change-me"
+AGENT_NAME="Girish"
+AGENT_ASSIGNEE="Girish"
+
+SUPPORT_USER="support"
+SUPPORT_PASS="change-me"
+SUPPORT_NAME="Kiran"
+SUPPORT_ASSIGNEE="Kiran"
+
+ADMIN_SESSION_SECRET=""
+ADMIN_ACTOR_LABEL="Management"
 
 # Canonical domain
 NEXT_PUBLIC_SITE_URL="https://conjoinnetwork.com"
 
-# WhatsApp CTA base URL
-NEXT_PUBLIC_WHATSAPP_URL="https://wa.me/919466663015"
-
-# Sales emails
-NEXT_PUBLIC_SALES_EMAIL="sales@conjoinnewtork.com"
-SALES_EMAIL="sales@conjoinnewtork.com"
-SALES_EMAIL_FALLBACK="manod1326@gmail.com"
+# Contact emails
+NEXT_PUBLIC_SALES_EMAIL="sales@conjoinnetwork.com"
+NEXT_PUBLIC_SUPPORT_EMAIL="support@conjoinnetwork.com"
+SALES_EMAIL="sales@conjoinnetwork.com"
+SUPPORT_EMAIL="support@conjoinnetwork.com"
+LEADS_EMAIL="leads@conjoinnetwork.com"
+OPTIONAL_PERSONAL_EMAIL="manod@conjoinnetwork.com"
 
 # Optional agent WhatsApp routing
 AGENT_WHATSAPP_ZEENA=""
@@ -45,13 +65,21 @@ AGENT_WHATSAPP_NIDHI=""
 AGENT_WHATSAPP_RIMPY=""
 AGENT_WHATSAPP_BHARAT=""
 AGENT_WHATSAPP_PARDEEP=""
+AGENT_WHATSAPP_GIRISH=""
+AGENT_WHATSAPP_KIRAN=""
 
 # Optional SMTP for lead notifications (if unset, lead save still works)
 SMTP_HOST=""
 SMTP_PORT="587"
 SMTP_USER=""
 SMTP_PASS=""
-MAIL_FROM="sales@conjoinnewtork.com"
+MAIL_FROM="sales@conjoinnetwork.com"
+
+# Optional WhatsApp API skeleton config
+WHATSAPP_VERIFY_TOKEN=""
+WHATSAPP_PROVIDER=""
+WHATSAPP_ACCESS_TOKEN=""
+WHATSAPP_PHONE_NUMBER_ID=""
 ```
 
 ## Run Locally (Port 4310)
@@ -84,3 +112,18 @@ rm -rf .next
 - Product names/logos belong to their owners.
 - Specs/inclusions are OEM-sourced and may change.
 - Final licensing is governed by OEM terms.
+
+## Admin Login
+- Open `/admin/login`
+- Enter role credentials (`OWNER`, `MANAGER`, `AGENT`, `SUPPORT`).
+- Role behavior:
+  - `OWNER`: all leads + assignment + export
+  - `MANAGER`: all leads + assignment (export optional via `MANAGER_CAN_EXPORT`)
+  - `AGENT`: assigned leads only, no export
+  - `SUPPORT`: assigned leads only, no export
+- Session cookies are `httpOnly`, `sameSite=lax`, and `secure` in production.
+
+## Security Notes
+- HTTPS is enforced by production hosting/edge (for example Vercel/Cloudflare). Local development runs on `http://localhost:4310`.
+- Admin pages are non-indexable and robots-disallowed (`/admin/*`).
+- Security headers are enabled globally (`nosniff`, `referrer-policy`, `permissions-policy`) with CSP in report-only mode.

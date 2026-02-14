@@ -1,0 +1,15 @@
+:root {
+  --color-page-bg: #ffffff;
+  --color-alt-bg: #f6f8fb;
+  --color-surface: #fbfbfd;
+  --color-text-primary: #1d1d1f;
+  --color-text-secondary: #4c5563;
+  --color-border: #d7dde8;
+  --color-primary: #0071e3;
+  --color-primary-hover: #0066cc;
+  --brand-microsoft: #0078d4;
+  --brand-seqrite: #178a4a;
+  --brand-cisco: #0b2a6a;
+  --brand-whatsapp: #128c7e;
+  --shadow-soft: 0 10px 28px -18px rgb(9 29 61 / 34%);
+}

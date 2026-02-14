@@ -2,18 +2,22 @@ import { NextResponse } from "next/server";
 import { createLead } from "@/lib/leads";
 import { enqueueMessageIntent, updateMessageIntentStatus } from "@/lib/message-queue";
 import { sendEmail, sendWhatsApp } from "@/lib/messaging";
+import { LEADS_EMAIL } from "@/lib/contact";
 import {
   QUOTE_CATALOG,
   type LeadBrand,
+  getDeploymentOptions,
   isValidSelection
 } from "@/lib/quote-catalog";
 import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
+import { z } from "zod";
 
 type QuotePayload = {
   brand?: string;
   otherBrand?: string;
   category?: string;
   plan?: string;
+  deployment?: string;
   tier?: string;
   usersSeats?: number | string;
   endpoints?: number | string;
@@ -28,6 +32,8 @@ type QuotePayload = {
   utmSource?: string;
   utmCampaign?: string;
   utmMedium?: string;
+  utmContent?: string;
+  utmTerm?: string;
   pagePath?: string;
   referrer?: string;
   timeline?: string;
@@ -37,6 +43,38 @@ type QuotePayload = {
   email?: string;
   phone?: string;
 };
+
+const quotePayloadSchema = z.object({
+  brand: z.string().optional(),
+  otherBrand: z.string().optional(),
+  category: z.string().trim().min(1, "Please choose a product category."),
+  plan: z.string().trim().min(1, "Please choose a plan."),
+  deployment: z.string().optional(),
+  tier: z.string().optional(),
+  usersSeats: z.union([z.number(), z.string()]).optional(),
+  endpoints: z.union([z.number(), z.string()]).optional(),
+  servers: z.union([z.number(), z.string()]).optional(),
+  ciscoUsers: z.union([z.number(), z.string()]).optional(),
+  ciscoSites: z.union([z.number(), z.string()]).optional(),
+  budgetRange: z.string().optional(),
+  addons: z.array(z.string()).optional(),
+  city: z.string().trim().min(1, "Please select a city."),
+  sourcePage: z.string().optional(),
+  source: z.string().optional(),
+  utmSource: z.string().optional(),
+  utmCampaign: z.string().optional(),
+  utmMedium: z.string().optional(),
+  utmContent: z.string().optional(),
+  utmTerm: z.string().optional(),
+  pagePath: z.string().optional(),
+  referrer: z.string().optional(),
+  timeline: z.string().optional(),
+  notes: z.string().optional(),
+  contactName: z.string().trim().min(1, "Contact name is required."),
+  company: z.string().trim().min(1, "Company name is required."),
+  email: z.string().trim().email("Please enter a valid business email."),
+  phone: z.string().trim().min(8, "Phone number is required.")
+});
 
 function toNumber(value: number | string | undefined) {
   const next = typeof value === "number" ? value : Number.parseInt(value ?? "", 10);
@@ -63,11 +101,17 @@ function validationError(message: string) {
 
 export async function POST(request: Request) {
   try {
-    const payload = (await request.json()) as QuotePayload;
+    const rawPayload = (await request.json()) as QuotePayload;
+    const parsed = quotePayloadSchema.safeParse(rawPayload);
+    if (!parsed.success) {
+      return validationError(parsed.error.issues[0]?.message ?? "Please review required fields.");
+    }
+    const payload = parsed.data;
 
     const brand = normalizeBrand(payload.brand);
     const category = payload.category?.trim() ?? "";
     const plan = payload.plan?.trim() ?? payload.tier?.trim() ?? "";
+    const deployment = payload.deployment?.trim() ?? "";
     const usersSeats = toNumber(payload.usersSeats);
     const endpoints = toNumber(payload.endpoints);
     const servers = toNumber(payload.servers);
@@ -80,6 +124,8 @@ export async function POST(request: Request) {
     const utmSource = payload.utmSource?.trim() ?? "";
     const utmCampaign = payload.utmCampaign?.trim() ?? "";
     const utmMedium = payload.utmMedium?.trim() ?? "";
+    const utmContent = payload.utmContent?.trim() ?? "";
+    const utmTerm = payload.utmTerm?.trim() ?? "";
     const pagePath = payload.pagePath?.trim() || sourcePage;
     const referrer = payload.referrer?.trim() || request.headers.get("referer") || "";
     const timeline = payload.timeline?.trim() || "This Week";
@@ -101,8 +147,13 @@ export async function POST(request: Request) {
       return validationError("Please select a valid brand.");
     }
 
-    if (!isValidSelection(brand, category, plan)) {
+    if (!isValidSelection(brand, category, plan, deployment)) {
       return validationError("Please select a valid category and plan combination.");
+    }
+
+    const deploymentOptions = getDeploymentOptions(brand, category);
+    if (deploymentOptions.length > 0 && !deployment) {
+      return validationError("Please select a valid deployment option.");
     }
 
     if (brand === "Microsoft" && usersSeats <= 0) {
@@ -132,6 +183,8 @@ export async function POST(request: Request) {
     const normalizedPayload = {
       brand,
       category,
+      plan,
+      deployment: deployment || undefined,
       tier: plan,
       usersSeats: brand === "Microsoft" ? usersSeats : undefined,
       endpoints: brand === "Seqrite" ? endpoints : undefined,
@@ -146,6 +199,8 @@ export async function POST(request: Request) {
       utmSource: utmSource || undefined,
       utmCampaign: utmCampaign || undefined,
       utmMedium: utmMedium || undefined,
+      utmContent: utmContent || undefined,
+      utmTerm: utmTerm || undefined,
       pagePath: pagePath || undefined,
       referrer: referrer || undefined,
       timeline,
@@ -159,7 +214,7 @@ export async function POST(request: Request) {
       category,
       tier: plan,
       qty,
-      delivery: brand === "Seqrite" ? category : undefined,
+      delivery: brand === "Seqrite" ? deployment || category : undefined,
       plan,
       usersSeats: brand === "Microsoft" ? usersSeats : null,
       endpoints: brand === "Seqrite" ? endpoints : null,
@@ -175,6 +230,8 @@ export async function POST(request: Request) {
       utmSource: utmSource || undefined,
       utmCampaign: utmCampaign || undefined,
       utmMedium: utmMedium || undefined,
+      utmContent: utmContent || undefined,
+      utmTerm: utmTerm || undefined,
       pagePath: pagePath || undefined,
       referrer: referrer || undefined,
       timeline,
@@ -209,7 +266,7 @@ export async function POST(request: Request) {
     const emailIntent = await enqueueMessageIntent({
       leadId: lead.leadId,
       channel: "email",
-      to: process.env.SALES_EMAIL ?? process.env.NEXT_PUBLIC_SALES_EMAIL ?? "sales@conjoinnewtork.com",
+      to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
       payload: `Lead ${lead.leadId} notification`
     });
 

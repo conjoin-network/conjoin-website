@@ -1,3 +1,5 @@
+import { NextResponse } from "next/server";
+import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { listLeads, readLeads, type LeadFilters } from "@/lib/leads";
 
 function parseFilters(url: URL): LeadFilters {
@@ -20,10 +22,19 @@ function csvCell(value: unknown) {
 }
 
 export async function GET(request: Request) {
+  const session = getPortalSessionFromRequest(request);
+  if (!session) {
+    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+  }
+  if (!session.canExport) {
+    return NextResponse.json({ ok: false, message: "Export is restricted for your role." }, { status: 403 });
+  }
+
   const url = new URL(request.url);
   const filters = parseFilters(url);
   const allLeads = await readLeads();
-  const leads = listLeads(allLeads, filters);
+  const visibleLeads = session.isManagement ? allLeads : allLeads.filter((lead) => lead.assignedTo === session.assignee);
+  const leads = listLeads(visibleLeads, filters);
 
   const headers = [
     "leadId",
@@ -57,6 +68,8 @@ export async function GET(request: Request) {
     "utmSource",
     "utmCampaign",
     "utmMedium",
+    "utmContent",
+    "utmTerm",
     "pagePath",
     "referrer",
     "notes",
@@ -95,6 +108,8 @@ export async function GET(request: Request) {
     lead.utmSource ?? "",
     lead.utmCampaign ?? "",
     lead.utmMedium ?? "",
+    lead.utmContent ?? "",
+    lead.utmTerm ?? "",
     lead.pagePath ?? "",
     lead.referrer ?? "",
     lead.notes,

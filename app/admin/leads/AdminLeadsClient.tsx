@@ -37,6 +37,8 @@ type LeadItem = {
   utmSource?: string;
   utmCampaign?: string;
   utmMedium?: string;
+  utmContent?: string;
+  utmTerm?: string;
   pagePath?: string;
   referrer?: string;
   notes: string;
@@ -56,6 +58,14 @@ type ApiResponse = {
     brands: string[];
     cities: string[];
     agents: typeof AGENT_OPTIONS;
+    permissions: {
+      role: "OWNER" | "MANAGER" | "AGENT" | "SUPPORT";
+      displayName: string;
+      assignee: string | null;
+      canExport: boolean;
+      canAssign: boolean;
+      isManagement: boolean;
+    };
   };
 };
 
@@ -88,7 +98,7 @@ const defaultFilters: FilterState = {
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "New",
-  IN_PROGRESS: "In-Progress",
+  IN_PROGRESS: "Contacted",
   QUOTED: "Quoted",
   WON: "Won",
   LOST: "Lost"
@@ -144,6 +154,8 @@ function buildLeadSummary(lead: LeadItem) {
     `Category: ${lead.category}`,
     `Tier: ${lead.tier}`,
     `Qty: ${lead.qty}`,
+    `Company: ${lead.company}`,
+    `Email: ${lead.email}`,
     `Users/Seats: ${lead.usersSeats ?? "-"}`,
     `Endpoints: ${lead.endpoints ?? "-"}`,
     `Servers: ${lead.servers ?? "-"}`,
@@ -162,7 +174,15 @@ export default function AdminLeadsClient() {
     statuses: LEAD_STATUSES,
     brands: [],
     cities: [],
-    agents: AGENT_OPTIONS
+    agents: AGENT_OPTIONS,
+    permissions: {
+      role: "OWNER",
+      displayName: "Owner",
+      assignee: null,
+      canExport: true,
+      canAssign: true,
+      isManagement: true
+    }
   });
   const [drafts, setDrafts] = useState<DraftMap>({});
   const [loading, setLoading] = useState(false);
@@ -181,6 +201,7 @@ export default function AdminLeadsClient() {
   }, [filters]);
 
   const exportHref = useMemo(() => `/api/admin/leads/export?${query}`, [query]);
+  const permissions = meta.permissions;
 
   async function loadLeads() {
     setLoading(true);
@@ -319,14 +340,21 @@ export default function AdminLeadsClient() {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Lead Inbox (Management)</h1>
+        <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Lead Inbox</h1>
         <p className="text-sm text-[var(--color-text-secondary)]">
           Assignment, status flow, WhatsApp follow-up and attribution for all incoming RFQs.
+        </p>
+        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          Data is confidential. Access is logged. Do not share externally.
+        </p>
+        <p className="text-xs text-[var(--color-text-secondary)]">
+          Signed in as {permissions.displayName} ({permissions.role})
+          {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
         </p>
       </header>
 
       <section className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
-        <div className="grid gap-3 md:grid-cols-6">
+        <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-6" : "md:grid-cols-5"}`}>
           <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
             Brand
             <select
@@ -335,8 +363,8 @@ export default function AdminLeadsClient() {
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
             >
               <option value="all">All</option>
-              {meta.brands.map((brand) => (
-                <option key={brand} value={brand}>
+              {meta.brands.map((brand, index) => (
+                <option key={`${brand}-${index}`} value={brand}>
                   {brand}
                 </option>
               ))}
@@ -351,8 +379,8 @@ export default function AdminLeadsClient() {
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
             >
               <option value="all">All</option>
-              {LEAD_STATUSES.map((status) => (
-                <option key={status} value={status}>
+              {LEAD_STATUSES.map((status, index) => (
+                <option key={`${status}-${index}`} value={status}>
                   {STATUS_LABELS[status]}
                 </option>
               ))}
@@ -367,8 +395,8 @@ export default function AdminLeadsClient() {
               className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
             >
               <option value="all">All</option>
-              {meta.cities.map((city) => (
-                <option key={city} value={city}>
+              {meta.cities.map((city, index) => (
+                <option key={`${city}-${index}`} value={city}>
                   {city}
                 </option>
               ))}
@@ -390,31 +418,35 @@ export default function AdminLeadsClient() {
             </select>
           </label>
 
-          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
-            Agent
-            <select
-              value={filters.agent}
-              onChange={(event) => setFilters((current) => ({ ...current, agent: event.target.value }))}
-              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
-            >
-              <option value="all">All</option>
-              <option value="Unassigned">Unassigned</option>
-              {meta.agents.map((agent) => (
-                <option key={agent.name} value={agent.name}>
-                  {agent.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {permissions.isManagement ? (
+            <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+              Agent
+              <select
+                value={filters.agent}
+                onChange={(event) => setFilters((current) => ({ ...current, agent: event.target.value }))}
+                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
+              >
+                <option value="all">All</option>
+                <option value="Unassigned">Unassigned</option>
+                {meta.agents.map((agent) => (
+                  <option key={agent.name} value={agent.name}>
+                    {agent.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
 
-          <div className="flex items-end justify-end gap-2">
-            <a
-              href={exportHref}
-              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--color-border)] px-4 text-sm font-semibold text-[var(--color-text-primary)]"
-            >
-              Export CSV
-            </a>
-          </div>
+          {permissions.canExport ? (
+            <div className="flex items-end justify-end gap-2">
+              <a
+                href={exportHref}
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-[var(--color-border)] px-4 text-sm font-semibold text-[var(--color-text-primary)]"
+              >
+                Export CSV
+              </a>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -425,20 +457,23 @@ export default function AdminLeadsClient() {
       {loading ? <p className="text-sm text-[var(--color-text-secondary)]">Loading leads...</p> : null}
 
       <section className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-white">
-        <table className="min-w-[2200px] divide-y divide-[var(--color-border)] text-sm">
+        <table className="min-w-[2500px] divide-y divide-[var(--color-border)] text-sm">
           <thead className="bg-[var(--color-alt-bg)] text-left text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
             <tr>
               <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3">Name / Phone</th>
+              <th className="px-4 py-3">Name</th>
+              <th className="px-4 py-3">Company</th>
+              <th className="px-4 py-3">Phone</th>
+              <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">City</th>
               <th className="px-4 py-3">Brand / Category / Tier</th>
-              <th className="px-4 py-3">Qty / Users / Endpoints</th>
+              <th className="px-4 py-3">Qty / Users / Endpoints / Servers</th>
               <th className="px-4 py-3">Timeline</th>
               <th className="px-4 py-3">Source / UTM</th>
               <th className="px-4 py-3">Path / Referrer</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Priority</th>
-              <th className="px-4 py-3">Assigned To</th>
+              <th className="px-4 py-3">Assigned Agent</th>
               <th className="px-4 py-3">Next Follow-up</th>
               <th className="px-4 py-3">Actions</th>
               <th className="px-4 py-3">Notes</th>
@@ -447,7 +482,7 @@ export default function AdminLeadsClient() {
           <tbody className="divide-y divide-[var(--color-border)]">
             {leads.length === 0 ? (
               <tr>
-                <td colSpan={14} className="px-4 py-6 text-sm text-[var(--color-text-secondary)]">
+                <td colSpan={18} className="px-4 py-6 text-sm text-[var(--color-text-secondary)]">
                   No leads found for selected filters.
                 </td>
               </tr>
@@ -478,12 +513,10 @@ export default function AdminLeadsClient() {
                       <p>1st contact: {formatDate(lead.firstContactAt)}</p>
                       <p>By: {lead.firstContactBy || "-"}</p>
                     </td>
-                    <td className="px-4 py-4 text-xs">
-                      <p className="font-semibold text-[var(--color-text-primary)]">{lead.contactName}</p>
-                      <p>{lead.phone}</p>
-                      <p>{lead.email}</p>
-                      <p>{lead.company}</p>
-                    </td>
+                    <td className="px-4 py-4 text-xs font-semibold text-[var(--color-text-primary)]">{lead.contactName}</td>
+                    <td className="px-4 py-4 text-xs">{lead.company}</td>
+                    <td className="px-4 py-4 text-xs">{lead.phone}</td>
+                    <td className="px-4 py-4 text-xs">{lead.email}</td>
                     <td className="px-4 py-4 text-xs">{lead.city}</td>
                     <td className="px-4 py-4 text-xs">
                       <p className="font-semibold text-[var(--color-text-primary)]">{lead.brand}</p>
@@ -494,6 +527,7 @@ export default function AdminLeadsClient() {
                       <p>Qty: {lead.qty}</p>
                       <p>Users/Seats: {lead.usersSeats ?? "-"}</p>
                       <p>Endpoints: {lead.endpoints ?? "-"}</p>
+                      <p>Servers: {lead.servers ?? "-"}</p>
                     </td>
                     <td className="px-4 py-4 text-xs">{lead.timeline || "-"}</td>
                     <td className="px-4 py-4 text-xs">
@@ -501,6 +535,8 @@ export default function AdminLeadsClient() {
                       <p>utm_source: {lead.utmSource || "-"}</p>
                       <p>utm_campaign: {lead.utmCampaign || "-"}</p>
                       <p>utm_medium: {lead.utmMedium || "-"}</p>
+                      <p>utm_content: {lead.utmContent || "-"}</p>
+                      <p>utm_term: {lead.utmTerm || "-"}</p>
                     </td>
                     <td className="max-w-sm px-4 py-4 text-xs">
                       <p>{lead.pagePath || "-"}</p>
@@ -515,8 +551,8 @@ export default function AdminLeadsClient() {
                         onChange={(event) => updateDraft(lead.leadId, "status", event.target.value)}
                         className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-2 py-2 text-xs"
                       >
-                        {LEAD_STATUSES.map((status) => (
-                          <option key={status} value={status}>
+                        {LEAD_STATUSES.map((status, index) => (
+                          <option key={`${status}-${index}`} value={status}>
                             {STATUS_LABELS[status]}
                           </option>
                         ))}
@@ -531,26 +567,32 @@ export default function AdminLeadsClient() {
                         onChange={(event) => updateDraft(lead.leadId, "priority", event.target.value)}
                         className="mt-2 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-2 py-2 text-xs"
                       >
-                        {LEAD_PRIORITIES.map((priority) => (
-                          <option key={priority} value={priority}>
+                        {LEAD_PRIORITIES.map((priority, index) => (
+                          <option key={`${priority}-${index}`} value={priority}>
                             {PRIORITY_LABELS[priority]}
                           </option>
                         ))}
                       </select>
                     </td>
                     <td className="px-4 py-4">
-                      <select
-                        value={draft.assignedTo}
-                        onChange={(event) => updateDraft(lead.leadId, "assignedTo", event.target.value)}
-                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-2 py-2 text-xs"
-                      >
-                        <option value="">Unassigned</option>
-                        {meta.agents.map((agent) => (
-                          <option key={agent.name} value={agent.name}>
-                            {agent.label}
-                          </option>
-                        ))}
-                      </select>
+                      {permissions.canAssign ? (
+                        <select
+                          value={draft.assignedTo}
+                          onChange={(event) => updateDraft(lead.leadId, "assignedTo", event.target.value)}
+                          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-2 py-2 text-xs"
+                        >
+                          <option value="">Unassigned</option>
+                          {meta.agents.map((agent) => (
+                            <option key={agent.name} value={agent.name}>
+                              {agent.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-2 py-2 text-xs">
+                          {draft.assignedTo || "Unassigned"}
+                        </div>
+                      )}
                     </td>
                     <td className="px-4 py-4">
                       <input

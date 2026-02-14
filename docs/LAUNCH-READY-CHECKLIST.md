@@ -4,6 +4,7 @@
 - Confirm DNS points to production host.
 - Confirm HTTPS certificate is valid and auto-renew is active.
 - Verify apex + `www` redirect behavior.
+- Ensure `ADMIN_PASSWORD` is set before opening `/admin/login`.
 
 ## 2) Crawl and Indexing
 - Open `/robots.txt` and confirm `200`.

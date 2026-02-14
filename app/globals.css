@@ -61,6 +61,13 @@ button {
   opacity: 1;
 }
 
+.interactive-link:hover,
+.interactive-link:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
@@ -120,6 +127,60 @@ textarea:focus-visible {
   opacity: 0.45;
 }
 
+.brand-mark {
+  position: relative;
+  display: inline-flex;
+  height: 2.45rem;
+  width: 2.45rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  isolation: isolate;
+}
+
+.brand-halo {
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, transparent 72%);
+  opacity: 0.22;
+  transition: opacity 180ms ease, transform 180ms ease;
+  animation: brand-pulse 3.2s ease-in-out infinite;
+}
+
+.brand-image {
+  position: relative;
+  z-index: 1;
+  height: 2.2rem;
+  width: 2.2rem;
+  object-fit: contain;
+}
+
+.brand-link:hover .brand-halo,
+.brand-link:focus-visible .brand-halo {
+  opacity: 0.34;
+  transform: scale(1.04);
+}
+
+.brand-link:hover .brand-mark,
+.brand-link:focus-visible .brand-mark {
+  transform: translateY(-1px);
+}
+
+.brand-link:hover,
+.brand-link:focus-visible {
+  text-decoration: none;
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+  opacity: 0.45;
+}
+
 .scroll-cue {
   animation: scroll-hint 1.8s ease-in-out infinite;
 }
@@ -173,6 +234,18 @@ textarea:focus-visible {
   }
 }
 
+@keyframes brand-pulse {
+  0%,
+  100% {
+    transform: scale(0.95);
+    opacity: 0.32;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 0.48;
+  }
+}
+
 .section-revealed {
   animation: section-fade 300ms ease-out both;
 }
@@ -181,7 +254,8 @@ textarea:focus-visible {
   .hero-panel,
   .scroll-cue,
   .cta-pulse,
-  .section-revealed {
+  .section-revealed,
+  .brand-halo {
     animation: none;
   }
 }

@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import AdminLogoutButton from "@/app/admin/AdminLogoutButton";
 import Container from "@/app/components/Container";
+import { getPortalSessionFromCookies } from "@/lib/admin-session";
 import { buildAgentSummary } from "@/lib/admin-metrics";
 import { readLeads } from "@/lib/leads";
 
@@ -13,6 +17,15 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminAgentsPage() {
+  const cookieStore = await cookies();
+  const session = getPortalSessionFromCookies(cookieStore);
+  if (!session) {
+    redirect("/admin/login");
+  }
+  if (!session.isManagement) {
+    redirect("/admin/leads");
+  }
+
   const leads = await readLeads();
   const summary = buildAgentSummary(leads);
 
@@ -20,7 +33,10 @@ export default async function AdminAgentsPage() {
     <div className="py-10 md:py-14">
       <Container className="space-y-5">
         <header className="space-y-1">
-          <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Agents</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Agents</h1>
+            <AdminLogoutButton />
+          </div>
           <p className="text-sm text-[var(--color-text-secondary)]">
             Assignment counters for management tracking and daily coordination.
           </p>
@@ -33,7 +49,7 @@ export default async function AdminAgentsPage() {
                 <th className="px-4 py-3">Agent</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">New</th>
-                <th className="px-4 py-3">In-Progress</th>
+                <th className="px-4 py-3">Contacted</th>
                 <th className="px-4 py-3">Won</th>
                 <th className="px-4 py-3">Touched Today</th>
                 <th className="px-4 py-3">Total Assigned</th>

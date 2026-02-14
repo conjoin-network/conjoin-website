@@ -42,6 +42,8 @@ export type LeadRecord = {
   utmSource?: string;
   utmCampaign?: string;
   utmMedium?: string;
+  utmContent?: string;
+  utmTerm?: string;
   pagePath?: string;
   referrer?: string;
   timeline?: string;
@@ -195,6 +197,8 @@ function normalizeLead(raw: unknown): LeadRecord | null {
     utmSource: candidate.utmSource,
     utmCampaign: candidate.utmCampaign,
     utmMedium: candidate.utmMedium,
+    utmContent: candidate.utmContent,
+    utmTerm: candidate.utmTerm,
     pagePath: candidate.pagePath,
     referrer: candidate.referrer,
     timeline: candidate.timeline,
@@ -226,7 +230,9 @@ export async function readLeads(): Promise<LeadRecord[]> {
 
 async function writeLeads(leads: LeadRecord[]) {
   await ensureDataFile();
-  await fs.writeFile(dataFilePath, JSON.stringify(leads, null, 2), "utf8");
+  const tempPath = `${dataFilePath}.${process.pid}.${Date.now()}.tmp`;
+  await fs.writeFile(tempPath, JSON.stringify(leads, null, 2), "utf8");
+  await fs.rename(tempPath, dataFilePath);
 }
 
 function buildLeadId(existing: Set<string>) {
@@ -400,9 +406,9 @@ export function formatDateTime(value: string | null | undefined) {
 }
 
 export function classifyLeadSource(
-  lead: Pick<LeadRecord, "source" | "sourcePage" | "utmSource" | "utmMedium" | "utmCampaign">
+  lead: Pick<LeadRecord, "source" | "sourcePage" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">
 ) {
-  const source = `${lead.source ?? ""} ${lead.sourcePage} ${lead.utmSource ?? ""} ${lead.utmMedium ?? ""} ${lead.utmCampaign ?? ""}`.toLowerCase();
+  const source = `${lead.source ?? ""} ${lead.sourcePage} ${lead.utmSource ?? ""} ${lead.utmMedium ?? ""} ${lead.utmCampaign ?? ""} ${lead.utmContent ?? ""} ${lead.utmTerm ?? ""}`.toLowerCase();
   if (source.includes("bark")) {
     return "Bark";
   }

@@ -1,0 +1,178 @@
+[
+  {
+    "id": "MSG-EMAIL-1771025206048-XT97H6I",
+    "leadId": "LD-20260213-8748",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-8748 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T23:26:46.048Z",
+    "updatedAt": "2026-02-13T23:26:46.050Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771025206044-SGF1Y43",
+    "leadId": "LD-20260213-8748",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Microsoft for Chandigarh. My requirement: Business Premium. Timeline: This Week. Seats/Qty: 33.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T23:26:46.044Z",
+    "updatedAt": "2026-02-13T23:26:46.044Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771019769331-N254FDJ",
+    "leadId": "LD-20260213-8903",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-8903 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T21:56:09.331Z",
+    "updatedAt": "2026-02-13T21:56:09.332Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771019769330-OMI7PRY",
+    "leadId": "LD-20260213-8903",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Microsoft for Chandigarh. My requirement: Business Standard. Timeline: This Week. Seats/Qty: 25.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T21:56:09.330Z",
+    "updatedAt": "2026-02-13T21:56:09.330Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771017647003-DBYVRQ9",
+    "leadId": "LD-20260213-6314",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-6314 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T21:20:47.003Z",
+    "updatedAt": "2026-02-13T21:20:47.006Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771017647002-5M751KO",
+    "leadId": "LD-20260213-6314",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Microsoft for Mohali. My requirement: Business Premium. Timeline: Today. Seats/Qty: 17.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T21:20:47.002Z",
+    "updatedAt": "2026-02-13T21:20:47.002Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771016651873-61XRTNU",
+    "leadId": "LD-20260213-3569",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-3569 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.873Z",
+    "updatedAt": "2026-02-13T21:04:11.880Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771016651810-653SOC9",
+    "leadId": "LD-20260213-3569",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Cisco for Panchkula. My requirement: New deployment. Timeline: This Month. Seats/Qty: 120.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.810Z",
+    "updatedAt": "2026-02-13T21:04:11.810Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771016651694-0OEZCEV",
+    "leadId": "LD-20260213-8187",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-8187 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.694Z",
+    "updatedAt": "2026-02-13T21:04:11.695Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771016651693-K2UMM7X",
+    "leadId": "LD-20260213-8187",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Seqrite for Mohali. My requirement: Advanced. Timeline: Today. Seats/Qty: 85.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.693Z",
+    "updatedAt": "2026-02-13T21:04:11.693Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771016651680-9TXZHQ2",
+    "leadId": "LD-20260213-5995",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-5995 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.680Z",
+    "updatedAt": "2026-02-13T21:04:11.681Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771016651679-CAOHKX5",
+    "leadId": "LD-20260213-5995",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Microsoft for Chandigarh. My requirement: Business Standard. Timeline: This Week. Seats/Qty: 42.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T21:04:11.679Z",
+    "updatedAt": "2026-02-13T21:04:11.679Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771013236669-ZAVDQ4P",
+    "leadId": "LD-20260213-4721",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-4721 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T20:07:16.669Z",
+    "updatedAt": "2026-02-13T20:07:16.670Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771013236668-UQUREIX",
+    "leadId": "LD-20260213-4721",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Seqrite for Mohali. My requirement: Essentials. Timeline: This Week. Seats/Qty: 120.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T20:07:16.668Z",
+    "updatedAt": "2026-02-13T20:07:16.668Z"
+  },
+  {
+    "id": "MSG-EMAIL-1771013230285-UKQYOL3",
+    "leadId": "LD-20260213-7506",
+    "channel": "email",
+    "to": "leads@conjoinnetwork.com",
+    "payload": "Lead LD-20260213-7506 notification",
+    "status": "SENT",
+    "error": null,
+    "createdAt": "2026-02-13T20:07:10.285Z",
+    "updatedAt": "2026-02-13T20:07:10.286Z"
+  },
+  {
+    "id": "MSG-WHATSAPP-1771013230284-259TN2W",
+    "leadId": "LD-20260213-7506",
+    "channel": "whatsapp",
+    "to": "919466663015",
+    "payload": "Hi Conjoin, I need a quote for Microsoft for Chandigarh. My requirement: Business Basic. Timeline: This Week. Seats/Qty: 25.",
+    "status": "PENDING",
+    "error": null,
+    "createdAt": "2026-02-13T20:07:10.284Z",
+    "updatedAt": "2026-02-13T20:07:10.284Z"
+  }
+]

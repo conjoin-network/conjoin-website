@@ -6,33 +6,39 @@ import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import Section from "@/app/components/Section";
+import { BRAND_TILES } from "@/lib/brands-data";
+import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
 import {
-  ADD_ON_OPTIONS,
   BRAND_ACCENTS,
   CITY_OPTIONS,
   type LeadBrand,
+  getDeploymentOptions,
   getPlans,
-  getQuantityLabel,
-  getStageTwoOptions
+  getStageTwoOptions,
+  isValidSelection,
+  supportsServers
 } from "@/lib/quote-catalog";
 
 type WizardState = {
-  brand: LeadBrand | "";
+  brandName: string;
+  leadBrand: LeadBrand | "";
   otherBrand: string;
   category: string;
   plan: string;
+  deployment: string;
   usersSeats: string;
   endpoints: string;
   servers: string;
-  ciscoUsers: string;
-  ciscoSites: string;
+  userBand: string;
+  siteBand: string;
   budgetRange: string;
-  addons: string[];
   city: string;
   sourcePage: string;
   utmSource: string;
   utmMedium: string;
   utmCampaign: string;
+  utmContent: string;
+  utmTerm: string;
   pagePath: string;
   referrer: string;
   timeline: string;
@@ -44,22 +50,25 @@ type WizardState = {
 };
 
 const initialState: WizardState = {
-  brand: "",
+  brandName: "",
+  leadBrand: "",
   otherBrand: "",
   category: "",
   plan: "",
+  deployment: "",
   usersSeats: "",
   endpoints: "",
   servers: "",
-  ciscoUsers: "",
-  ciscoSites: "",
+  userBand: "",
+  siteBand: "",
   budgetRange: "",
-  addons: [],
   city: "",
   sourcePage: "/request-quote",
   utmSource: "",
   utmMedium: "",
   utmCampaign: "",
+  utmContent: "",
+  utmTerm: "",
   pagePath: "/request-quote",
   referrer: "",
   timeline: "This Week",
@@ -70,31 +79,120 @@ const initialState: WizardState = {
   notes: ""
 };
 
-const steps = ["Brand", "Category", "Plan", "Quantity", "Add-ons", "Contact"] as const;
+const steps = ["Brand", "Product", "Requirement", "Contact"] as const;
 
-function normalizeBrand(input: string | null): Pick<WizardState, "brand" | "otherBrand"> {
-  const value = (input ?? "").trim();
-  if (!value) {
-    return { brand: "", otherBrand: "" };
-  }
+const brandOptions = Array.from(new Set([...BRAND_TILES.map((brand) => brand.name), "Other"]))
+  .sort((a, b) => a.localeCompare(b));
 
-  const lower = value.toLowerCase();
-  if (lower === "microsoft") {
-    return { brand: "Microsoft", otherBrand: "" };
-  }
-  if (lower === "seqrite") {
-    return { brand: "Seqrite", otherBrand: "" };
-  }
-  if (lower === "cisco") {
-    return { brand: "Cisco", otherBrand: "" };
-  }
-
-  return { brand: "Other", otherBrand: value };
-}
+const userBandOptions = ["1-25", "26-100", "101-300", "300+"] as const;
+const siteBandOptions = ["1", "2-5", "6-10", "10+"] as const;
+const budgetRangeOptions = ["Under ₹1L", "₹1L-₹5L", "₹5L-₹15L", "₹15L+"] as const;
 
 function toInt(value: string) {
   const next = Number.parseInt(value, 10);
   return Number.isFinite(next) && next > 0 ? next : 0;
+}
+
+function bandToQty(value: string) {
+  const map: Record<string, number> = {
+    "1": 1,
+    "2-5": 5,
+    "6-10": 10,
+    "10+": 10,
+    "1-25": 25,
+    "26-100": 100,
+    "101-300": 300,
+    "300+": 300
+  };
+
+  return map[value] ?? 0;
+}
+
+function mapBrandNameToLeadBrand(brandName: string): LeadBrand {
+  const lower = brandName.trim().toLowerCase();
+  if (lower === "microsoft") {
+    return "Microsoft";
+  }
+  if (lower === "seqrite") {
+    return "Seqrite";
+  }
+  if (lower === "cisco") {
+    return "Cisco";
+  }
+  return "Other";
+}
+
+function findCategoryByPlan(leadBrand: LeadBrand, plan: string) {
+  const lookup = plan.trim().toLowerCase();
+  if (!lookup) {
+    return "";
+  }
+
+  const categories = getStageTwoOptions(leadBrand);
+  const match = categories.find((category) =>
+    getPlans(leadBrand, category).some((candidate) => candidate.toLowerCase() === lookup)
+  );
+
+  return match ?? "";
+}
+
+function normalizeSeqriteCategoryAndDeployment(category: string, deployment: string) {
+  const categoryLower = category.trim().toLowerCase();
+  const deploymentLower = deployment.trim().toLowerCase();
+
+  if (categoryLower === "cloud") {
+    return { category: "Endpoint Security", deployment: "Cloud" };
+  }
+
+  if (categoryLower === "on-prem" || categoryLower === "onprem") {
+    return { category: "Endpoint Security", deployment: "On-Prem" };
+  }
+
+  if (categoryLower.includes("endpoint") && categoryLower.includes("cloud")) {
+    return { category: "Endpoint Security", deployment: "Cloud" };
+  }
+
+  if (categoryLower.includes("endpoint") && categoryLower.includes("on-prem")) {
+    return { category: "Endpoint Security", deployment: "On-Prem" };
+  }
+
+  if (deploymentLower === "on-prem" || deploymentLower === "onprem") {
+    return { category: category || "Endpoint Security", deployment: "On-Prem" };
+  }
+
+  if (deploymentLower === "cloud") {
+    return { category: category || "Endpoint Security", deployment: "Cloud" };
+  }
+
+  return { category, deployment };
+}
+
+function stepHeading(step: number, state: WizardState) {
+  if (step === 2) {
+    if (state.leadBrand === "Microsoft") {
+      return "Choose Microsoft product";
+    }
+    if (state.leadBrand === "Seqrite") {
+      return "Choose Seqrite product";
+    }
+    return "Requirement category";
+  }
+
+  if (step === 3) {
+    if (state.leadBrand === "Microsoft") {
+      return "Users / Seats";
+    }
+    if (state.leadBrand === "Seqrite") {
+      return "Deployment and quantity";
+    }
+    return "Requirement details";
+  }
+
+  if (step === 4) {
+    return "Contact details";
+  }
+
+  return "Choose brand";
 }
 
 export default function RequestQuoteWizard() {
@@ -102,110 +200,170 @@ export default function RequestQuoteWizard() {
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [notice, setNotice] = useState("");
-  const [state, setState] = useState<WizardState>(() => {
-    const params =
-      typeof window === "undefined"
-        ? new URLSearchParams()
-        : new URLSearchParams(window.location.search);
+  const [brandQuery, setBrandQuery] = useState("");
 
-    const prefill = normalizeBrand(params.get("brand"));
+  const [state, setState] = useState<WizardState>(() => {
+    const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+    const incomingBrand = (params.get("brand") ?? "").trim();
+    const brandName = incomingBrand || "";
+    const leadBrand = brandName ? mapBrandNameToLeadBrand(brandName) : "";
+
+    const incomingCategory = params.get("category") ?? params.get("delivery") ?? "";
+    const incomingPlan = params.get("product") ?? params.get("plan") ?? params.get("tier") ?? "";
+    const incomingDeployment = params.get("deployment") ?? "";
+
+    let category = incomingCategory;
+    let plan = incomingPlan;
+    let deployment = incomingDeployment;
+
+    if (leadBrand === "Seqrite") {
+      const normalized = normalizeSeqriteCategoryAndDeployment(category, deployment);
+      category = normalized.category;
+      deployment = normalized.deployment;
+    }
+
+    if ((leadBrand === "Microsoft" || leadBrand === "Seqrite") && plan && !category) {
+      category = findCategoryByPlan(leadBrand, plan);
+    }
+
+    if ((leadBrand === "Cisco" || leadBrand === "Other") && category && !plan) {
+      plan = getPlans(leadBrand, category)[0] ?? "";
+    }
+
+    if (leadBrand && category && plan && !isValidSelection(leadBrand, category, plan, deployment)) {
+      category = "";
+      plan = "";
+      deployment = "";
+    }
 
     return {
       ...initialState,
-      ...prefill,
-      category: params.get("category") ?? params.get("delivery") ?? "",
-      plan: params.get("plan") ?? params.get("tier") ?? "",
+      brandName,
+      leadBrand,
+      otherBrand: leadBrand === "Other" ? brandName : "",
+      category,
+      plan,
+      deployment,
       city: params.get("city") ?? "",
       sourcePage: params.get("source") ?? "/request-quote",
       utmSource: params.get("utm_source") ?? "",
       utmMedium: params.get("utm_medium") ?? "",
       utmCampaign: params.get("utm_campaign") ?? "",
-      pagePath:
-        typeof window === "undefined" ? "/request-quote" : `${window.location.pathname}${window.location.search}`,
-      referrer: typeof window === "undefined" ? "" : document.referrer
+      utmContent: params.get("utm_content") ?? "",
+      utmTerm: params.get("utm_term") ?? "",
+      pagePath: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/request-quote",
+      referrer: typeof window !== "undefined" ? document.referrer : ""
     };
   });
 
-  const accent = state.brand ? BRAND_ACCENTS[state.brand] : "var(--color-primary)";
-  const stageTwoOptions = state.brand ? getStageTwoOptions(state.brand) : [];
-  const planOptions = state.brand && state.category ? getPlans(state.brand, state.category) : [];
-  const quantityLabel = state.brand && state.category ? getQuantityLabel(state.brand, state.category) : "Quantity";
+  const accent = state.leadBrand ? BRAND_ACCENTS[state.leadBrand] : "var(--color-primary)";
+  const categoryOptions = state.leadBrand ? getStageTwoOptions(state.leadBrand) : [];
+  const planOptions = state.leadBrand && state.category ? getPlans(state.leadBrand, state.category) : [];
+  const deploymentOptions = state.leadBrand && state.category ? getDeploymentOptions(state.leadBrand, state.category) : [];
+  const showServers = state.leadBrand === "Seqrite" && supportsServers("Seqrite", state.category, state.deployment);
+
+  const filteredBrands = useMemo(() => {
+    const keyword = brandQuery.trim().toLowerCase();
+    if (!keyword) {
+      return brandOptions;
+    }
+    return brandOptions.filter((brand) => brand.toLowerCase().includes(keyword));
+  }, [brandQuery]);
 
   const summaryRows = useMemo(() => {
-    const brandLabel = state.brand === "Other" && state.otherBrand ? state.otherBrand : state.brand || "-";
-    const qtyText =
-      state.brand === "Microsoft"
-        ? state.usersSeats || "-"
-        : state.brand === "Seqrite"
-          ? `${state.endpoints || "-"} endpoints / ${state.servers || "0"} servers`
-          : `${state.ciscoUsers || "-"} users / ${state.ciscoSites || "1"} site(s)`;
+    const quantityText =
+      state.leadBrand === "Microsoft"
+        ? `${state.usersSeats || "-"} users / seats`
+        : state.leadBrand === "Seqrite"
+          ? `${state.endpoints || "-"} endpoints${showServers && state.servers ? `, ${state.servers} servers` : ""}`
+          : `${state.userBand || "-"} users, ${state.siteBand || "-"} sites`;
+    const quantityLabel =
+      state.leadBrand === "Microsoft"
+        ? "Users / Seats"
+        : state.leadBrand === "Seqrite"
+          ? "Endpoints"
+          : "Approx users / sites";
 
-    return [
-      ["Brand", brandLabel],
-      ["Category", state.category || "-"],
+    const rows: Array<[string, string]> = [
+      ["Brand", state.brandName || "-"],
+      ["Product", state.category || "-"],
       ["Plan", state.plan || "-"],
-      ["Quantity", qtyText],
-      ["Timeline", state.timeline || "-"],
-      ["Budget", state.budgetRange || "-"],
-      ["Add-ons", state.addons.length > 0 ? state.addons.join(", ") : "-"],
+      [quantityLabel, quantityText],
       ["City", state.city || "-"],
-      ["Source", state.sourcePage || "/request-quote"]
-    ] as const;
-  }, [state]);
+      ["Timeline", state.timeline || "-"]
+    ];
+
+    if (state.leadBrand === "Seqrite" && state.deployment) {
+      rows.splice(3, 0, ["Deployment", state.deployment]);
+    }
+
+    if ((state.leadBrand === "Cisco" || state.leadBrand === "Other") && state.budgetRange) {
+      rows.splice(rows.length - 2, 0, ["Budget", state.budgetRange]);
+    }
+
+    return rows;
+  }, [showServers, state]);
 
   function patch(values: Partial<WizardState>) {
     setState((current) => ({ ...current, ...values }));
   }
 
-  function selectBrand(brand: LeadBrand) {
+  function selectBrand(brandName: string) {
+    const leadBrand = mapBrandNameToLeadBrand(brandName);
     patch({
-      brand,
+      brandName,
+      leadBrand,
+      otherBrand: leadBrand === "Other" ? brandName : "",
       category: "",
       plan: "",
+      deployment: "",
       usersSeats: "",
       endpoints: "",
       servers: "",
-      ciscoUsers: "",
-      ciscoSites: "",
+      userBand: "",
+      siteBand: "",
       budgetRange: ""
     });
   }
 
-  function toggleAddon(addon: string) {
-    const exists = state.addons.includes(addon);
-    patch({ addons: exists ? state.addons.filter((item) => item !== addon) : [...state.addons, addon] });
-  }
-
   function canContinue(currentStep: number) {
     if (currentStep === 1) {
-      if (!state.brand) {
-        return false;
-      }
-      if (state.brand === "Other") {
-        return state.otherBrand.trim().length > 0;
-      }
-      return true;
+      return Boolean(state.brandName && state.leadBrand);
     }
 
     if (currentStep === 2) {
-      return Boolean(state.category);
+      if (!state.leadBrand || !state.category) {
+        return false;
+      }
+
+      if (state.leadBrand === "Cisco" || state.leadBrand === "Other") {
+        return true;
+      }
+
+      if (!state.plan) {
+        return false;
+      }
+
+      if (deploymentOptions.length > 0 && !state.deployment) {
+        return false;
+      }
+
+      return isValidSelection(state.leadBrand, state.category, state.plan, state.deployment);
     }
 
     if (currentStep === 3) {
-      return Boolean(state.plan);
+      if (state.leadBrand === "Microsoft") {
+        return toInt(state.usersSeats) > 0;
+      }
+
+      if (state.leadBrand === "Seqrite") {
+        return toInt(state.endpoints) > 0;
+      }
+
+      return Boolean(state.userBand && state.siteBand);
     }
 
     if (currentStep === 4) {
-      if (state.brand === "Microsoft") {
-        return toInt(state.usersSeats) > 0;
-      }
-      if (state.brand === "Seqrite") {
-        return toInt(state.endpoints) > 0;
-      }
-      return toInt(state.ciscoUsers) > 0;
-    }
-
-    if (currentStep === 6) {
       return Boolean(state.contactName && state.company && state.email && state.phone && state.city);
     }
 
@@ -217,7 +375,6 @@ export default function RequestQuoteWizard() {
       setNotice("Please complete required fields to continue.");
       return;
     }
-
     setNotice("");
     setStep((current) => Math.min(current + 1, steps.length));
   }
@@ -228,7 +385,7 @@ export default function RequestQuoteWizard() {
   }
 
   async function submit() {
-    if (!canContinue(6)) {
+    if (!canContinue(4)) {
       setNotice("Please complete required fields.");
       return;
     }
@@ -236,28 +393,33 @@ export default function RequestQuoteWizard() {
     setStatus("loading");
     setNotice("");
 
+    const ciscoUsers = state.leadBrand === "Cisco" || state.leadBrand === "Other" ? bandToQty(state.userBand) : 0;
+    const ciscoSites = state.leadBrand === "Cisco" || state.leadBrand === "Other" ? bandToQty(state.siteBand) : 0;
+
     try {
       const response = await fetch("/api/quote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          brand: state.brand,
-          otherBrand: state.otherBrand,
+          brand: state.leadBrand,
+          otherBrand: state.leadBrand === "Other" ? state.brandName : "",
           category: state.category,
           plan: state.plan,
-          usersSeats: state.usersSeats,
-          endpoints: state.endpoints,
-          servers: state.servers,
-          ciscoUsers: state.ciscoUsers,
-          ciscoSites: state.ciscoSites,
-          budgetRange: state.budgetRange,
-          addons: state.addons,
+          deployment: state.leadBrand === "Seqrite" ? state.deployment : "",
+          usersSeats: state.leadBrand === "Microsoft" ? state.usersSeats : "",
+          endpoints: state.leadBrand === "Seqrite" ? state.endpoints : "",
+          servers: state.leadBrand === "Seqrite" && showServers ? state.servers : "",
+          ciscoUsers,
+          ciscoSites,
+          budgetRange: state.leadBrand === "Cisco" || state.leadBrand === "Other" ? state.budgetRange : "",
           city: state.city,
           source: state.sourcePage,
           sourcePage: state.sourcePage,
           utmSource: state.utmSource,
           utmMedium: state.utmMedium,
           utmCampaign: state.utmCampaign,
+          utmContent: state.utmContent,
+          utmTerm: state.utmTerm,
           pagePath: state.pagePath,
           referrer: state.referrer,
           timeline: state.timeline,
@@ -277,15 +439,15 @@ export default function RequestQuoteWizard() {
       }
 
       const qty =
-        state.brand === "Microsoft"
+        state.leadBrand === "Microsoft"
           ? state.usersSeats
-          : state.brand === "Seqrite"
+          : state.leadBrand === "Seqrite"
             ? state.endpoints
-            : state.ciscoUsers;
+            : state.userBand;
 
       const query = new URLSearchParams({
         leadId: data.leadId ?? "",
-        brand: state.brand === "Other" ? state.otherBrand : state.brand,
+        brand: state.brandName,
         city: state.city,
         qty,
         category: state.category,
@@ -305,37 +467,31 @@ export default function RequestQuoteWizard() {
       <div className="mx-auto max-w-6xl space-y-6">
         <header className="space-y-4">
           <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-5xl">Request a Quote</h1>
-          <p className="max-w-3xl text-sm md:text-base">
-            Fast procurement intake for Microsoft, Seqrite and firewall/networking requirements.
+          <p className="max-w-3xl text-sm md:text-base">Procurement-ready RFQ in four quick steps. We only ask fields required for a compliance-ready proposal.</p>
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            For urgent help:{" "}
+            <a href={mailto(SALES_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
+              {SALES_EMAIL}
+            </a>{" "}
+            • Support:{" "}
+            <a href={mailto(SUPPORT_EMAIL)} className="font-semibold text-[var(--color-primary)] hover:underline">
+              {SUPPORT_EMAIL}
+            </a>
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/microsoft"
-              className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
+              href="/brands"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
             >
-              View Microsoft Plans
+              Browse Brands
             </Link>
             <Link
-              href="/seqrite"
-              className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--color-border)] px-4 text-sm font-semibold text-[var(--color-text-primary)]"
+              href="/search"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] px-4 text-sm font-semibold text-[var(--color-text-primary)]"
             >
-              View Seqrite Plans
+              Search
             </Link>
           </div>
-          <ul className="grid gap-2 text-sm md:grid-cols-3">
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
-              TCO-focused proposals
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
-              Compliance-ready scope
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
-              Renewal and SLA visibility
-            </li>
-          </ul>
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -344,68 +500,65 @@ export default function RequestQuoteWizard() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-secondary)]">
                 Step {step} of {steps.length}
               </p>
-              <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">{steps[step - 1]}</h2>
+              <h2 className="text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">{stepHeading(step, state)}</h2>
               <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--color-alt-bg)]">
-                <div
-                  className="h-full rounded-full transition-all duration-300"
-                  style={{ width: `${(step / steps.length) * 100}%`, background: accent }}
-                />
+                <div className="h-full rounded-full transition-all duration-300" style={{ width: `${(step / steps.length) * 100}%`, background: accent }} />
               </div>
             </div>
 
             {step === 1 ? (
               <div className="space-y-4">
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {(["Microsoft", "Seqrite", "Cisco", "Other"] as LeadBrand[]).map((brand) => {
-                    const selected = state.brand === brand;
-                    const label = brand === "Other" ? "Firewall Vendor / Other" : brand;
-                    return (
-                      <button
-                        key={brand}
-                        type="button"
-                        onClick={() => selectBrand(brand)}
-                        className="rounded-2xl border px-4 py-4 text-left transition"
-                        style={{
-                          borderColor: selected ? BRAND_ACCENTS[brand] : "var(--color-border)",
-                          boxShadow: selected ? `0 0 0 1px ${BRAND_ACCENTS[brand]}22` : "none"
-                        }}
-                      >
-                        <p className="text-sm font-semibold text-[var(--color-text-primary)]">{label}</p>
-                      </button>
-                    );
-                  })}
+                <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                  Search brand
+                </label>
+                <div className="relative z-30">
+                  <input
+                    type="text"
+                    value={brandQuery}
+                    onChange={(event) => setBrandQuery(event.target.value)}
+                    placeholder="Type Microsoft, Seqrite, Cisco, Fortinet..."
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                  />
+                  <div className="absolute left-0 right-0 top-full z-40 mt-2 max-h-72 space-y-2 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-white p-2 shadow-[0_18px_40px_-24px_rgba(15,23,42,0.32)]">
+                    {filteredBrands.map((brandName, index) => {
+                      const selected = state.brandName === brandName;
+                      return (
+                        <button
+                          key={`${brandName}-${index}`}
+                          type="button"
+                          onClick={() => selectBrand(brandName)}
+                          className="w-full rounded-xl border px-4 py-3 text-left text-sm font-semibold transition"
+                          style={{
+                            borderColor: selected ? accent : "var(--color-border)",
+                            boxShadow: selected ? `0 0 0 1px ${accent}22` : "none"
+                          }}
+                        >
+                          {brandName}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="h-72" aria-hidden />
                 </div>
-                {state.brand === "Other" ? (
-                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    Brand name
-                    <input
-                      type="text"
-                      value={state.otherBrand}
-                      onChange={(event) => patch({ otherBrand: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                    />
-                  </label>
-                ) : null}
+                <p className="text-xs text-[var(--color-text-secondary)]">Why we ask this: brand selection shows only valid fields and plans.</p>
               </div>
             ) : null}
 
             {step === 2 ? (
-              <div className="space-y-3">
-                <p className="text-sm text-[var(--color-text-secondary)]">
-                  {state.brand === "Cisco" || state.brand === "Other"
-                    ? "Requirement Type"
-                    : state.brand === "Seqrite"
-                      ? "Deployment model"
-                      : "Suite category"}
-                </p>
+              <div className="space-y-4">
+                <p className="text-xs text-[var(--color-text-secondary)]">Why we ask this: this drives the exact commercial proposal and compliance scope.</p>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  {stageTwoOptions.map((option) => {
+                  {categoryOptions.map((option, index) => {
                     const selected = option === state.category;
+                    const defaultPlan =
+                      state.leadBrand === "Cisco" || state.leadBrand === "Other"
+                        ? getPlans(state.leadBrand, option)[0] ?? ""
+                        : "";
                     return (
                       <button
-                        key={option}
+                        key={`${option}-${index}`}
                         type="button"
-                        onClick={() => patch({ category: option, plan: "" })}
+                        onClick={() => patch({ category: option, plan: defaultPlan, deployment: "" })}
                         className="rounded-2xl border px-4 py-4 text-left transition"
                         style={{
                           borderColor: selected ? accent : "var(--color-border)",
@@ -417,48 +570,65 @@ export default function RequestQuoteWizard() {
                     );
                   })}
                 </div>
+
+                {deploymentOptions.length > 0 ? (
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    Deployment
+                    <select
+                      value={state.deployment}
+                      onChange={(event) => patch({ deployment: event.target.value, plan: "" })}
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                    >
+                      <option value="">Select deployment</option>
+                      {deploymentOptions.map((option, index) => (
+                        <option key={`${option}-${index}`} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                {state.category && (state.leadBrand === "Microsoft" || state.leadBrand === "Seqrite") ? (
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    {state.leadBrand === "Microsoft" ? "Plan" : state.leadBrand === "Seqrite" ? "Product plan" : "Requirement detail"}
+                    <select
+                      value={state.plan}
+                      onChange={(event) => patch({ plan: event.target.value })}
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      disabled={deploymentOptions.length > 0 && !state.deployment}
+                    >
+                      <option value="">Select option</option>
+                      {planOptions.map((plan, index) => (
+                        <option key={`${plan}-${index}`} value={plan}>
+                          {plan}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
               </div>
             ) : null}
 
             {step === 3 ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                {planOptions.map((option) => {
-                  const selected = option === state.plan;
-                  return (
-                    <button
-                      key={option}
-                      type="button"
-                      onClick={() => patch({ plan: option })}
-                      className="rounded-2xl border px-4 py-4 text-left transition"
-                      style={{
-                        borderColor: selected ? accent : "var(--color-border)",
-                        boxShadow: selected ? `0 0 0 1px ${accent}22` : "none"
-                      }}
-                    >
-                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">{option}</p>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+              <div className="space-y-4">
+                <p className="text-xs text-[var(--color-text-secondary)]">Why we ask this: these inputs help produce a compliance-ready quote. Response in 15 minutes (business hours).</p>
 
-            {step === 4 ? (
-              <div className="grid gap-4 md:grid-cols-2">
-                {state.brand === "Microsoft" ? (
-                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
-                    {quantityLabel}
+                {state.leadBrand === "Microsoft" ? (
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    Users / Seats
                     <input
                       type="number"
                       min="1"
                       value={state.usersSeats}
                       onChange={(event) => patch({ usersSeats: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
                 ) : null}
 
-                {state.brand === "Seqrite" ? (
-                  <>
+                {state.leadBrand === "Seqrite" ? (
+                  <div className="grid gap-4 md:grid-cols-2">
                     <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                       Endpoints
                       <input
@@ -466,94 +636,81 @@ export default function RequestQuoteWizard() {
                         min="1"
                         value={state.endpoints}
                         onChange={(event) => patch({ endpoints: event.target.value })}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                       />
                     </label>
-                    <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                      Servers (optional)
-                      <input
-                        type="number"
-                        min="0"
-                        value={state.servers}
-                        onChange={(event) => patch({ servers: event.target.value })}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                      />
-                    </label>
-                  </>
+                    {showServers ? (
+                      <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                        Servers (optional)
+                        <input
+                          type="number"
+                          min="0"
+                          value={state.servers}
+                          onChange={(event) => patch({ servers: event.target.value })}
+                          className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                        />
+                      </label>
+                    ) : null}
+                  </div>
                 ) : null}
 
-                {state.brand === "Cisco" || state.brand === "Other" ? (
-                  <>
+                {state.leadBrand === "Cisco" || state.leadBrand === "Other" ? (
+                  <div className="grid gap-4 md:grid-cols-2">
                     <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                      Users
-                      <input
-                        type="number"
-                        min="1"
-                        value={state.ciscoUsers}
-                        onChange={(event) => patch({ ciscoUsers: event.target.value })}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                      />
+                      No. of sites
+                      <select
+                        value={state.siteBand}
+                        onChange={(event) => patch({ siteBand: event.target.value })}
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      >
+                        <option value="">Select sites</option>
+                        {siteBandOptions.map((option, index) => (
+                          <option key={`${option}-${index}`} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
                     </label>
+
                     <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                      Sites/Locations
-                      <input
-                        type="number"
-                        min="1"
-                        value={state.ciscoSites}
-                        onChange={(event) => patch({ ciscoSites: event.target.value })}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                      />
+                      Approx users
+                      <select
+                        value={state.userBand}
+                        onChange={(event) => patch({ userBand: event.target.value })}
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      >
+                        <option value="">Select users</option>
+                        {userBandOptions.map((option, index) => (
+                          <option key={`${option}-${index}`} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
                     </label>
+
                     <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
                       Budget range (optional)
                       <select
                         value={state.budgetRange}
                         onChange={(event) => patch({ budgetRange: event.target.value })}
-                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                        className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                       >
-                        <option value="">Select range</option>
-                        <option value="Below 2L">Below 2L</option>
-                        <option value="2L to 5L">2L to 5L</option>
-                        <option value="5L to 10L">5L to 10L</option>
-                        <option value="10L+">10L+</option>
+                        <option value="">Select budget range</option>
+                        {budgetRangeOptions.map((option, index) => (
+                          <option key={`${option}-${index}`} value={option}>
+                            {option}
+                          </option>
+                        ))}
                       </select>
                     </label>
-                  </>
+                  </div>
                 ) : null}
               </div>
             ) : null}
 
-            {step === 5 ? (
-              <div className="space-y-4">
-                <p className="text-sm font-semibold text-[var(--color-text-primary)]">Add-ons</p>
-                <div className="grid gap-2 sm:grid-cols-2">
-                  {ADD_ON_OPTIONS.map((addon) => {
-                    const checked = state.addons.includes(addon);
-                    return (
-                      <label
-                        key={addon}
-                        className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                      >
-                        <input type="checkbox" checked={checked} onChange={() => toggleAddon(addon)} className="h-4 w-4" />
-                        {addon}
-                      </label>
-                    );
-                  })}
-                </div>
-                <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                  Notes (optional)
-                  <textarea
-                    rows={4}
-                    value={state.notes}
-                    onChange={(event) => patch({ notes: event.target.value })}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
-                  />
-                </label>
-              </div>
-            ) : null}
-
-            {step === 6 ? (
+            {step === 4 ? (
               <div className="space-y-5">
+                <p className="text-xs text-[var(--color-text-secondary)]">Why we ask this: we use this to send proposal options and assign the right follow-up owner.</p>
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                     Contact name
@@ -561,7 +718,7 @@ export default function RequestQuoteWizard() {
                       type="text"
                       value={state.contactName}
                       onChange={(event) => patch({ contactName: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -570,7 +727,7 @@ export default function RequestQuoteWizard() {
                       type="text"
                       value={state.company}
                       onChange={(event) => patch({ company: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -579,7 +736,7 @@ export default function RequestQuoteWizard() {
                       type="email"
                       value={state.email}
                       onChange={(event) => patch({ email: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -588,7 +745,7 @@ export default function RequestQuoteWizard() {
                       type="tel"
                       value={state.phone}
                       onChange={(event) => patch({ phone: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
@@ -596,22 +753,22 @@ export default function RequestQuoteWizard() {
                     <select
                       value={state.city}
                       onChange={(event) => patch({ city: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     >
                       <option value="">Select city</option>
-                      {CITY_OPTIONS.map((city) => (
-                        <option key={city} value={city}>
+                      {CITY_OPTIONS.map((city, index) => (
+                        <option key={`${city}-${index}`} value={city}>
                           {city}
                         </option>
                       ))}
                     </select>
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
-                    Preferred timeline
+                    Timeline
                     <select
                       value={state.timeline}
                       onChange={(event) => patch({ timeline: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm"
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     >
                       <option value="Today">Today</option>
                       <option value="This Week">This Week</option>
@@ -619,53 +776,31 @@ export default function RequestQuoteWizard() {
                       <option value="Planned Window">Planned Window</option>
                     </select>
                   </label>
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
+                    Notes (optional)
+                    <textarea
+                      rows={4}
+                      value={state.notes}
+                      onChange={(event) => patch({ notes: event.target.value })}
+                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                    />
+                  </label>
                 </div>
-
-                <Card className="space-y-3 p-4">
-                  <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Summary</h3>
-                  <dl className="grid grid-cols-[140px_1fr] gap-y-1 text-sm">
-                    {summaryRows.map(([label, value]) => (
-                      <div key={label} className="contents">
-                        <dt className="font-medium text-[var(--color-text-primary)]">{label}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </Card>
-
-                <div className="space-y-3 rounded-xl border border-[var(--color-border)] bg-white p-4 text-sm">
-                  <p className="font-semibold text-[var(--color-text-primary)]">What happens next</p>
-                  <ol className="list-decimal space-y-1 pl-5">
-                    <li>We confirm your requirements and quantities.</li>
-                    <li>We send a WhatsApp and email follow-up with proposal scope.</li>
-                    <li>We align a call slot for commercial and deployment checkpoints.</li>
-                  </ol>
-                </div>
-
-                <PartnerDisclaimer sourceLabel="OEM documentation" />
-
-                <button
-                  type="button"
-                  onClick={submit}
-                  disabled={status === "loading"}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl px-5 text-sm font-semibold text-white"
-                  style={{ background: accent }}
-                >
-                  {status === "loading" ? "Submitting..." : "Submit Quote Request"}
-                </button>
               </div>
             ) : null}
 
             {notice ? (
-              <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{notice}</p>
+              <p className={`rounded-xl border px-3 py-2 text-sm ${status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}>
+                {notice}
+              </p>
             ) : null}
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={back}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] px-4 text-sm font-semibold"
                 disabled={step === 1 || status === "loading"}
-                className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[var(--color-border)] px-4 text-sm font-semibold text-[var(--color-text-primary)] disabled:opacity-50"
               >
                 Back
               </button>
@@ -673,31 +808,36 @@ export default function RequestQuoteWizard() {
                 <button
                   type="button"
                   onClick={next}
-                  className="inline-flex min-h-10 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white"
-                  style={{ background: accent }}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white"
                 >
                   Continue
                 </button>
-              ) : null}
+              ) : (
+                <button
+                  type="button"
+                  onClick={submit}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white disabled:opacity-60"
+                  disabled={status === "loading"}
+                >
+                  {status === "loading" ? "Submitting..." : "Submit RFQ"}
+                </button>
+              )}
             </div>
           </Card>
 
-          <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <Card className="space-y-3 p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">Live summary</h3>
-              <ul className="space-y-1 text-sm">
-                {summaryRows.map(([label, value]) => (
-                  <li key={label}>
-                    <span className="font-medium text-[var(--color-text-primary)]">{label}:</span> {value}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-            <p className="text-xs">Commercial clarity: best price + compliance-ready proposal + renewal support.</p>
-          </aside>
+          <Card className="h-fit space-y-3 p-5 lg:sticky lg:top-24">
+            <h3 className="text-base font-semibold text-[var(--color-text-primary)]">Summary</h3>
+            <dl className="space-y-2 text-sm">
+              {summaryRows.map(([label, value], index) => (
+                <div key={`${label}-${index}`} className="grid grid-cols-[110px_1fr] gap-2">
+                  <dt className="font-medium text-[var(--color-text-primary)]">{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+            <PartnerDisclaimer className="mt-4" />
+          </Card>
         </div>
-
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
       </div>
     </Section>
   );
