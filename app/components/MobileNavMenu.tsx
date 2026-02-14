@@ -34,8 +34,13 @@ export default function MobileNavMenu() {
   }, [open]);
 
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+    if (!open) {
+      return;
+    }
+
+    const closeOnRouteChange = window.setTimeout(() => setOpen(false), 0);
+    return () => window.clearTimeout(closeOnRouteChange);
+  }, [open, pathname]);
 
   useEffect(() => {
     if (!open) {
