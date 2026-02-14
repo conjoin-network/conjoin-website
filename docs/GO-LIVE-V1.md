@@ -42,20 +42,43 @@
 - Product names and route copy remain procurement-oriented and non-claiming.
 - Partner/trademark disclaimer remains in place.
 
-## Vercel Go-Live Steps
-1. Import GitHub repo: `conjoin-network/conjoin-website`.
-2. Use Next.js defaults with PNPM:
-   - Build command: `pnpm build`
-   - Start command: `pnpm start`
-3. Configure required environment variables:
-   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
-   - `MAIL_FROM`, `LEADS_EMAIL`, `ADMIN_PASSWORD`
-4. Configure optional variables:
-   - `WHATSAPP_PROVIDER`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`
-   - `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_URL`
-5. Add and verify domains:
-   - `conjoinnetwork.com` (apex)
-   - `www.conjoinnetwork.com`
+## Vercel Go-Live Steps (Exact)
+1. **Vercel -> New Project -> Import GitHub repo**:
+   - `conjoin-network/conjoin-website`
+2. **Framework preset**:
+   - Next.js (auto-detected)
+3. **Build command**:
+   - `pnpm build`
+4. **Install command**:
+   - `pnpm install`
+5. **Output setting**:
+   - Use Vercel default output (no custom override)
+6. **Environment variables (placeholders only)**:
+   - Required:
+     - `ADMIN_PASSWORD="change-me"`
+     - `LEADS_EMAIL="leads@conjoinnetwork.com"`
+     - `MAIL_FROM="sales@conjoinnetwork.com"`
+     - `SMTP_HOST="smtp.example.com"`
+     - `SMTP_PORT="587"`
+     - `SMTP_USER="smtp-user"`
+     - `SMTP_PASS="smtp-pass"`
+   - Optional:
+     - `NEXT_PUBLIC_SITE_URL="https://conjoinnetwork.com"`
+     - `NEXT_PUBLIC_WHATSAPP_URL="https://wa.me/919466663015"`
+     - `WHATSAPP_PROVIDER=""`
+     - `WHATSAPP_ACCESS_TOKEN=""`
+     - `WHATSAPP_PHONE_NUMBER_ID=""`
+     - `WHATSAPP_VERIFY_TOKEN=""`
+7. **Domains + DNS guidance**:
+   - Add domains in Vercel:
+     - `conjoinnetwork.com`
+     - `www.conjoinnetwork.com`
+   - Typical DNS:
+     - Apex `A` record -> `76.76.21.21` (or Vercel-provided target)
+     - `www` `CNAME` -> `cname.vercel-dns.com`
+   - Verify:
+     - `https://conjoinnetwork.com/robots.txt`
+     - `https://conjoinnetwork.com/sitemap.xml`
 
 ## Known Limits
 - In-memory rate limiting is per-instance and not globally shared across multiple regions/instances.

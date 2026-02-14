@@ -484,3 +484,38 @@ Runtime behavior if env is missing:
 4. Configure env vars from `.env.example`.
 5. Attach domains and verify `robots.txt` + `sitemap.xml`.
 6. Submit one RFQ and one contact lead as post-deploy checks.
+
+## 14) Final Go-Live Publish Status (14 Feb 2026)
+
+- Branch used for release: `main`
+- Go-live commit hash: `b1dbe56`
+- Commit message: `go-live: v1`
+
+### Build and startup status
+
+- `pnpm install` ✅
+- `pnpm lint` ✅
+- `pnpm typecheck` ✅
+- `node scripts/audit-forbidden-strings.mjs` ✅
+- `pnpm build` ✅
+- `PORT=4310 pnpm start` ✅ (boot verified with HTTP `200`)
+
+### Remaining manual steps for Manod
+
+1. Fix local GitHub auth for write access to `conjoin-network/conjoin-website`.
+2. Run push from `/Users/msleox/Documents/conjoin/web`:
+   - `git push -u origin main`
+3. In Vercel UI:
+   - New Project -> Import `conjoin-network/conjoin-website`
+   - Confirm Next.js auto-detection
+   - Install command: `pnpm install`
+   - Build command: `pnpm build`
+4. Add env vars from `.env.example` placeholders.
+5. Add domains:
+   - `conjoinnetwork.com`
+   - `www.conjoinnetwork.com`
+6. Update DNS:
+   - apex `A` -> `76.76.21.21` (or Vercel-provided target)
+   - `www` `CNAME` -> `cname.vercel-dns.com`
+7. Post-deploy verify:
+   - `/`, `/request-quote`, `/contact`, `/robots.txt`, `/sitemap.xml`
