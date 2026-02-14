@@ -5,6 +5,7 @@ import { LEAD_PRIORITIES, LEAD_STATUSES } from "@/lib/quote-catalog";
 
 const dataDir = path.join(process.cwd(), "data");
 const dataFilePath = path.join(dataDir, "leads.json");
+let writeQueue: Promise<unknown> = Promise.resolve();
 
 export type LeadActivityNote = {
   id: string;
@@ -230,9 +231,18 @@ export async function readLeads(): Promise<LeadRecord[]> {
 
 async function writeLeads(leads: LeadRecord[]) {
   await ensureDataFile();
-  const tempPath = `${dataFilePath}.${process.pid}.${Date.now()}.tmp`;
+  const tempPath = `${dataFilePath}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 10)}.tmp`;
   await fs.writeFile(tempPath, JSON.stringify(leads, null, 2), "utf8");
   await fs.rename(tempPath, dataFilePath);
+}
+
+function withWriteLock<T>(job: () => Promise<T>): Promise<T> {
+  const run = writeQueue.then(job, job);
+  writeQueue = run.then(
+    () => undefined,
+    () => undefined
+  );
+  return run;
 }
 
 function buildLeadId(existing: Set<string>) {
@@ -262,28 +272,30 @@ function appendNote(lead: LeadRecord, note: string, author: string) {
 }
 
 export async function createLead(input: NewLeadInput): Promise<LeadRecord> {
-  const leads = await readLeads();
-  const existingIds = new Set(leads.map((lead) => lead.leadId));
-  const now = new Date().toISOString();
+  return withWriteLock(async () => {
+    const leads = await readLeads();
+    const existingIds = new Set(leads.map((lead) => lead.leadId));
+    const now = new Date().toISOString();
 
-  const lead: LeadRecord = {
-    leadId: buildLeadId(existingIds),
-    status: "NEW",
-    priority: "WARM",
-    assignedTo: null,
-    lastContactedAt: null,
-    firstContactAt: null,
-    firstContactBy: null,
-    nextFollowUpAt: null,
-    activityNotes: [],
-    createdAt: now,
-    updatedAt: now,
-    ...input
-  };
+    const lead: LeadRecord = {
+      leadId: buildLeadId(existingIds),
+      status: "NEW",
+      priority: "WARM",
+      assignedTo: null,
+      lastContactedAt: null,
+      firstContactAt: null,
+      firstContactBy: null,
+      nextFollowUpAt: null,
+      activityNotes: [],
+      createdAt: now,
+      updatedAt: now,
+      ...input
+    };
 
-  leads.unshift(lead);
-  await writeLeads(leads);
-  return lead;
+    leads.unshift(lead);
+    await writeLeads(leads);
+    return lead;
+  });
 }
 
 export async function getLeadById(leadId: string): Promise<LeadRecord | null> {
@@ -292,58 +304,60 @@ export async function getLeadById(leadId: string): Promise<LeadRecord | null> {
 }
 
 export async function patchLead(leadId: string, input: LeadPatchInput): Promise<LeadRecord | null> {
-  const leads = await readLeads();
-  const target = leads.find((lead) => lead.leadId === leadId);
-  if (!target) {
-    return null;
-  }
+  return withWriteLock(async () => {
+    const leads = await readLeads();
+    const target = leads.find((lead) => lead.leadId === leadId);
+    if (!target) {
+      return null;
+    }
 
-  const now = new Date().toISOString();
+    const now = new Date().toISOString();
 
-  if (input.status && LEAD_STATUSES.includes(input.status)) {
-    target.status = input.status;
-    if (["IN_PROGRESS", "QUOTED", "WON", "LOST"].includes(input.status)) {
+    if (input.status && LEAD_STATUSES.includes(input.status)) {
+      target.status = input.status;
+      if (["IN_PROGRESS", "QUOTED", "WON", "LOST"].includes(input.status)) {
+        target.lastContactedAt = now;
+        if (!target.firstContactAt) {
+          target.firstContactAt = now;
+          target.firstContactBy = target.assignedTo || input.actor?.trim() || "Team";
+        }
+      }
+    }
+
+    if (input.priority && LEAD_PRIORITIES.includes(input.priority)) {
+      target.priority = input.priority;
+    }
+
+    if (input.assignedTo !== undefined) {
+      target.assignedTo = input.assignedTo && input.assignedTo.trim() ? input.assignedTo.trim() : null;
+    }
+
+    if (input.lastContactedAt !== undefined) {
+      target.lastContactedAt = input.lastContactedAt;
+    }
+
+    if (input.nextFollowUpAt !== undefined) {
+      target.nextFollowUpAt = input.nextFollowUpAt;
+    }
+
+    if (input.markContacted) {
+      target.status = target.status === "NEW" ? "IN_PROGRESS" : target.status;
       target.lastContactedAt = now;
       if (!target.firstContactAt) {
         target.firstContactAt = now;
         target.firstContactBy = target.assignedTo || input.actor?.trim() || "Team";
       }
     }
-  }
 
-  if (input.priority && LEAD_PRIORITIES.includes(input.priority)) {
-    target.priority = input.priority;
-  }
-
-  if (input.assignedTo !== undefined) {
-    target.assignedTo = input.assignedTo && input.assignedTo.trim() ? input.assignedTo.trim() : null;
-  }
-
-  if (input.lastContactedAt !== undefined) {
-    target.lastContactedAt = input.lastContactedAt;
-  }
-
-  if (input.nextFollowUpAt !== undefined) {
-    target.nextFollowUpAt = input.nextFollowUpAt;
-  }
-
-  if (input.markContacted) {
-    target.status = target.status === "NEW" ? "IN_PROGRESS" : target.status;
-    target.lastContactedAt = now;
-    if (!target.firstContactAt) {
-      target.firstContactAt = now;
-      target.firstContactBy = target.assignedTo || input.actor?.trim() || "Team";
+    if (input.note) {
+      appendNote(target, input.note, input.actor?.trim() || "Team");
+      target.lastContactedAt = now;
     }
-  }
 
-  if (input.note) {
-    appendNote(target, input.note, input.actor?.trim() || "Team");
-    target.lastContactedAt = now;
-  }
-
-  target.updatedAt = now;
-  await writeLeads(leads);
-  return target;
+    target.updatedAt = now;
+    await writeLeads(leads);
+    return target;
+  });
 }
 
 export async function updateLeadStatus(leadId: string, status: LeadStatus) {

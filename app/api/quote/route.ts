@@ -100,7 +100,7 @@ function normalizeBrand(input: string | undefined): LeadBrand {
 }
 
 function validationError(message: string) {
-  return NextResponse.json({ ok: false, message });
+  return NextResponse.json({ ok: false, message }, { status: 400 });
 }
 
 function serviceUnavailable(message = "Service temporarily unavailable. Please try again shortly.") {
@@ -134,7 +134,12 @@ export async function POST(request: Request) {
     const rawPayload = (await request.json()) as QuotePayload;
     const parsed = quotePayloadSchema.safeParse(rawPayload);
     if (!parsed.success) {
-      return validationError(parsed.error.issues[0]?.message ?? "Please review required fields.");
+      const issueMessage = parsed.error.issues[0]?.message;
+      return validationError(
+        !issueMessage || issueMessage === "Required"
+          ? "Please review the required fields and try again."
+          : issueMessage
+      );
     }
     const payload = parsed.data;
 

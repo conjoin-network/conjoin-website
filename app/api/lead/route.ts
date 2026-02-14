@@ -69,8 +69,15 @@ export async function POST(request: Request) {
 
   const parsed = leadPayloadSchema.safeParse(payload);
   if (!parsed.success) {
+    const issueMessage = parsed.error.issues[0]?.message;
     return NextResponse.json(
-      { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid request." },
+      {
+        ok: false,
+        message:
+          !issueMessage || issueMessage === "Required"
+            ? "Please review the required fields and try again."
+            : issueMessage
+      },
       { status: 400 }
     );
   }
