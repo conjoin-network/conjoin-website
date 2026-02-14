@@ -435,10 +435,24 @@ export default function RequestQuoteWizard() {
         })
       });
 
-      const data = await response.json();
-      if (!data?.ok) {
+      let data: { ok?: boolean; message?: string; leadId?: string } | null = null;
+      const contentType = response.headers.get("content-type") ?? "";
+      if (contentType.includes("application/json")) {
+        data = (await response.json()) as { ok?: boolean; message?: string; leadId?: string };
+      } else {
+        const text = await response.text();
+        data = {
+          ok: false,
+          message:
+            response.status >= 500
+              ? "Server error while submitting RFQ. Please retry or contact sales."
+              : text?.trim() || "Unable to submit request."
+        };
+      }
+
+      if (!response.ok || !data?.ok) {
         setStatus("error");
-        setNotice(data?.message ?? "Unable to submit request.");
+        setNotice(data?.message ?? `Unable to submit request (HTTP ${response.status}).`);
         return;
       }
 
@@ -453,9 +467,13 @@ export default function RequestQuoteWizard() {
       });
 
       router.push(`/thank-you?${query.toString()}`);
-    } catch {
+    } catch (error) {
       setStatus("error");
-      setNotice("Unable to submit request.");
+      setNotice(
+        error instanceof Error && error.message
+          ? `Unable to submit request: ${error.message}`
+          : "Unable to submit request."
+      );
     }
   }
 
@@ -907,7 +925,7 @@ export default function RequestQuoteWizard() {
                   onClick={next}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
                   style={{ background: accent }}
-                  disabled={!canContinue(step)}
+                  disabled={status === "loading"}
                 >
                   Next
                 </button>

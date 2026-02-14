@@ -13,7 +13,7 @@ const isServerlessRuntime = Boolean(
     process.env.NOW_REGION
 );
 const requestedStorageMode = (process.env.LEAD_STORAGE_MODE ?? "").trim().toLowerCase();
-const leadStorageMode: "file" | "memory" =
+let leadStorageMode: "file" | "memory" =
   requestedStorageMode === "memory" || requestedStorageMode === "file"
     ? requestedStorageMode
     : isServerlessRuntime
@@ -136,9 +136,11 @@ function ensureStorageReady() {
   }
 
   if (!allowEphemeralStorage) {
-    throw new Error(
-      "LEAD_STORAGE_UNSAFE: serverless runtime detected without durable lead storage. Configure durable storage or set ALLOW_EPHEMERAL_LEADS=true for temporary mode."
+    leadStorageMode = "memory";
+    warnStorage(
+      "Serverless runtime detected without durable storage. Falling back to in-memory lead storage. Configure durable DB/KV for production persistence."
     );
+    return;
   }
 
   warnStorage(

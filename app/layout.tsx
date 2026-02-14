@@ -305,7 +305,7 @@ export default function RootLayout({
                 Working closely with leading OEM ecosystems to deliver the right-fit solution and pricing.
               </p>
               <PartnerDisclaimer />
-              <p className="text-xs">© {year} Conjoin Network Pvt Ltd. All rights reserved.</p>
+              <p className="text-xs">© {year} Conjoin Network Pvt. Ltd. All rights reserved.</p>
             </Container>
           </footer>
         </div>

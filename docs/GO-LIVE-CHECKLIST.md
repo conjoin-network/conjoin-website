@@ -12,6 +12,9 @@ Port: `4310`
 
 ## P0 Stabilization
 
+- [x] PASS: RFQ submit blocker fixed (`/request-quote` step 5 no longer fails with generic error).
+- [x] PASS: Frontend submit now handles non-JSON/server errors with clear user messages.
+- [x] PASS: Backend queue/storage fallbacks prevent silent submission crashes in constrained runtimes.
 - [x] PASS: Responsive logo sizing updated (desktop and mobile ranges tuned).
 - [x] PASS: Mobile drawer safe-area top padding added.
 - [x] PASS: iOS-safe body scroll locking implemented with scroll restore.
@@ -45,5 +48,17 @@ Port: `4310`
 
 ## Remaining Risk Blockers
 
-- [ ] BLOCKER (deployment-dependent): serverless hosts need durable lead storage (DB/KV/volume).  
-  Current guard returns service-unavailable when unsafe storage is detected, to avoid silent lead loss.
+- [ ] RISK (deployment-dependent): serverless hosts still need durable lead storage (DB/KV/volume) for long-term retention.  
+  Runtime now degrades safely and logs warnings, but durable persistence should be configured before scale campaigns.
+
+## Screenshot Proof (Final Pass)
+
+- `docs/screenshots/golive-final-pass/home-desktop-after.png`
+- `docs/screenshots/golive-final-pass/home-mobile-after.png`
+- `docs/screenshots/golive-final-pass/slider-mobile-slide-1.png`
+- `docs/screenshots/golive-final-pass/slider-mobile-slide-2.png`
+- `docs/screenshots/golive-final-pass/slider-mobile-slide-3.png`
+- `docs/screenshots/golive-final-pass/footer-whatsapp-mobile-no-overlap.png`
+- `docs/screenshots/golive-final-pass/rfq-success-desktop.png`
+- `docs/screenshots/golive-final-pass/rfq-success-mobile.png`
+- `docs/screenshots/golive-final-pass/admin-leads-desktop-proof.png`

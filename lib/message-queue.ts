@@ -3,6 +3,21 @@ import path from "node:path";
 
 const dataDir = path.join(process.cwd(), "data");
 const queueFilePath = path.join(dataDir, "message-queue.json");
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+    process.env.NETLIFY ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.NOW_REGION
+);
+const requestedStorageMode = (process.env.LEAD_STORAGE_MODE ?? "").trim().toLowerCase();
+let queueStorageMode: "file" | "memory" =
+  requestedStorageMode === "memory" || requestedStorageMode === "file"
+    ? requestedStorageMode
+    : isServerlessRuntime
+      ? "memory"
+      : "file";
+let queueWarningShown = false;
+let memoryQueue: MessageIntent[] = [];
 
 export type MessageChannel = "whatsapp" | "email";
 export type MessageIntentStatus = "PENDING" | "SENT" | "FAILED";
@@ -20,12 +35,24 @@ export type MessageIntent = {
 };
 
 async function ensureQueueFile() {
+  if (queueStorageMode !== "file") {
+    return;
+  }
+
   await fs.mkdir(dataDir, { recursive: true });
   try {
     await fs.access(queueFilePath);
   } catch {
     await fs.writeFile(queueFilePath, "[]", "utf8");
   }
+}
+
+function warnQueueStorage(message: string) {
+  if (queueWarningShown) {
+    return;
+  }
+  queueWarningShown = true;
+  console.warn("MESSAGE_QUEUE_WARNING", message);
 }
 
 function normalizeIntent(value: unknown): MessageIntent | null {
@@ -57,8 +84,23 @@ function normalizeIntent(value: unknown): MessageIntent | null {
 }
 
 export async function readMessageQueue(): Promise<MessageIntent[]> {
+  if (queueStorageMode === "memory") {
+    return [...memoryQueue].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   await ensureQueueFile();
-  const raw = await fs.readFile(queueFilePath, "utf8");
+  let raw = "[]";
+  try {
+    raw = await fs.readFile(queueFilePath, "utf8");
+  } catch (error) {
+    queueStorageMode = "memory";
+    warnQueueStorage(
+      `Queue file read failed, switching to in-memory mode. ${
+        error instanceof Error ? error.message : "unknown error"
+      }`
+    );
+    return [...memoryQueue];
+  }
   try {
     const parsed = JSON.parse(raw) as unknown[];
     if (!Array.isArray(parsed)) {
@@ -74,10 +116,25 @@ export async function readMessageQueue(): Promise<MessageIntent[]> {
 }
 
 async function writeMessageQueue(intents: MessageIntent[]) {
+  if (queueStorageMode === "memory") {
+    memoryQueue = intents;
+    return;
+  }
+
   await ensureQueueFile();
   const tempPath = `${queueFilePath}.${process.pid}.${Date.now()}.tmp`;
-  await fs.writeFile(tempPath, JSON.stringify(intents, null, 2), "utf8");
-  await fs.rename(tempPath, queueFilePath);
+  try {
+    await fs.writeFile(tempPath, JSON.stringify(intents, null, 2), "utf8");
+    await fs.rename(tempPath, queueFilePath);
+  } catch (error) {
+    queueStorageMode = "memory";
+    memoryQueue = intents;
+    warnQueueStorage(
+      `Queue file write failed, switching to in-memory mode. ${
+        error instanceof Error ? error.message : "unknown error"
+      }`
+    );
+  }
 }
 
 function buildIntentId(channel: MessageChannel) {
