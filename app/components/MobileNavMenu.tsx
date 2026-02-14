@@ -55,7 +55,7 @@ export default function MobileNavMenu() {
         >
           <div
             ref={drawerRef}
-            className="mobile-nav-sheet absolute inset-x-0 top-0 h-full w-full translate-x-0 bg-white px-4 pb-6 pt-4 shadow-[0_14px_30px_rgba(15,23,42,0.1)]"
+            className="mobile-nav-sheet absolute inset-x-0 top-0 h-full w-full translate-x-0 bg-[var(--color-surface)] px-4 pb-6 pt-4 shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
@@ -63,7 +63,7 @@ export default function MobileNavMenu() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40"
               >
                 <span aria-hidden className="text-xl leading-none">×</span>
                 <span className="sr-only">Close menu</span>

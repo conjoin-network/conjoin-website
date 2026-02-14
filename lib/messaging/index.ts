@@ -28,6 +28,12 @@ export async function sendEmail(input: { lead: LeadRecord }): Promise<MessagingR
   try {
     const result = await sendLeadNotification(input.lead);
     if (!result.sent) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          "EMAIL_FALLBACK_QUEUE",
+          JSON.stringify({ leadId: input.lead.leadId, reason: result.reason ?? "Email send failed" })
+        );
+      }
       return { ok: false, reason: result.reason ?? "Email send failed" };
     }
     return { ok: true };

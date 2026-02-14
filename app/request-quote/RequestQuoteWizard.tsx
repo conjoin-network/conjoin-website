@@ -33,6 +33,7 @@ type WizardState = {
   email: string;
   phone: string;
   notes: string;
+  website: string;
   sourcePage: string;
   source: string;
   utmSource: string;
@@ -153,6 +154,7 @@ export default function RequestQuoteWizard() {
       email: "",
       phone: "",
       notes: "",
+      website: "",
       sourcePage: (params.get("source") ?? "/request-quote").trim() || "/request-quote",
       source: (params.get("source") ?? "/request-quote").trim() || "/request-quote",
       utmSource: (params.get("utm_source") ?? "").trim(),
@@ -359,6 +361,7 @@ export default function RequestQuoteWizard() {
           referrer: state.referrer,
           timeline: state.timeline,
           notes: state.notes,
+          website: state.website,
           contactName: state.contactName,
           company: state.company,
           email: state.email,
@@ -776,6 +779,17 @@ export default function RequestQuoteWizard() {
                       className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
                     />
                   </label>
+                  <div className="hidden" aria-hidden="true">
+                    <label>
+                      Website
+                      <input
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={state.website}
+                        onChange={(event) => patch({ website: event.target.value })}
+                      />
+                    </label>
+                  </div>
                 </div>
               </div>
             ) : null}

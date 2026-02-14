@@ -306,6 +306,71 @@ Files touched in this email consistency pass:
   - CSV export (`/api/admin/leads/export`) ✅
   - WhatsApp send/webhook fallback (missing env) returns graceful `503` message ✅
 
+## 11) Go-Live Morning Pass (14 Feb 2026)
+
+### Homepage first-impression upgrades
+
+- Added a premium homepage hero carousel (`/`) with:
+  - 4 slides
+  - autoplay every `2000ms`
+  - infinite loop
+  - fade transition
+  - pause on hover (desktop)
+  - pause while swiping (mobile)
+  - dot indicators + desktop-only prev/next arrows
+- Added stable hero height and fixed image dimensions to avoid CLS.
+- Kept heading hierarchy SEO-safe (`h1` + structured sections).
+
+### UI polish and mobile safety
+
+- Header surface moved to variable-driven background for better readability in light/dark color schemes.
+- Mobile menu sheet updated to token-based surface colors.
+- Floating WhatsApp button adjusted with safe-area right/bottom offsets and larger request-quote route offset to avoid CTA overlap.
+- Reduced motion load on mobile:
+  - disabled hero breathing animation on small screens
+  - disabled CTA pulse and reveal effects on small screens
+
+### API and messaging hardening
+
+- `/api/quote`:
+  - explicit invalid JSON handling (`400`)
+  - existing Zod validation + rate limit + honeypot retained
+- `/api/lead`:
+  - existing Zod validation + rate limit + honeypot retained
+- Email fallback:
+  - non-throwing SMTP behavior
+  - clear dev warnings (`EMAIL_NOT_CONFIGURED`, `EMAIL_FALLBACK_QUEUE`)
+  - no runtime 500 from missing optional email envs
+
+### Known limits (current release)
+
+- Rate limiting is in-memory and instance-local (works for single instance, not distributed globally).
+- Message queue is file-based (`data/message-queue.json`) and local to deployment instance.
+- WhatsApp provider remains optional and defaults to no-op unless enabled with provider credentials.
+- Lighthouse report still requires browser-side run (DevTools) in network-enabled environment.
+
+### Final QA commands
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm build
+lsof -ti :4310 | xargs kill -9 2>/dev/null || true
+PORT=4310 pnpm start
+```
+
+### Vercel deployment steps (quick)
+
+1. Import repository `conjoin-network/conjoin-website` in Vercel.
+2. Framework preset: Next.js (`build`: `pnpm build`, `start`: `pnpm start`).
+3. Set required environment variables (`SMTP_*`, `MAIL_FROM`, `LEADS_EMAIL`, `ADMIN_PASSWORD`).
+4. Add optional integrations (`WHATSAPP_*`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_URL`).
+5. Add domains (`conjoinnetwork.com`, `www.conjoinnetwork.com`) and verify DNS.
+6. Deploy and run post-deploy checks:
+   - `/`, `/request-quote`, `/contact`, `/thank-you`
+   - `/robots.txt`, `/sitemap.xml`
+   - one test quote and one test contact lead.
+
 ## 11) GitHub + Vercel Handoff
 
 - GitHub repository: `https://github.com/conjoin-network/conjoin-website.git`

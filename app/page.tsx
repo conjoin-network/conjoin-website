@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import Card from "@/app/components/Card";
-import PageHero from "@/app/components/PageHero";
+import HeroCarousel from "@/app/components/HeroCarousel";
 import Section from "@/app/components/Section";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import RelatedLinks from "@/app/components/RelatedLinks";
@@ -41,28 +41,13 @@ export default function Home() {
   return (
     <div>
       <Section className="pb-10 pt-10 md:pb-14 md:pt-12">
-        <div className="space-y-4">
-          <PageHero
-            title="Microsoft, Seqrite & Cisco Solutions for Business Teams"
-            subtitle="Licensing, migration, security, renewals & support — procurement-ready proposals."
-            ctas={[
-              {
-                href: "/request-quote",
-                label: "Request a Quote"
-              },
-              {
-                href: "#solutions",
-                label: "Browse Solutions",
-                variant: "secondary"
-              }
-            ]}
-            bullets={[
-              "Since 2014",
-              "Response in 15 minutes (business hours)",
-              "Chandigarh Tricity + North India coverage"
-            ]}
-            microcopy="Request a quote (best price + compliance-ready proposal). Get renewal reminders & license management."
-          />
+        <div className="space-y-5">
+          <HeroCarousel />
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--color-text-secondary)]">
+            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1">Microsoft</span>
+            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1">Seqrite</span>
+            <span className="rounded-full border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-1">Cisco</span>
+          </div>
           <div className="pt-1">
             <Link
               href="#solutions"

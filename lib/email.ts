@@ -24,6 +24,9 @@ function getConfiguredTransport() {
 export async function sendLeadNotification(lead: LeadRecord) {
   const transporter = getConfiguredTransport();
   if (!transporter) {
+    if (process.env.NODE_ENV !== "production") {
+      console.warn("EMAIL_NOT_CONFIGURED", JSON.stringify({ leadId: lead.leadId, destination: process.env.LEADS_EMAIL ?? LEADS_EMAIL }));
+    }
     return { sent: false, reason: "SMTP not configured" };
   }
 
@@ -32,15 +35,19 @@ export async function sendLeadNotification(lead: LeadRecord) {
   const recipients = primary;
 
   const internal = buildInternalLeadTemplate(lead);
-
-  await transporter.sendMail({
-    from: `"${internal.fromName}" <${fromAddress}>`,
-    replyTo: internal.replyTo,
-    to: recipients,
-    subject: internal.subject,
-    text: internal.text,
-    html: internal.html
-  });
+  try {
+    await transporter.sendMail({
+      from: `"${internal.fromName}" <${fromAddress}>`,
+      replyTo: internal.replyTo,
+      to: recipients,
+      subject: internal.subject,
+      text: internal.text,
+      html: internal.html
+    });
+  } catch (error) {
+    console.error("LEAD_EMAIL_SEND_FAILED", error instanceof Error ? error.message : "Unknown email error");
+    return { sent: false, reason: "Email provider unavailable" };
+  }
 
   const customer = buildCustomerLeadTemplate(lead);
   try {

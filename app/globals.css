@@ -170,7 +170,7 @@ textarea:focus-visible {
 .header-icon-btn {
   border-radius: 0.8rem;
   border: 1px solid var(--color-border);
-  background: #fff;
+  background: var(--color-surface);
   box-shadow: 0 10px 20px -18px rgb(11 32 63 / 38%);
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
@@ -196,6 +196,7 @@ textarea:focus-visible {
 }
 
 .floating-whatsapp {
+  right: calc(env(safe-area-inset-right, 0px) + 1rem);
   bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
   box-shadow: 0 12px 25px -14px rgba(18, 140, 126, 0.9);
 }
@@ -318,6 +319,10 @@ textarea:focus-visible {
 }
 
 @media (max-width: 767px) {
+  .hero-panel {
+    animation: none;
+  }
+
   .brand-mark {
     height: 2.9rem;
     width: 2.9rem;
@@ -326,5 +331,38 @@ textarea:focus-visible {
   .brand-image {
     height: 2.55rem;
     width: 2.55rem;
+  }
+
+  .cta-pulse {
+    animation: none;
+  }
+
+  .scroll-cue,
+  .section-revealed {
+    animation: none;
+  }
+
+  .floating-whatsapp {
+    right: calc(env(safe-area-inset-right, 0px) + 0.85rem);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1.1rem);
+  }
+
+  .floating-whatsapp.is-form-route {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 7rem);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: var(--color-page-bg);
+    color: var(--color-text-primary);
+  }
+
+  .hero-panel {
+    border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+    background:
+      radial-gradient(circle at 88% 12%, rgb(75 141 255 / 19%), transparent 44%),
+      radial-gradient(circle at 12% 92%, rgb(20 184 166 / 12%), transparent 38%),
+      linear-gradient(180deg, #101a2f, #0f1729);
   }
 }

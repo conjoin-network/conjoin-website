@@ -75,8 +75,7 @@ const quotePayloadSchema = z.object({
   contactName: z.string().trim().min(1, "Contact name is required."),
   company: z.string().trim().min(1, "Company name is required."),
   email: z.string().trim().email("Please enter a valid business email."),
-  phone: z.string().trim().min(8, "Phone number is required.")
-  ,
+  phone: z.string().trim().min(8, "Phone number is required."),
   website: z.string().optional()
 });
 
@@ -130,8 +129,17 @@ export async function POST(request: Request) {
     );
   }
 
+  let rawPayload: QuotePayload;
   try {
-    const rawPayload = (await request.json()) as QuotePayload;
+    rawPayload = (await request.json()) as QuotePayload;
+  } catch {
+    return NextResponse.json(
+      { ok: false, message: "Invalid request payload. Please try again." },
+      { status: 400 }
+    );
+  }
+
+  try {
     const parsed = quotePayloadSchema.safeParse(rawPayload);
     if (!parsed.success) {
       const issueMessage = parsed.error.issues[0]?.message;

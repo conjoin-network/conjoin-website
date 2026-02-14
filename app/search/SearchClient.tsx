@@ -190,7 +190,7 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
             }}
             onKeyDown={onKeyDown}
             placeholder="Search brands or categories"
-            className="w-full rounded-xl border border-[#e5e7eb] bg-white px-4 py-3.5 text-base text-[var(--color-text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] placeholder:text-[#9ca3af] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] focus:outline-none md:text-sm"
+            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 text-base text-[var(--color-text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] placeholder:text-[var(--color-text-secondary)] focus:border-[var(--color-primary)] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] focus:outline-none md:text-sm"
           />
           <p className="text-xs text-[var(--color-text-secondary)]">
             Tip: use <kbd className="rounded border px-1 py-0.5">⌘K</kbd> / <kbd className="rounded border px-1 py-0.5">Ctrl+K</kbd>
@@ -200,10 +200,10 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
         <div className="space-y-4">
           {isSearching ? (
             <Card className="space-y-3 p-4">
-              <div className="h-3 w-24 animate-pulse rounded bg-slate-200" />
+              <div className="h-3 w-24 animate-pulse rounded bg-[var(--color-border)]" />
               <div className="space-y-2">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <div key={`search-skeleton-${index}`} className="h-10 animate-pulse rounded-lg bg-slate-100" />
+                  <div key={`search-skeleton-${index}`} className="h-10 animate-pulse rounded-lg bg-[var(--color-alt-bg)]" />
                 ))}
               </div>
             </Card>
@@ -214,7 +214,7 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
           ) : (
             grouped.map((section) => (
               <Card key={section.group} className="space-y-2 p-3">
-                <h2 className="px-1 text-xs font-semibold uppercase tracking-[0.08em] text-[#64748b]">{section.group}</h2>
+                <h2 className="px-1 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">{section.group}</h2>
                 <ul className="space-y-1">
                   {section.items.map((entry) => {
                     const globalIndex = flatIndexMap.get(entry.id) ?? -1;
@@ -225,12 +225,12 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
                           href={entry.url}
                           className={`block rounded-lg px-3 py-2 text-sm transition ${
                             active
-                              ? "bg-[#f3f4f6] text-[var(--color-text-primary)]"
-                              : "text-[var(--color-text-primary)] hover:bg-[#f3f4f6]"
+                              ? "bg-[var(--color-alt-bg)] text-[var(--color-text-primary)]"
+                              : "text-[var(--color-text-primary)] hover:bg-[var(--color-alt-bg)]"
                           }`}
                         >
                           <div className="flex items-center gap-2">
-                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#94a3b8]" aria-hidden />
+                            <span className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--color-text-secondary)]/70" aria-hidden />
                             <p className="font-medium">{entry.title}</p>
                           </div>
                           <p className="text-xs text-[var(--color-text-secondary)]">{entry.description}</p>

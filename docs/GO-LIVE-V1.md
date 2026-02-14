@@ -41,3 +41,32 @@
 - No OEM technical specs were altered in this pass.
 - Product names and route copy remain procurement-oriented and non-claiming.
 - Partner/trademark disclaimer remains in place.
+
+## Vercel Go-Live Steps
+1. Import GitHub repo: `conjoin-network/conjoin-website`.
+2. Use Next.js defaults with PNPM:
+   - Build command: `pnpm build`
+   - Start command: `pnpm start`
+3. Configure required environment variables:
+   - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+   - `MAIL_FROM`, `LEADS_EMAIL`, `ADMIN_PASSWORD`
+4. Configure optional variables:
+   - `WHATSAPP_PROVIDER`, `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`
+   - `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_WHATSAPP_URL`
+5. Add and verify domains:
+   - `conjoinnetwork.com` (apex)
+   - `www.conjoinnetwork.com`
+
+## Known Limits
+- In-memory rate limiting is per-instance and not globally shared across multiple regions/instances.
+- File-backed lead/message storage is local; production multi-instance deployments should migrate to managed DB/queue.
+- If SMTP is missing, lead notifications degrade safely (lead is still saved, warnings logged, no crash).
+
+## Final QA Commands
+```bash
+pnpm lint
+pnpm typecheck
+pnpm build
+lsof -ti :4310 | xargs kill -9 2>/dev/null || true
+PORT=4310 pnpm start
+```
