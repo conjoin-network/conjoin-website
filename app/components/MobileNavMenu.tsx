@@ -9,6 +9,7 @@ export default function MobileNavMenu() {
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     document.body.classList.toggle("menu-open-lock", open);
@@ -32,6 +33,46 @@ export default function MobileNavMenu() {
     };
   }, [open]);
 
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    closeButtonRef.current?.focus();
+
+    function trapFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab" || !drawerRef.current) {
+        return;
+      }
+
+      const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+        "a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex='-1'])"
+      );
+      if (focusable.length === 0) {
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    window.addEventListener("keydown", trapFocus);
+    return () => window.removeEventListener("keydown", trapFocus);
+  }, [open]);
+
   return (
     <div className="relative z-[65]">
       <button
@@ -50,6 +91,9 @@ export default function MobileNavMenu() {
       {open ? (
         <div
           id="mobile-nav-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation"
           className="mobile-nav-overlay fixed inset-0 z-[70] bg-slate-900/30 backdrop-blur-[1px]"
           onClick={() => setOpen(false)}
         >
@@ -61,6 +105,7 @@ export default function MobileNavMenu() {
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-secondary)]">Menu</p>
               <button
+                ref={closeButtonRef}
                 type="button"
                 onClick={() => setOpen(false)}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40"

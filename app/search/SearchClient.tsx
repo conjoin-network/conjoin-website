@@ -192,7 +192,7 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
             }}
             onKeyDown={onKeyDown}
             placeholder="Search brands or categories"
-            className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3.5 text-base text-[var(--color-text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] placeholder:text-[var(--color-text-secondary)] focus:border-[var(--color-primary)] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] focus:outline-none md:text-sm"
+            className="h-[42px] w-full rounded-[10px] border border-[var(--color-border)] bg-[var(--color-surface)] px-[14px] text-sm text-[var(--color-text-primary)] shadow-[0_2px_8px_rgba(0,0,0,0.04)] placeholder:text-[var(--color-text-secondary)] focus:border-[#2563eb] focus:shadow-[0_0_0_4px_rgba(37,99,235,0.15)] focus:outline-none"
           />
           <p className="text-xs text-[var(--color-text-secondary)]">
             Tip: use <kbd className="rounded border px-1 py-0.5">⌘K</kbd> / <kbd className="rounded border px-1 py-0.5">Ctrl+K</kbd>

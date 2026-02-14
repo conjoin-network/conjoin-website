@@ -106,7 +106,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
       >
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]/96">
+          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
             <Container className="min-h-[68px] py-2.5 md:min-h-[82px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
