@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
@@ -30,8 +30,28 @@ function inferCity(pathname: string) {
 export default function FloatingWhatsApp() {
   const pathname = usePathname() ?? "/";
   const [nearFooter, setNearFooter] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(900);
   const hiddenByPath = pathname.startsWith("/admin") || pathname.startsWith("/api");
   const isFormRoute = pathname.startsWith("/request-quote");
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const updateHeight = () => {
+      setViewportHeight(window.innerHeight);
+    };
+
+    updateHeight();
+    window.addEventListener("resize", updateHeight, { passive: true });
+    window.addEventListener("orientationchange", updateHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+    };
+  }, []);
 
   useEffect(() => {
     const footer = document.querySelector("footer");
@@ -57,6 +77,14 @@ export default function FloatingWhatsApp() {
   const city = inferCity(pathname);
   const requirement = pathname.startsWith("/products/") ? "Product advisory" : "Quote support";
   const href = getWhatsAppLink(buildQuoteMessage({ brand, city, requirement }));
+  const isShortViewport = viewportHeight < 720;
+  const bottomOffset = useMemo(() => {
+    let next = isFormRoute ? (isShortViewport ? 124 : 108) : (isShortViewport ? 28 : 20);
+    if (nearFooter) {
+      next = Math.max(next, isShortViewport ? 126 : 106);
+    }
+    return next;
+  }, [isFormRoute, isShortViewport, nearFooter]);
 
   if (hiddenByPath) {
     return null;
@@ -69,6 +97,7 @@ export default function FloatingWhatsApp() {
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
       className={`floating-whatsapp interactive-btn fixed z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
+      style={{ "--floating-bottom-offset": `${bottomOffset}px` } as CSSProperties}
     >
       WhatsApp
     </a>

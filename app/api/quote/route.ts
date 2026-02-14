@@ -347,6 +347,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("QUOTE_ROUTE_ERROR", error);
+    if (error instanceof Error && error.message.includes("LEAD_STORAGE_UNSAFE")) {
+      return serviceUnavailable("Lead capture storage is not configured. Please contact support.");
+    }
     return serviceUnavailable();
   }
 }

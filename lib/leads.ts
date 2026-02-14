@@ -6,6 +6,22 @@ import { LEAD_PRIORITIES, LEAD_STATUSES } from "@/lib/quote-catalog";
 const dataDir = path.join(process.cwd(), "data");
 const dataFilePath = path.join(dataDir, "leads.json");
 let writeQueue: Promise<unknown> = Promise.resolve();
+const isServerlessRuntime = Boolean(
+  process.env.VERCEL ||
+    process.env.NETLIFY ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.NOW_REGION
+);
+const requestedStorageMode = (process.env.LEAD_STORAGE_MODE ?? "").trim().toLowerCase();
+const leadStorageMode: "file" | "memory" =
+  requestedStorageMode === "memory" || requestedStorageMode === "file"
+    ? requestedStorageMode
+    : isServerlessRuntime
+      ? "memory"
+      : "file";
+const allowEphemeralStorage = process.env.ALLOW_EPHEMERAL_LEADS === "true";
+let storageWarningShown = false;
+let memoryLeads: LeadRecord[] = [];
 
 export type LeadActivityNote = {
   id: string;
@@ -93,12 +109,43 @@ type NewLeadInput = Omit<
 >;
 
 async function ensureDataFile() {
+  if (leadStorageMode !== "file") {
+    return;
+  }
+
   await fs.mkdir(dataDir, { recursive: true });
   try {
     await fs.access(dataFilePath);
   } catch {
     await fs.writeFile(dataFilePath, "[]", "utf8");
   }
+}
+
+function warnStorage(message: string) {
+  if (storageWarningShown) {
+    return;
+  }
+
+  storageWarningShown = true;
+  console.warn("LEAD_STORAGE_WARNING", message);
+}
+
+function ensureStorageReady() {
+  if (!isServerlessRuntime) {
+    return;
+  }
+
+  if (!allowEphemeralStorage) {
+    throw new Error(
+      "LEAD_STORAGE_UNSAFE: serverless runtime detected without durable lead storage. Configure durable storage or set ALLOW_EPHEMERAL_LEADS=true for temporary mode."
+    );
+  }
+
+  warnStorage(
+    leadStorageMode === "memory"
+      ? "Running with in-memory lead storage in serverless mode. Data can reset on cold starts/deployments."
+      : "Running file-backed lead storage in serverless mode. Local disk can be ephemeral."
+  );
 }
 
 function toString(value: unknown) {
@@ -215,6 +262,12 @@ function normalizeLead(raw: unknown): LeadRecord | null {
 }
 
 export async function readLeads(): Promise<LeadRecord[]> {
+  ensureStorageReady();
+
+  if (leadStorageMode === "memory") {
+    return memoryLeads;
+  }
+
   await ensureDataFile();
   const raw = await fs.readFile(dataFilePath, "utf8");
   try {
@@ -230,6 +283,13 @@ export async function readLeads(): Promise<LeadRecord[]> {
 }
 
 async function writeLeads(leads: LeadRecord[]) {
+  ensureStorageReady();
+
+  if (leadStorageMode === "memory") {
+    memoryLeads = leads;
+    return;
+  }
+
   await ensureDataFile();
   const tempPath = `${dataFilePath}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2, 10)}.tmp`;
   await fs.writeFile(tempPath, JSON.stringify(leads, null, 2), "utf8");

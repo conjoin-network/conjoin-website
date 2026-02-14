@@ -10,11 +10,31 @@ export default function MobileNavMenu() {
   const [open, setOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
-    document.body.classList.toggle("menu-open-lock", open);
+    const body = document.body;
+    if (!open) {
+      body.classList.remove("menu-open-lock");
+      return;
+    }
+
+    scrollYRef.current = window.scrollY;
+    body.classList.add("menu-open-lock");
+    body.style.position = "fixed";
+    body.style.top = `-${scrollYRef.current}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
     return () => {
-      document.body.classList.remove("menu-open-lock");
+      body.classList.remove("menu-open-lock");
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollYRef.current);
     };
   }, [open]);
 
@@ -104,7 +124,8 @@ export default function MobileNavMenu() {
         >
           <div
             ref={drawerRef}
-            className="mobile-nav-sheet absolute inset-x-0 top-0 h-[100dvh] w-full translate-x-0 bg-[var(--color-surface)] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] pt-4 shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
+            className="mobile-nav-sheet absolute inset-x-0 top-0 h-[100dvh] w-full translate-x-0 bg-[var(--color-surface)] px-4 pb-[calc(env(safe-area-inset-bottom,0px)+1.25rem)] shadow-[0_14px_30px_rgba(15,23,42,0.18)]"
+            style={{ paddingTop: "calc(env(safe-area-inset-top, 0px) + 1rem)" }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[var(--color-border)] pb-3">
@@ -120,7 +141,10 @@ export default function MobileNavMenu() {
               </button>
             </div>
 
-            <nav className="mt-4 flex max-h-[calc(100dvh-8rem)] flex-col gap-1 overflow-y-auto pr-1">
+            <nav
+              className="mt-4 flex flex-col gap-1 overflow-y-auto pr-1"
+              style={{ maxHeight: "calc(100dvh - env(safe-area-inset-top, 0px) - 8rem)" }}
+            >
               {PRIMARY_NAV_LINKS.map((link) => {
                 const active = isNavActive(pathname, link);
                 return (

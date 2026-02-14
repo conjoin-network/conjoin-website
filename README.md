@@ -75,6 +75,12 @@ SMTP_USER=""
 SMTP_PASS=""
 MAIL_FROM="sales@conjoinnetwork.com"
 
+# Lead storage behavior
+# file (recommended for VPS/container with writable volume) | memory
+LEAD_STORAGE_MODE="file"
+# For serverless only: set true only for temporary demos (data can reset)
+ALLOW_EPHEMERAL_LEADS="false"
+
 # Optional WhatsApp API skeleton config
 WHATSAPP_VERIFY_TOKEN=""
 WHATSAPP_PROVIDER=""
@@ -115,6 +121,12 @@ Optional cleanup before retrying:
 rm -rf .next
 ```
 
+### Port 4310 helper
+```bash
+lsof -ti :4310 | xargs kill -9 2>/dev/null || true
+PORT=4310 pnpm dev
+```
+
 ### Production-mode local check
 
 ```bash
@@ -141,3 +153,5 @@ npm run start:4310
 - HTTPS is enforced by production hosting/edge (for example Vercel/Cloudflare). Local development runs on `http://localhost:4310`.
 - Admin pages are non-indexable and robots-disallowed (`/admin/*`).
 - Security headers are enabled globally (`nosniff`, `referrer-policy`, `permissions-policy`) with CSP in report-only mode.
+- `.env.local` and all `.env*` files are git-ignored; never commit secrets.
+- For serverless deployments, use durable storage for leads (DB/KV/volume). File/memory modes are not durable.

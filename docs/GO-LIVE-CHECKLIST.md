@@ -1,60 +1,49 @@
-# Go-Live Checklist (ConjoinNetwork Phase-1)
+# Conjoin Go-Live Checklist (Makhan Pass)
 
-## Domain & Security
-- [ ] Production domain points to active deployment (`conjoinnetwork.com`)
-- [ ] SSL certificate valid for apex + www (if used)
-- [ ] `NEXT_PUBLIC_SITE_URL` set to `https://conjoinnetwork.com`
-- [ ] Owner credentials set (`OWNER_USER` / `OWNER_PASS`)
-- [ ] Optional role credentials set (`MANAGER_*`, `AGENT_*`, `SUPPORT_*`)
-- [ ] `ADMIN_SESSION_SECRET` set in production
+Date: 2026-02-14  
+Repo: `/Users/msleox/Documents/conjoin/web`  
+Port: `4310`
 
-## Indexing
-- [ ] `https://conjoinnetwork.com/robots.txt` returns 200
-- [ ] `https://conjoinnetwork.com/sitemap.xml` returns 200
-- [ ] `/admin/` disallowed in robots and admin pages return noindex meta
-- [ ] Search Console sitemap submitted
-- [ ] Bing Webmaster sitemap submitted
+## Baseline
 
-## Analytics & Conversion Tracking (Placeholder Ready)
-- [ ] GA4 property created and placeholder script plan approved
-- [ ] Conversion events TODO documented (`rfq_submit`, `whatsapp_click`, `call_click`)
-- [ ] UTM parameters visible in `/admin/leads` for campaign traffic
+- [x] PASS: Working directory guard (`scripts/ensure-workdir.sh`) blocks non-conjoin paths.
+- [x] PASS: Port cleanup command verified (`lsof -ti :4310 | xargs kill -9 2>/dev/null || true`).
+- [x] PASS: Dependencies installed (`pnpm i`).
 
-## Core Route Smoke Check
-- [ ] `/`
-- [ ] `/brands`
-- [ ] `/categories`
-- [ ] `/knowledge`
-- [ ] `/search`
-- [ ] `/request-quote`
-- [ ] `/thank-you`
-- [ ] `/microsoft`
-- [ ] `/seqrite`
-- [ ] `/cisco`
-- [ ] `/campaigns/microsoft-365`
-- [ ] `/campaigns/seqrite-endpoint`
-- [ ] `/campaigns/cisco-security`
-- [ ] All `/brands/<slug>` routes return 200
-- [ ] All `/categories/<slug>` routes return 200
-- [ ] `/brands` shows all tiles as LIVE
+## P0 Stabilization
 
-## Lead Flow Validation
-- [ ] Submit RFQ from each campaign page
-- [ ] Verify lead saved in `data/leads.json`
-- [ ] Verify `QUOTE_LEAD` server log appears
-- [ ] Verify thank-you page shows lead context
-- [ ] Verify WhatsApp prefill contains brand, city and requirement
-- [ ] Verify admin can assign/status-update from `/admin/leads`
+- [x] PASS: Responsive logo sizing updated (desktop and mobile ranges tuned).
+- [x] PASS: Mobile drawer safe-area top padding added.
+- [x] PASS: iOS-safe body scroll locking implemented with scroll restore.
+- [x] PASS: Floating WhatsApp uses computed bottom offset variable and footer/form avoidance.
+- [x] PASS: Search sticky offset aligned to header height with shared CSS vars.
+- [x] PASS: Lead storage fail-safe added for serverless (`LEAD_STORAGE_MODE` + `ALLOW_EPHEMERAL_LEADS` guard).
+- [x] PASS: `.env*` ignored, documented in README.
+- [x] PASS: `data/leads.json` sanitized for production (emptied).
 
-## UX QA (Mobile + Desktop)
-- [ ] Hero above fold is concise (headline, subhead, 2 CTAs, trust bullets)
-- [ ] No long paragraph walls in top sections
-- [ ] Buttons/links have hover and keyboard focus states
-- [ ] Navigation active state is visible
-- [ ] No overflow or broken layout on 360px mobile width
+## Lead + CRM Flow
 
-## Compliance QA
-- [ ] Trademark/partner disclaimer visible in footer
-- [ ] Disclaimer present on campaign/brand/product pages
-- [ ] No distributor mentions or implied OEM affiliation claims
-- [ ] No unsourced OEM specs or invented inclusions
+- [x] PASS: Microsoft RFQ submission -> lead creation -> admin list visibility.
+- [x] PASS: Seqrite RFQ submission -> lead creation -> admin list visibility.
+- [x] PASS: Admin assignment/status/note persistence verified after refresh.
+
+## Route/Health Sweep
+
+- [x] PASS: `/, /brands, /knowledge, /search, /request-quote, /thank-you`
+- [x] PASS: `/microsoft, /seqrite, /cisco`
+- [x] PASS: `/campaigns/microsoft-365, /campaigns/seqrite-endpoint, /campaigns/cisco-security`
+- [x] PASS: `/locations/chandigarh, /sitemap.xml, /robots.txt`
+
+## Build Gates
+
+- [x] PASS: `pnpm run lint`
+- [x] PASS: `pnpm run typecheck`
+- [x] PASS: `pnpm run build`
+- [x] PASS: `pnpm run qa:smoke`
+- [x] PASS: `pnpm run qa:golive`
+- [x] PASS: `PORT=4310 pnpm start`
+
+## Remaining Risk Blockers
+
+- [ ] BLOCKER (deployment-dependent): serverless hosts need durable lead storage (DB/KV/volume).  
+  Current guard returns service-unavailable when unsafe storage is detected, to avoid silent lead loss.

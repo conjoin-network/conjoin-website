@@ -178,7 +178,7 @@ export default function SearchClient({ initialQuery = "" }: { initialQuery?: str
           </p>
         </header>
 
-        <Card className="sticky top-[4.75rem] z-20 space-y-3 p-4 md:top-[5.5rem] md:p-5">
+        <Card className="search-sticky z-20 space-y-3 p-4 md:p-5">
           <label htmlFor="search-prompt" className="sr-only">
             Search brands or categories
           </label>

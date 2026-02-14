@@ -21,6 +21,11 @@ body {
   overflow-x: clip;
 }
 
+:root {
+  --header-height-mobile: 68px;
+  --header-height-desktop: 82px;
+}
+
 h1,
 h2,
 h3 {
@@ -142,8 +147,8 @@ textarea:focus-visible {
 .brand-mark {
   position: relative;
   display: inline-flex;
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 2.65rem;
+  width: 2.65rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -153,8 +158,8 @@ textarea:focus-visible {
 .brand-image {
   position: relative;
   z-index: 1;
-  height: 2.3rem;
-  width: 2.3rem;
+  height: 2.5rem;
+  width: 2.5rem;
   object-fit: contain;
 }
 
@@ -187,6 +192,7 @@ textarea:focus-visible {
 .menu-open-lock {
   overflow: hidden;
   touch-action: none;
+  overscroll-behavior: contain;
 }
 
 .mobile-nav-overlay {
@@ -199,7 +205,7 @@ textarea:focus-visible {
 
 .floating-whatsapp {
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.25rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--floating-bottom-offset, 20px));
   box-shadow: 0 12px 25px -14px rgba(18, 140, 126, 0.9);
 }
 
@@ -207,18 +213,15 @@ textarea:focus-visible {
   transform: scale(0.98);
 }
 
-.floating-whatsapp.is-form-route {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 6.4rem);
-}
-
-.floating-whatsapp.is-near-footer {
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.75rem);
-}
-
 .menu-open-lock .floating-whatsapp {
   opacity: 0;
   pointer-events: none;
   transform: translateY(10px);
+}
+
+.search-sticky {
+  position: sticky;
+  top: calc(var(--header-height-mobile) + 0.7rem);
 }
 
 .scroll-cue {
@@ -330,8 +333,8 @@ textarea:focus-visible {
   }
 
   .brand-mark {
-    height: 3rem;
-    width: 3rem;
+    height: 2.95rem;
+    width: 2.95rem;
   }
 
   .brand-image {
@@ -350,25 +353,19 @@ textarea:focus-visible {
 
   .floating-whatsapp {
     right: calc(env(safe-area-inset-right, 0px) + 0.9rem);
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 1.35rem);
-  }
-
-  .floating-whatsapp.is-form-route {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 7.25rem);
   }
 }
 
 @media (max-width: 479px) {
-  .floating-whatsapp {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 1.6rem);
+  .brand-mark {
+    height: 2.88rem;
+    width: 2.88rem;
   }
+}
 
-  .floating-whatsapp.is-form-route {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 7.75rem);
-  }
-
-  .floating-whatsapp.is-near-footer {
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 6.75rem);
+@media (min-width: 768px) {
+  .search-sticky {
+    top: calc(var(--header-height-desktop) + 0.7rem);
   }
 }
 
