@@ -6,6 +6,11 @@ export type PrimaryNavLink = {
 
 export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
   {
+    href: "/solutions",
+    label: "Solutions",
+    matchPrefix: "/solutions"
+  },
+  {
     href: "/microsoft",
     label: "Microsoft",
     matchPrefix: "/microsoft"
@@ -19,11 +24,6 @@ export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
     href: "/brands",
     label: "Brands",
     matchPrefix: "/brands"
-  },
-  {
-    href: "/locations/chandigarh",
-    label: "Locations",
-    matchPrefix: "/locations"
   },
   {
     href: "/knowledge",

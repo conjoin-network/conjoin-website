@@ -2,7 +2,18 @@ import type { MetadataRoute } from "next";
 import { SITE_INDEX } from "@/lib/site-index";
 import { absoluteUrl } from "@/lib/seo";
 
-const STATIC_ROUTES = ["/", "/brands", "/categories", "/knowledge", "/locations", "/products", "/request-quote", "/search"];
+const STATIC_ROUTES = [
+  "/",
+  "/brands",
+  "/categories",
+  "/solutions",
+  "/commercial",
+  "/knowledge",
+  "/locations",
+  "/products",
+  "/request-quote",
+  "/search"
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const seen = new Set<string>();

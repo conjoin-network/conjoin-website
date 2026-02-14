@@ -238,6 +238,12 @@ export default function RootLayout({
                     <Link href="/products" className="hover:underline">
                       Products
                     </Link>
+                    <Link href="/solutions" className="hover:underline">
+                      Solutions
+                    </Link>
+                    <Link href="/commercial" className="hover:underline">
+                      Commercial
+                    </Link>
                     <Link href="/categories" className="hover:underline">
                       Categories
                     </Link>

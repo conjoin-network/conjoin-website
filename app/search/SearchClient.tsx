@@ -63,13 +63,15 @@ function buildSearchIndex() {
   SITE_INDEX.filter((entry) => !entry.url.startsWith("/brands/") && !entry.url.startsWith("/categories/")).forEach((entry) => {
     let group: SearchGroup = "Knowledge";
 
-    if (entry.url.startsWith("/locations") || entry.category === "Locations") {
-      group = "Locations";
-    } else if (
-      entry.category === "Products" ||
-      entry.url.startsWith("/products") ||
-      entry.url.startsWith("/microsoft") ||
-      entry.url.startsWith("/seqrite") ||
+      if (entry.url.startsWith("/locations") || entry.category === "Locations") {
+        group = "Locations";
+      } else if (
+        entry.category === "Products" ||
+        entry.url.startsWith("/solutions") ||
+        entry.url.startsWith("/commercial") ||
+        entry.url.startsWith("/products") ||
+        entry.url.startsWith("/microsoft") ||
+        entry.url.startsWith("/seqrite") ||
       entry.url.startsWith("/cisco") ||
       entry.url.startsWith("/campaigns")
     ) {

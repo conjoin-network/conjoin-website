@@ -70,3 +70,17 @@ pnpm build
 lsof -ti :4310 | xargs kill -9 2>/dev/null || true
 PORT=4310 pnpm start
 ```
+
+## Butter Smooth URLs (Morning Spot Check)
+- `/`
+- `/solutions`
+- `/solutions/workspace`
+- `/solutions/secure`
+- `/solutions/vision`
+- `/commercial`
+- `/request-quote`
+
+## UX Notes
+- Service lines are modeled as portfolio delivery families (not SaaS plans/SKUs).
+- Homepage carousel is lightweight, accessible, and calm (3-second rotation with manual controls).
+- Primary navigation remains minimal with request-quote CTA always visible.

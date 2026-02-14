@@ -25,7 +25,7 @@ const baseClass =
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "cta-pulse bg-[var(--color-primary)] text-white shadow-[0_8px_20px_-14px_rgba(0,113,227,0.9)] hover:-translate-y-0.5 hover:bg-[var(--color-primary-hover)]",
+    "bg-[var(--color-primary)] text-white shadow-[0_8px_20px_-14px_rgba(0,113,227,0.9)] hover:-translate-y-0.5 hover:bg-[var(--color-primary-hover)]",
   secondary:
     "border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] hover:-translate-y-0.5 hover:border-[var(--color-primary)]/35 hover:bg-[var(--color-alt-bg)]",
   ghost: "text-[var(--color-primary)] hover:underline",

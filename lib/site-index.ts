@@ -3,6 +3,7 @@ import { CATEGORY_PAGES } from "@/lib/categories-data";
 import { KNOWLEDGE_ARTICLES } from "@/lib/knowledge-data";
 import { LOCATION_PAGES } from "@/lib/locations-data";
 import { PRODUCT_PAGES } from "@/lib/products-data";
+import { SOLUTION_LINES } from "@/lib/solutions-data";
 
 export type SiteIndexEntry = {
   title: string;
@@ -109,6 +110,20 @@ const baseEntries: SiteIndexEntry[] = [
     description: "Category-wise IT procurement pathways mapped to live brands.",
     url: "/categories",
     tags: ["categories", "security", "networking", "cloud", "software", "datacenter"],
+    category: "Guides"
+  },
+  {
+    title: "Solutions Portfolio",
+    description: "Service lines for workspace, secure, network, vision and access delivery.",
+    url: "/solutions",
+    tags: ["solutions", "workspace", "security", "networking", "surveillance", "access"],
+    category: "Guides"
+  },
+  {
+    title: "Commercial Model",
+    description: "Quote-led commercial structure for licensing, services and implementation.",
+    url: "/commercial",
+    tags: ["commercial", "quote", "procurement", "implementation"],
     category: "Guides"
   },
   {
@@ -244,11 +259,20 @@ const knowledgeEntries: SiteIndexEntry[] = KNOWLEDGE_ARTICLES.map((article) => (
   category: "Guides"
 }));
 
+const solutionEntries: SiteIndexEntry[] = SOLUTION_LINES.map((solution) => ({
+  title: `${solution.title} Service Line`,
+  description: solution.heroSubtitle,
+  url: `/solutions/${solution.slug}`,
+  tags: [solution.key, "service line", "quote-led", "procurement"],
+  category: "Guides"
+}));
+
 export const SITE_INDEX: SiteIndexEntry[] = [
   ...baseEntries,
   ...brandEntries,
   ...categoryEntries,
   ...productEntries,
   ...locationEntries,
-  ...knowledgeEntries
+  ...knowledgeEntries,
+  ...solutionEntries
 ];

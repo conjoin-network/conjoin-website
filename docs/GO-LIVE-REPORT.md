@@ -430,3 +430,57 @@ Runtime behavior if env is missing:
 - Confirm lead email destination is `leads@conjoinnetwork.com`.
 - Confirm WhatsApp CTA link prefill renders correctly.
 - Verify mobile header/menu/search on Android + iPhone viewports.
+
+## 13) Butter Smooth IA Pass (14 Feb 2026)
+
+### What changed
+
+- Added design-system foundation:
+  - `lib/brand/tokens.ts`
+  - `lib/brand/themes.ts`
+- Added service-line data model:
+  - `lib/solutions-data.ts`
+- Added new routes:
+  - `/solutions`
+  - `/solutions/workspace`
+  - `/solutions/secure`
+  - `/solutions/network`
+  - `/solutions/vision`
+  - `/solutions/access`
+  - `/commercial`
+- Rebuilt homepage IA for one-glance flow:
+  - concise hero with 2 CTAs
+  - lightweight 3-second carousel with play/pause + dots + arrows
+  - five themed service cards
+  - discover/design/deliver section
+  - trust metrics + testimonials
+- Updated navigation, site index, and sitemap for new IA.
+- Extended smoke QA checks to validate:
+  - service-card markers and badge-first DOM order
+  - carousel control markers
+  - themed solution page markers.
+
+### Spot-check URLs
+
+- `/`
+- `/solutions`
+- `/solutions/workspace`
+- `/solutions/secure`
+- `/solutions/vision`
+- `/commercial`
+- `/request-quote`
+
+### Performance note
+
+- No heavy animation dependencies added.
+- Carousel built with React state + CSS transitions only.
+- Motion limited to transform/opacity transitions and reduced-motion-safe behavior.
+
+### Deploy steps for Vercel
+
+1. Import `conjoin-network/conjoin-website`.
+2. Build command: `pnpm build`.
+3. Start command: `pnpm start`.
+4. Configure env vars from `.env.example`.
+5. Attach domains and verify `robots.txt` + `sitemap.xml`.
+6. Submit one RFQ and one contact lead as post-deploy checks.
