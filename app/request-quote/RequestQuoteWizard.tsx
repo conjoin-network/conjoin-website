@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
@@ -47,6 +47,7 @@ type WizardState = {
 const steps = ["Brand", "Product", "Users / Devices", "Deployment", "Contact"] as const;
 const timelineOptions = ["Today", "This Week", "This Month", "Planned Window"] as const;
 const primaryBrands: LeadBrand[] = ["Microsoft", "Seqrite", "Cisco", "Other"];
+const quickSelectBrands: LeadBrand[] = ["Microsoft", "Seqrite"];
 const brandSearchOptions: Array<{ label: string; brand: LeadBrand; note: string }> = [
   { label: "Microsoft", brand: "Microsoft", note: "Microsoft 365 licensing and migration" },
   { label: "Microsoft 365", brand: "Microsoft", note: "Business and enterprise suites" },
@@ -107,7 +108,13 @@ export default function RequestQuoteWizard() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [notice, setNotice] = useState("");
   const [productQuery, setProductQuery] = useState("");
-  const [brandQuery, setBrandQuery] = useState("");
+  const [brandQuery, setBrandQuery] = useState(() => {
+    if (typeof window === "undefined") {
+      return "";
+    }
+    const params = new URLSearchParams(window.location.search);
+    return normalizeBrand(params.get("brand") ?? "").brandLabel || "";
+  });
   const [brandListOpen, setBrandListOpen] = useState(false);
   const [activeBrandIndex, setActiveBrandIndex] = useState(0);
   const brandInputRef = useRef<HTMLInputElement | null>(null);
@@ -157,10 +164,6 @@ export default function RequestQuoteWizard() {
       referrer: typeof window !== "undefined" ? document.referrer : ""
     };
   });
-
-  useEffect(() => {
-    setBrandQuery(state.brandLabel || "");
-  }, [state.brandLabel]);
 
   const filteredBrandOptions = useMemo(() => {
     const query = brandQuery.trim().toLowerCase();
@@ -458,7 +461,7 @@ export default function RequestQuoteWizard() {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Quick select</p>
                   <div className="grid gap-2 sm:grid-cols-2">
-                    {primaryBrands.map((brand) => {
+                    {quickSelectBrands.map((brand) => {
                       const active = state.brand === brand;
                       return (
                         <button

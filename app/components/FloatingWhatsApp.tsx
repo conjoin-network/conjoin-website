@@ -31,6 +31,7 @@ export default function FloatingWhatsApp() {
   const pathname = usePathname() ?? "/";
   const [nearFooter, setNearFooter] = useState(false);
   const hiddenByPath = pathname.startsWith("/admin") || pathname.startsWith("/api");
+  const isFormRoute = pathname.startsWith("/request-quote");
 
   useEffect(() => {
     const footer = document.querySelector("footer");
@@ -67,7 +68,7 @@ export default function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
-      className={`floating-whatsapp interactive-btn fixed right-4 z-40 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white shadow-[0_12px_25px_-15px_rgba(18,140,126,0.9)] transition-all duration-200 ${nearFooter ? "is-near-footer" : ""}`}
+      className={`floating-whatsapp interactive-btn fixed right-4 z-40 inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
     >
       WhatsApp
     </a>

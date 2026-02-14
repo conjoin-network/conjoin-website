@@ -106,16 +106,15 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
       >
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-white/85 backdrop-blur">
+          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-gradient-to-b from-white to-[#fbfcff]">
             <Container className="min-h-[68px] py-2.5 md:min-h-[82px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1 transition hover:bg-[var(--color-alt-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                  className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                 >
                   <span className="brand-mark" aria-hidden>
-                    <span className="brand-halo" />
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
@@ -136,7 +135,7 @@ export default function RootLayout({
                   <Link
                     href="/search"
                     aria-label="Search"
-                    className="interactive-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] focus-visible:outline-none"
+                    className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   >
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
                       <path
@@ -159,10 +158,9 @@ export default function RootLayout({
                   <Link
                     href="/"
                     aria-label="ConjoinNetwork Home"
-                    className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1 transition hover:bg-[var(--color-alt-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
+                    className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-white"
                   >
                     <span className="brand-mark" aria-hidden>
-                      <span className="brand-halo" />
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
@@ -180,7 +178,7 @@ export default function RootLayout({
                     <Link
                       href="/search"
                       aria-label="Search"
-                      className="interactive-btn inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:border-[var(--color-primary)]/35 hover:text-[var(--color-text-primary)] focus-visible:outline-none"
+                      className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     >
                       <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
                         <path

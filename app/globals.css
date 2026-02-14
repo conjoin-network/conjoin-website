@@ -16,6 +16,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+html,
+body {
+  overflow-x: clip;
+}
+
 h1,
 h2,
 h3 {
@@ -59,6 +64,13 @@ button {
 .interactive-card:hover::after,
 .interactive-card:focus-within::after {
   opacity: 1;
+}
+
+.surface-card {
+  border-radius: 1rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
 }
 
 .interactive-link:hover,
@@ -130,36 +142,19 @@ textarea:focus-visible {
 .brand-mark {
   position: relative;
   display: inline-flex;
-  height: 2.45rem;
-  width: 2.45rem;
+  height: 2.5rem;
+  width: 2.5rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
-  isolation: isolate;
-}
-
-.brand-halo {
-  position: absolute;
-  inset: -4px;
-  border-radius: inherit;
-  background: radial-gradient(circle, color-mix(in srgb, var(--color-primary) 18%, transparent) 0%, transparent 72%);
-  opacity: 0.22;
-  transition: opacity 180ms ease, transform 180ms ease;
-  animation: brand-pulse 3.2s ease-in-out infinite;
 }
 
 .brand-image {
   position: relative;
   z-index: 1;
-  height: 2.2rem;
-  width: 2.2rem;
+  height: 2.3rem;
+  width: 2.3rem;
   object-fit: contain;
-}
-
-.brand-link:hover .brand-halo,
-.brand-link:focus-visible .brand-halo {
-  opacity: 0.34;
-  transform: scale(1.04);
 }
 
 .brand-link:hover .brand-mark,
@@ -172,13 +167,51 @@ textarea:focus-visible {
   text-decoration: none;
 }
 
-.brand-mark::after {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
-  opacity: 0.45;
+.header-icon-btn {
+  border-radius: 0.8rem;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  box-shadow: 0 10px 20px -18px rgb(11 32 63 / 38%);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.header-icon-btn:hover,
+.header-icon-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  box-shadow: 0 12px 22px -18px rgb(0 113 227 / 42%);
+  transform: translateY(-1px);
+}
+
+.menu-open-lock {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.mobile-nav-overlay {
+  animation: fade-in 300ms ease-in-out both;
+}
+
+.mobile-nav-sheet {
+  animation: slide-down-in 300ms ease-in-out both;
+}
+
+.floating-whatsapp {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  box-shadow: 0 12px 25px -14px rgba(18, 140, 126, 0.9);
+}
+
+.floating-whatsapp:active {
+  transform: scale(0.98);
+}
+
+.floating-whatsapp.is-form-route {
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 5.5rem);
+}
+
+.floating-whatsapp.is-near-footer {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(16px);
 }
 
 .scroll-cue {
@@ -234,6 +267,28 @@ textarea:focus-visible {
   }
 }
 
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-down-in {
+  from {
+    transform: translateY(-16px);
+    opacity: 0.96;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 @keyframes brand-pulse {
   0%,
   100% {
@@ -255,7 +310,21 @@ textarea:focus-visible {
   .scroll-cue,
   .cta-pulse,
   .section-revealed,
-  .brand-halo {
+  .mobile-nav-overlay,
+  .mobile-nav-sheet,
+  .floating-whatsapp {
     animation: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .brand-mark {
+    height: 2.9rem;
+    width: 2.9rem;
+  }
+
+  .brand-image {
+    height: 2.55rem;
+    width: 2.55rem;
   }
 }

@@ -9,7 +9,7 @@ export default function FaqAccordion({ items }: { items: FaqItem[] }) {
       {items.map((item) => (
         <details
           key={item.question}
-          className="group rounded-2xl border border-[var(--color-border)] bg-white px-5 py-4"
+          className="surface-card group px-5 py-4"
         >
           <summary className="cursor-pointer list-none text-sm font-semibold text-[var(--color-text-primary)]">
             {item.question}

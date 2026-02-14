@@ -18,10 +18,6 @@ export default function MobileNavMenu() {
   }, [open]);
 
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpen(false);
@@ -44,7 +40,7 @@ export default function MobileNavMenu() {
         aria-expanded={open}
         aria-controls="mobile-nav-drawer"
         aria-label="Toggle navigation menu"
-        className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-white text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/30"
+        className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-primary)]"
       >
         <span aria-hidden className="text-lg leading-none">
           ☰

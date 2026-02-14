@@ -25,7 +25,7 @@ export default function RelatedLinks({
           <Link
             key={link.href}
             href={link.href}
-            className="rounded-2xl border border-[var(--color-border)] bg-white p-4 transition hover:border-[var(--color-primary)]/40"
+            className="surface-card p-4 transition hover:border-[var(--color-primary)]/40"
           >
             <p className="text-sm font-semibold text-[var(--color-text-primary)]">{link.title}</p>
             {link.description ? <p className="mt-2 text-xs text-[var(--color-text-secondary)]">{link.description}</p> : null}
