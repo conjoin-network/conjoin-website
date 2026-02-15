@@ -238,6 +238,71 @@ Files touched in this email consistency pass:
 - Added shared email branding + signature source:
   - `lib/emailBrand.ts`
   - `lib/emailSignature.ts`
+
+## 10) Mobile Stabilization Batch (15 Feb 2026)
+
+### Scope completed
+
+- Re-verified path hygiene: no invalid `src/*Users/msleox*` nested paths.
+- Fixed mobile hamburger behavior so route-change close logic no longer self-closes immediately on open.
+- Increased mobile logo visibility while keeping header height clean and stable.
+- Stabilized hero carousel rendering on phone widths (no clipped slides, denser mobile-safe min-height, no empty panel state).
+- Updated screenshot automation to use stable wizard selectors (`data-testid="wizard-next"`), preventing false failures from Next dev tools button labeling.
+- Added viewport QA automation for widths: `360, 375, 390, 414, 768, 1024, 1440`.
+
+### Commands run
+
+```bash
+pnpm run lint
+pnpm run typecheck
+pnpm run build
+BASE_URL=http://127.0.0.1:4310 node scripts/qa-golive.mjs
+BASE_URL=http://127.0.0.1:4310 node scripts/qa-rfq-revenue-pass.mjs
+
+## 11) Soft Go-Live Readiness Batch (15 Feb 2026)
+
+### Completed in this batch
+
+- Hero carousel card readability hardened:
+  - white cards now force slate text for heading/body/badges
+  - carousel controls tuned for dark-on-light contrast
+- Analytics and conversion tracking added:
+  - GA4 page views on route change
+  - Google Ads conversion event on `/thank-you`
+  - optional Clarity script support via env
+- Knowledge hub content readiness completed:
+  - 5 pillar articles live (`Microsoft licensing`, `M365 vs Workspace`, `Seqrite pricing`, `Procurement checklist`, `Renewal & compliance`)
+  - `lastVerified` field added and displayed
+  - removed placeholder “coming soon” wording from key knowledge surfaces
+- Next.js image optimization flags set for AVIF/WebP output.
+
+### Validation
+
+```bash
+pnpm lint
+pnpm typecheck
+pnpm build
+BASE_URL=http://127.0.0.1:4310 node scripts/qa-mobile-layout.mjs
+```
+
+Status:
+
+- Lint: pass
+- Typecheck: pass
+- Build: pass
+- Mobile layout QA script: pass (`25 checks, 0 fails`)
+pnpm run qa:smoke
+BASE_URL=http://127.0.0.1:4310 node scripts/qa-mobile-layout.mjs
+BASE_URL=http://127.0.0.1:4310 node scripts/capture-rfq-proof.mjs
+```
+
+### QA outcomes
+
+- `lint`, `typecheck`, `build`: pass.
+- Route QA: all required routes returned 200 for desktop + mobile user agents.
+- RFQ revenue scenarios: pass with lead IDs persisted and admin workflow update checks passing.
+- Viewport QA (`docs/qa-mobile-layout.json`): 25 checks, 0 failures.
+- Screenshot proofs generated under `docs/screenshots/rfq-revenue-pass/`.
 - Added standardized premium templates:
   - `lib/emailTemplates.ts`
 - Updated lead notification delivery to use branded HTML templates with consistent sender identity:
@@ -318,6 +383,87 @@ Files touched in this email consistency pass:
   - pause on hover (desktop)
   - pause while swiping (mobile)
   - dot indicators + desktop-only prev/next arrows
+
+## 12) Phase-2 Enterprise Upgrade Validation (15 Feb 2026)
+
+### Scope delivered
+
+- Phase-2 foundation completed without breaking Phase-1 RFQ + CRM path.
+- Added enterprise scaffolding for `src/components/ui`, `src/components/sections`, `src/features`, and `src/lib`.
+- Added noindex internal component gallery route: `/ui-kit`.
+- Upgraded CRM signal layer with lead scoring, score filtering, and score export.
+- Upgraded `/brands` experience with debounce search, category filtering, top-OEM toggle, sorting, and pagination.
+- Upgraded brand/product/knowledge detail pages with improved SEO structure and schema blocks.
+- Added RFQ draft persistence (24h), slider quantity UX, WhatsApp opt-in state, and stable QA selectors.
+- Added Prisma schema foundation and seed workflow docs.
+
+### Blockers fixed in this pass
+
+- RFQ/API 503 regression fixed by removing SMTP hard-stop on quote creation:
+  - leads are always captured even when notification providers are unavailable.
+- Legacy CRM SQLite schema migration fixed:
+  - safe `score` column migration and score index creation now run in compatible order.
+- QA automation hardening:
+  - wizard `Next` selector conflict fixed with `data-testid="wizard-next"` and script updates.
+
+### Commands executed (final pass)
+
+```bash
+npm run seed:platform
+npm run lint
+npm run typecheck
+npm run build
+npm run qa:smoke
+npm run qa:golive
+npm run qa:rfq
+npm run qa:rfq:persistence
+lsof -ti :4310 | xargs kill -9 2>/dev/null || true
+PORT=4310 npm run start
+```
+
+### Final QA results
+
+- Build gates: `lint`, `typecheck`, `build` all pass.
+- Route QA (`qa:golive`) pass on desktop + mobile route set.
+- RFQ revenue scenarios (`qa:rfq`) pass with lead IDs generated.
+- Persistence validation (`qa:rfq:persistence`) pass: all expected RFQ IDs found after reload.
+- Production-mode checks pass on `PORT=4310` under `npm run start`.
+
+### Screenshot evidence (after)
+
+Phase-2 screenshot bundle:
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/home-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/home-mobile-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/brands-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/brand-microsoft-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/product-endpoint-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/knowledge-hub-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/knowledge-article-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/rfq-step-1-mobile-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/rfq-step-3-mobile-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/rfq-success-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/rfq-success-mobile-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/admin-leads-list-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/admin-assignment-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/phase2-upgrade/admin-lead-detail-desktop-after.png`
+
+Baseline "before" references from previous release pass:
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/rfq-revenue-pass/home-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/rfq-revenue-pass/hero-right-slider-desktop-after.png`
+- `/Users/msleox/Documents/conjoin/web/docs/screenshots/rfq-revenue-pass/header-logo-mobile-after.png`
+
+### Migration notes
+
+- Full migration and rollback guide:
+  - `/Users/msleox/Documents/conjoin/web/docs/PHASE2-MIGRATION-NOTES.md`
+
+### Phase-2 readiness verdict
+
+`Phase-2 Ready = YES`
+
+Remaining backlog (non-blocking):
+- Wire Prisma runtime client + managed production database for fully durable serverless storage.
+- Expand seeded article catalog from placeholders to reviewed long-form content.
 - Added stable hero height and fixed image dimensions to avoid CLS.
 - Kept heading hierarchy SEO-safe (`h1` + structured sections).
 
@@ -703,3 +849,161 @@ Admin status persistence:
 - `/locations/chandigarh`
 - `/robots.txt`
 - `/sitemap.xml`
+
+## 18) Final Revenue Pass (14 Feb 2026)
+
+### Blocker status
+
+- RFQ submit fetch fixed and verified on `POST /api/quote` (`200` + `rfqId` returned).
+- Frontend uses `fetch("/api/quote")` and maps `rfqId`/`leadId` to thank-you flow.
+- Lead persistence is now CRM-backed SQLite (`data/crm-leads.sqlite`) instead of JSON-file lead storage.
+
+### CRM hardening completed
+
+- Added server-side searchable leads filter (`q`) across:
+  - `leadId`
+  - contact name/company
+  - email/phone
+  - brand/category/tier/city
+- Added UI search box in `/admin/leads` for quick RFQ lookup.
+- Automated admin workflow QA now verifies:
+  - assignment update
+  - status update (`IN_PROGRESS -> QUOTED`)
+  - persistence after reload/restart
+
+### Dummy scenario execution
+
+- Scenario 1 Microsoft 365 (50 seats): PASS
+- Scenario 2 Seqrite endpoint (100 devices): PASS
+- Scenario 3 Surveillance inquiry (multi-site): PASS
+- Scenario 4 Notes empty optional flow: PASS
+- Scenario 5 Missing required contact fields: PASS (blocked client-side, no API call)
+- Scenario 6 Large notes text (500+ chars): PASS
+
+### Persisted IDs after restart
+
+- `LD-20260214-6677`
+- `LD-20260214-6321`
+- `LD-20260214-3523`
+- `LD-20260214-8037`
+- `LD-20260214-5318`
+
+### Screenshot artifacts
+
+- New after-pass set:
+  - `docs/screenshots/rfq-revenue-pass/home-desktop-after.png`
+  - `docs/screenshots/rfq-revenue-pass/home-mobile-after.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-1.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-2.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-3.png`
+  - `docs/screenshots/rfq-revenue-pass/footer-whatsapp-no-overlap-mobile.png`
+  - `docs/screenshots/rfq-revenue-pass/network-post-api-quote-200-proof.png`
+  - `docs/screenshots/rfq-revenue-pass/rfq-success-desktop.png`
+  - `docs/screenshots/rfq-revenue-pass/rfq-success-mobile.png`
+  - `docs/screenshots/rfq-revenue-pass/admin-leads-with-rfq-proof.png`
+- Previous baseline set:
+  - `docs/screenshots/golive-final-pass/*`
+
+### Final command results
+
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run build` ✅
+- `pnpm run qa:smoke` ✅
+- `pnpm run qa:golive` ✅
+- `pnpm run qa:rfq` ✅
+- `pnpm run qa:rfq:shots` ✅
+- `pnpm run qa:rfq:persistence` ✅
+
+## 19) Makhan Polish Pass (14 Feb 2026)
+
+- Header polish:
+  - increased logo size on desktop/mobile with stable header height
+  - no extra blur layer behind logo/search icon
+- Hero right card:
+  - premium capture validated (desktop + mobile)
+  - slides remain dense and stable-height (no blank state)
+- Footer links:
+  - converted to multi-column grid (2 columns default, 3 on large desktop) for faster scan
+  - mobile remains single stacked flow via responsive collapse
+- CRM improvements:
+  - added quick search (`q`) in `/admin/leads` (RFQ ID / phone / email / name)
+  - export endpoint uses same search filter
+
+### Screenshot set (final)
+
+- Before baseline:
+  - `docs/screenshots/golive-final-pass/*`
+- After polish:
+  - `docs/screenshots/rfq-revenue-pass/header-logo-desktop-after.png`
+  - `docs/screenshots/rfq-revenue-pass/header-logo-mobile-after.png`
+  - `docs/screenshots/rfq-revenue-pass/hero-right-slider-desktop-after.png`
+  - `docs/screenshots/rfq-revenue-pass/hero-right-slider-mobile-after.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-1.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-2.png`
+  - `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-3.png`
+  - `docs/screenshots/rfq-revenue-pass/footer-site-links-desktop-after.png`
+  - `docs/screenshots/rfq-revenue-pass/footer-whatsapp-no-overlap-mobile.png`
+  - `docs/screenshots/rfq-revenue-pass/network-post-api-quote-200-proof.png`
+  - `docs/screenshots/rfq-revenue-pass/rfq-success-desktop.png`
+  - `docs/screenshots/rfq-revenue-pass/rfq-success-mobile.png`
+  - `docs/screenshots/rfq-revenue-pass/admin-leads-with-rfq-proof.png`
+
+## 20) Apple Polish + Lead Engine Lock (14 Feb 2026)
+
+### What changed
+
+- RFQ + lead engine:
+  - Re-verified submit path is `POST /api/quote` with loading and error handling.
+  - Re-ran full 6-scenario RFQ dummy suite (`qa:rfq`) and persistence check after restart (`qa:rfq:persistence`).
+  - Confirmed new RFQ IDs are visible in CRM lead list and remain after refresh/restart.
+- CRM route clarity:
+  - Added canonical CRM access routes:
+    - `/crm` (login)
+    - `/crm/leads` (lead list)
+  - Existing `/admin/*` routes remain valid for management pages and API.
+  - Admin login client now accepts `/crm` next-path redirects safely.
+- Credentials/env hardening:
+  - Added support for `CRM_ADMIN_EMAIL` + `CRM_ADMIN_PASSWORD` in session auth fallback chain.
+  - Added CRM env placeholders to `.env.example`.
+- Header/mobile interaction polish:
+  - Increased key icon/button tap targets in header and mobile menu to `44px` minimum (`h-11 w-11` / `min-h-11`).
+  - Maintained clean spacing and logo prominence without layout shift.
+- Footer + floating WhatsApp:
+  - Added near-footer auto-hide behavior for floating WhatsApp to prevent overlap with footer links/CTAs.
+- SEO/schema minimum:
+  - Added global `LocalBusiness` JSON-LD in layout.
+  - Added `Service` JSON-LD on `/solutions/[slug]` pages.
+
+### QA rerun status
+
+- `pnpm run lint` ✅
+- `pnpm run typecheck` ✅
+- `pnpm run build` ✅
+- `pnpm run qa:golive` ✅
+- `pnpm run qa:rfq` ✅
+- `pnpm run qa:rfq:persistence` ✅
+- `pnpm run qa:rfq:shots` ✅
+
+### Route checks
+
+- `200`: `/`, `/request-quote`, `/crm`, `/admin/login`, `/robots.txt`, `/sitemap.xml`
+- Redirect behavior (auth gate expected): `/crm/leads` -> `307` without session, `/admin/leads` -> `307` without session
+- RFQ endpoint behavior:
+  - `GET /api/quote` -> `405` (expected)
+  - `POST /api/quote` -> `200` verified via QA script + network screenshot
+
+### Updated screenshot artifacts
+
+- `docs/screenshots/rfq-revenue-pass/header-logo-desktop-after.png`
+- `docs/screenshots/rfq-revenue-pass/header-logo-mobile-after.png`
+- `docs/screenshots/rfq-revenue-pass/hero-right-slider-desktop-after.png`
+- `docs/screenshots/rfq-revenue-pass/hero-right-slider-mobile-after.png`
+- `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-1.png`
+- `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-2.png`
+- `docs/screenshots/rfq-revenue-pass/slider-mobile-slide-3.png`
+- `docs/screenshots/rfq-revenue-pass/footer-whatsapp-no-overlap-mobile.png`
+- `docs/screenshots/rfq-revenue-pass/network-post-api-quote-200-proof.png`
+- `docs/screenshots/rfq-revenue-pass/rfq-success-desktop.png`
+- `docs/screenshots/rfq-revenue-pass/rfq-success-mobile.png`
+- `docs/screenshots/rfq-revenue-pass/admin-leads-with-rfq-proof.png`

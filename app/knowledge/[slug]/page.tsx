@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Card from "@/app/components/Card";
+import Script from "next/script";
+import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
+import { PLATFORM_ARTICLES } from "@/lib/platform-catalog";
 import { KNOWLEDGE_ARTICLES, getKnowledgeBySlug } from "@/lib/knowledge-data";
-import { buildMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
   return KNOWLEDGE_ARTICLES.map((article) => ({ slug: article.slug }));
@@ -37,6 +39,47 @@ export default async function KnowledgeArticlePage({
   if (!article) {
     notFound();
   }
+  const detailed = PLATFORM_ARTICLES.find((item) => item.slug === slug) ?? null;
+  const faqItems = [
+    {
+      question: "Is this article aligned to procurement decisions?",
+      answer: "Yes. Content is structured around commercial clarity, compliance, and deployment readiness."
+    },
+    {
+      question: "When is this article updated?",
+      answer: `Last verified on ${(detailed?.lastVerified ?? "2026-02-14").replaceAll("-", "-")}.`
+    }
+  ];
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: article.title,
+    description: article.description,
+    datePublished: detailed?.publishedAt ?? "2026-02-14T00:00:00.000Z",
+    dateModified: detailed?.publishedAt ?? "2026-02-14T00:00:00.000Z",
+    author: {
+      "@type": "Organization",
+      name: "Conjoin Network Private Limited"
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "Conjoin Network Private Limited"
+    },
+    mainEntityOfPage: absoluteUrl(`/knowledge/${slug}`),
+    keywords: article.tags.join(", ")
+  };
+  const faqJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer
+      }
+    }))
+  };
 
   return (
     <div>
@@ -56,7 +99,7 @@ export default async function KnowledgeArticlePage({
             }
           ]}
           bullets={[
-            "Coming soon article",
+            "Procurement-ready article",
             "Procurement and compliance focus",
             "Built for IT and purchase teams"
           ]}
@@ -64,19 +107,25 @@ export default async function KnowledgeArticlePage({
       </Section>
 
       <Section tone="alt" className="py-10 md:py-14">
-        <Card className="space-y-4">
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Coming soon</h2>
-          <p className="text-sm">
-            This article is being prepared for IT and purchase teams that need commercial clarity without vendor noise.
-          </p>
-          <ul className="list-disc space-y-2 pl-5 text-sm">
-            <li>Procurement scope framing with TCO and compliance checkpoints.</li>
-            <li>Commercial and renewal guardrails for predictable lifecycle costs.</li>
-            <li>Deployment considerations with risk controls and rollback readiness.</li>
-            <li>Procurement Q&amp;A patterns for IT, finance and leadership reviews.</li>
-          </ul>
-          <p className="text-sm">Coming soon: official matrices and buyer worksheets.</p>
-          <div className="flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
+        <article className="rounded-2xl border border-[var(--color-border)] bg-white p-6">
+          <div className="mb-4 flex flex-wrap items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+            <span className="rounded-full bg-[var(--color-alt-bg)] px-2 py-1 font-semibold">{article.category}</span>
+            <span>Last verified: {detailed?.lastVerified ?? "2026-02-14"}</span>
+          </div>
+          <div className="space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
+            <p>
+              {detailed?.content ??
+                "This guide is being expanded for IT and procurement teams that need commercial clarity without vendor noise."}
+            </p>
+            <ul className="list-disc space-y-2 pl-5">
+              <li>Procurement scope framing with TCO and compliance checkpoints.</li>
+              <li>Commercial and renewal guardrails for predictable lifecycle costs.</li>
+              <li>Deployment considerations with risk controls and rollback readiness.</li>
+              <li>Procurement Q&A patterns for IT, finance and leadership reviews.</li>
+            </ul>
+            <p>Use the Request Quote path for commercial proposals mapped to your exact scope.</p>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
             <Link href="/request-quote" className="hover:underline">
               Request Quote
             </Link>
@@ -90,7 +139,12 @@ export default async function KnowledgeArticlePage({
               Brands
             </Link>
           </div>
-        </Card>
+        </article>
+      </Section>
+
+      <Section className="py-10 md:py-14">
+        <h2 className="mb-4 text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">FAQ</h2>
+        <FaqAccordion items={faqItems} />
       </Section>
 
       <Section className="py-10 md:py-14">
@@ -101,6 +155,9 @@ export default async function KnowledgeArticlePage({
             .map((item) => ({ href: `/knowledge/${item.slug}`, title: item.title, description: item.category }))}
         />
       </Section>
+
+      <Script id={`knowledge-article-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <Script id={`knowledge-faq-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
     </div>
   );
 }

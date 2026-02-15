@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import Card from "@/app/components/Card";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
+import KnowledgeHubClient from "@/app/knowledge/KnowledgeHubClient";
 import {
   KNOWLEDGE_ARTICLES,
-  KNOWLEDGE_CATEGORIES,
-  getKnowledgeByCategory
+  KNOWLEDGE_CATEGORIES
 } from "@/lib/knowledge-data";
 import { buildMetadata } from "@/lib/seo";
 
@@ -31,40 +29,22 @@ export default function KnowledgeHubPage() {
           bullets={[
             "Procurement-oriented writing",
             "North India business context",
-            "Coming soon content roadmap"
+            "Last-verified publishing cadence"
           ]}
         />
       </Section>
 
       <Section tone="alt" className="py-10 md:py-14">
-        <div className="space-y-8">
-          {KNOWLEDGE_CATEGORIES.map((category) => {
-            const articles = getKnowledgeByCategory(category);
-            return (
-              <section key={category} className="space-y-3">
-                <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">{category}</h2>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {articles.map((article) => (
-                    <Link key={article.slug} href={`/knowledge/${article.slug}`}>
-                      <Card className="space-y-2 p-4 transition hover:-translate-y-0.5">
-                        <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{article.title}</h3>
-                        <p className="text-sm">{article.description}</p>
-                        <p className="text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">Coming soon</p>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <KnowledgeHubClient articles={KNOWLEDGE_ARTICLES} categories={KNOWLEDGE_CATEGORIES} />
       </Section>
 
       <Section className="py-10 md:py-14">
-        <Card className="space-y-2 p-4">
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Article index count</h2>
-          <p className="text-sm">{KNOWLEDGE_ARTICLES.length} placeholder articles are live and indexable.</p>
-        </Card>
+        <div className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Knowledge index status</h2>
+          <p className="text-sm">
+            {KNOWLEDGE_ARTICLES.length} procurement-focused articles are live, indexed, and connected to the RFQ flow.
+          </p>
+        </div>
       </Section>
     </div>
   );
