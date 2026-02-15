@@ -1,4 +1,19 @@
-const baseUrl = process.env.BASE_URL || "http://127.0.0.1:4310";
+function readCliBaseUrl() {
+  const args = process.argv.slice(2);
+  const baseIndex = args.findIndex((arg) => arg === "--base");
+  if (baseIndex !== -1) {
+    return args[baseIndex + 1];
+  }
+
+  const inline = args.find((arg) => arg.startsWith("--base="));
+  if (inline) {
+    return inline.slice("--base=".length);
+  }
+
+  return undefined;
+}
+
+const baseUrl = readCliBaseUrl() || process.env.BASE_URL || "http://127.0.0.1:4310";
 
 const checks = [
   {
