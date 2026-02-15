@@ -57,19 +57,13 @@ const heroSlides = [
     title: "Workspace service line",
     description: "Microsoft 365, endpoint governance, and modern workplace rollout.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 md:p-6" style={withThemeStyles("workspace")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("workspace")}>
         <div className="space-y-2">
-          <span
-            className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold"
-            style={{
-              background: "var(--theme-badge-bg)",
-              color: "var(--theme-badge-text)"
-            }}
-          >
+          <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Workspace
           </span>
-          <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Microsoft 365 + Endpoint Governance</h2>
-          <p className="text-sm text-[var(--color-text-secondary)]">Rollout clarity for users, devices, identity, and adoption operations.</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Microsoft 365 + Endpoint Governance</h2>
+          <p className="text-sm text-slate-600">Rollout clarity for users, devices, identity, and adoption operations.</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -80,10 +74,10 @@ const heroSlides = [
           ].map(([title, a, b, c]) => (
             <div
               key={title}
-              className="interactive-card rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_96%,transparent)] p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
             >
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
-              <ul className="mt-2 space-y-1.5 text-xs text-[var(--color-text-secondary)]">
+              <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+              <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
                 {[a, b, c].map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--brand-microsoft)]" />
@@ -99,7 +93,11 @@ const heroSlides = [
           <ButtonLink href="/request-quote?brand=Microsoft&source=/" variant="primary" className="min-h-10 px-4 text-xs">
             Request Quote
           </ButtonLink>
-          <ButtonLink href="/solutions/workspace" variant="secondary" className="min-h-10 px-4 text-xs">
+          <ButtonLink
+            href="/solutions/workspace"
+            variant="secondary"
+            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+          >
             Explore Solutions
           </ButtonLink>
         </div>
@@ -111,19 +109,13 @@ const heroSlides = [
     title: "Secure service line",
     description: "Endpoint, email, and backup resilience for business continuity.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 md:p-6" style={withThemeStyles("secure")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("secure")}>
         <div className="space-y-2">
-          <span
-            className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold"
-            style={{
-              background: "var(--theme-badge-bg)",
-              color: "var(--theme-badge-text)"
-            }}
-          >
+          <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Secure
           </span>
-          <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Security and Resilience Operations</h2>
-          <p className="text-sm text-[var(--color-text-secondary)]">Policy-first rollout for endpoint, email, and recovery governance.</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Security and Resilience Operations</h2>
+          <p className="text-sm text-slate-600">Policy-first rollout for endpoint, email, and recovery governance.</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -143,10 +135,10 @@ const heroSlides = [
           ].map((block) => (
             <div
               key={block.title}
-              className="interactive-card rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_96%,transparent)] p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
             >
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{block.title}</h3>
-              <ul className="mt-2 space-y-1.5 text-xs text-[var(--color-text-secondary)]">
+              <h3 className="text-sm font-semibold text-slate-900">{block.title}</h3>
+              <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
                 {block.bullets.map((bullet) => (
                   <li key={bullet} className="flex items-center gap-2">
                     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--brand-seqrite)]" />
@@ -159,7 +151,11 @@ const heroSlides = [
         </div>
 
         <div className="mt-4 flex items-center justify-between gap-3">
-          <ButtonLink href="/solutions/secure" variant="secondary" className="min-h-10 px-4 text-xs">
+          <ButtonLink
+            href="/solutions/secure"
+            variant="secondary"
+            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+          >
             View details
           </ButtonLink>
           <ButtonLink href="/request-quote?brand=Seqrite&source=/" variant="primary" className="min-h-10 px-4 text-xs">
@@ -174,19 +170,13 @@ const heroSlides = [
     title: "Vision service line",
     description: "Surveillance and monitoring architecture for multi-site operations.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 md:p-6" style={withThemeStyles("vision")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("vision")}>
         <div className="space-y-2">
-          <span
-            className="inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold"
-            style={{
-              background: "var(--theme-badge-bg)",
-              color: "var(--theme-badge-text)"
-            }}
-          >
+          <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Vision
           </span>
-          <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">Surveillance and visibility programs</h2>
-          <p className="text-sm text-[var(--color-text-secondary)]">Coverage, retention, and monitoring workflows aligned for operational continuity.</p>
+          <h2 className="text-2xl font-semibold text-slate-900">Surveillance and visibility programs</h2>
+          <p className="text-sm text-slate-600">Coverage, retention, and monitoring workflows aligned for operational continuity.</p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -197,10 +187,10 @@ const heroSlides = [
           ].map(([title, a, b, c]) => (
             <div
               key={title}
-              className="interactive-card rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_96%,transparent)] p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
             >
-              <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>
-              <ul className="mt-2 space-y-1.5 text-xs text-[var(--color-text-secondary)]">
+              <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+              <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
                 {[a, b, c].map((item) => (
                   <li key={item} className="flex items-center gap-2">
                     <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-[var(--color-primary)]" />
@@ -216,7 +206,11 @@ const heroSlides = [
           <ButtonLink href="/request-quote?brand=Cisco&source=/" variant="primary" className="min-h-10 px-4 text-xs">
             Request Quote
           </ButtonLink>
-          <ButtonLink href="/solutions/vision" variant="secondary" className="min-h-10 px-4 text-xs">
+          <ButtonLink
+            href="/solutions/vision"
+            variant="secondary"
+            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+          >
             Explore Solutions
           </ButtonLink>
         </div>

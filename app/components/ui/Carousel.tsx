@@ -103,7 +103,7 @@ export default function Carousel({
           <button
             type="button"
             onClick={goPrev}
-            className="interactive-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-primary)]"
+            className="interactive-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm text-slate-700"
             aria-label="Previous slide"
           >
             <span aria-hidden>‹</span>
@@ -111,7 +111,7 @@ export default function Carousel({
           <button
             type="button"
             onClick={goNext}
-            className="interactive-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-sm text-[var(--color-text-primary)]"
+            className="interactive-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white text-sm text-slate-700"
             aria-label="Next slide"
           >
             <span aria-hidden>›</span>
@@ -136,7 +136,7 @@ export default function Carousel({
               aria-label={`Go to slide ${dotIndex + 1}`}
               aria-current={active}
               className={`h-2.5 rounded-full transition-all ${
-                active ? "w-6 bg-[var(--color-primary)]" : "w-2.5 bg-[var(--color-border)]"
+                active ? "w-6 bg-blue-600" : "w-2.5 bg-slate-300"
               }`}
             />
           );
