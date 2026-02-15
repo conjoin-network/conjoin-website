@@ -100,6 +100,17 @@ button {
   box-shadow: var(--shadow-soft);
 }
 
+.admin-card {
+  border: 1px solid color-mix(in srgb, var(--color-border) 92%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  box-shadow: 0 12px 28px -24px rgba(2, 6, 23, 0.75);
+}
+
+.admin-card-muted {
+  border: 1px solid color-mix(in srgb, var(--color-border) 88%, transparent);
+  background: color-mix(in srgb, var(--color-alt-bg) 92%, transparent);
+}
+
 .interactive-link:hover,
 .interactive-link:focus-visible {
   text-decoration: none;
@@ -185,7 +196,7 @@ html[data-header-scrolled="true"] .site-header {
 .brand-image {
   position: relative;
   z-index: 1;
-  height: 2.75rem;
+  height: 2.05rem;
   width: auto;
   max-width: none;
   object-fit: contain;
@@ -367,7 +378,7 @@ html[data-header-scrolled="true"] .site-header {
   }
 
   .brand-image {
-    height: 2.35rem;
+    height: 2rem;
   }
 
   .cta-pulse {
@@ -382,31 +393,28 @@ html[data-header-scrolled="true"] .site-header {
   .floating-whatsapp {
     right: calc(env(safe-area-inset-right, 0px) + 0.9rem);
   }
+
+  .mobile-nav-sheet nav a {
+    min-height: 44px;
+  }
+
+  [aria-roledescription="carousel"] {
+    padding-bottom: calc(3.4rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 @media (max-width: 479px) {
   .brand-image {
-    height: 2.25rem;
+    height: 1.95rem;
   }
 }
 
 @media (min-width: 768px) {
+  .brand-image {
+    height: 2.4rem;
+  }
+
   .search-sticky {
     top: calc(var(--header-height-desktop) + 0.7rem);
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background: var(--color-page-bg);
-    color: var(--color-text-primary);
-  }
-
-  .hero-panel {
-    border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
-    background:
-      radial-gradient(circle at 88% 12%, rgb(75 141 255 / 19%), transparent 44%),
-      radial-gradient(circle at 12% 92%, rgb(20 184 166 / 12%), transparent 38%),
-      linear-gradient(180deg, #101a2f, #0f1729);
   }
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AGENT_OPTIONS } from "@/lib/agents";
 import { buildQuoteMessage, getLeadWhatsAppLink } from "@/lib/whatsapp";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
+import { Modal } from "@/src/components/ui/Modal";
 
 type LeadActivityNote = {
   id: string;
@@ -12,12 +13,36 @@ type LeadActivityNote = {
   author: string;
 };
 
+type LeadAiSummary = {
+  summary: string;
+  nextStep: string;
+  priority: LeadPriority;
+  generatedAt: string;
+  source: "ai" | "fallback";
+};
+
+type LeadAiEmailDraft = {
+  subject: string;
+  body: string;
+  source: "ai" | "fallback";
+  generatedAt: string;
+};
+
+type LeadAiObjectionReply = {
+  objection: string;
+  shortReply: string;
+  longReply: string;
+  source: "ai" | "fallback";
+  generatedAt: string;
+};
+
 type LeadItem = {
   leadId: string;
   createdAt: string;
   updatedAt: string;
   status: LeadStatus;
   priority: LeadPriority;
+  score: number;
   assignedTo: string | null;
   lastContactedAt: string | null;
   firstContactAt: string | null;
@@ -43,6 +68,7 @@ type LeadItem = {
   referrer?: string;
   notes: string;
   activityNotes: LeadActivityNote[];
+  aiSummary?: LeadAiSummary | null;
   contactName: string;
   company: string;
   email: string;
@@ -72,9 +98,11 @@ type ApiResponse = {
 type FilterState = {
   brand: string;
   status: string;
+  scoreBand: "all" | "hot" | "warm" | "cold";
   city: string;
   dateRange: "all" | "7" | "30";
   agent: string;
+  query: string;
 };
 
 type DraftMap = Record<
@@ -91,9 +119,11 @@ type DraftMap = Record<
 const defaultFilters: FilterState = {
   brand: "all",
   status: "all",
+  scoreBand: "all",
   city: "all",
   dateRange: "30",
-  agent: "all"
+  agent: "all",
+  query: ""
 };
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
@@ -110,6 +140,8 @@ const PRIORITY_LABELS: Record<LeadPriority, string> = {
   COLD: "Cold"
 };
 
+const OBJECTION_CHIPS = ["Too expensive", "Need comparison", "Just exploring"] as const;
+
 function formatDate(value: string | null | undefined) {
   if (!value) {
     return "-";
@@ -123,28 +155,28 @@ function formatDate(value: string | null | undefined) {
 
 function statusClass(status: LeadStatus) {
   if (status === "WON") {
-    return "bg-emerald-50 text-emerald-700";
+    return "bg-emerald-400/15 text-emerald-200";
   }
   if (status === "LOST") {
-    return "bg-rose-50 text-rose-700";
+    return "bg-rose-400/15 text-rose-200";
   }
   if (status === "QUOTED") {
-    return "bg-indigo-50 text-indigo-700";
+    return "bg-indigo-400/15 text-indigo-200";
   }
   if (status === "IN_PROGRESS") {
-    return "bg-amber-50 text-amber-700";
+    return "bg-amber-400/15 text-amber-200";
   }
-  return "bg-slate-100 text-slate-700";
+  return "bg-slate-200/15 text-slate-200";
 }
 
 function priorityClass(priority: LeadPriority) {
   if (priority === "HOT") {
-    return "bg-rose-50 text-rose-700";
+    return "bg-rose-400/15 text-rose-200";
   }
   if (priority === "WARM") {
-    return "bg-amber-50 text-amber-700";
+    return "bg-amber-400/15 text-amber-200";
   }
-  return "bg-slate-100 text-slate-700";
+  return "bg-slate-200/15 text-slate-200";
 }
 
 function buildLeadSummary(lead: LeadItem) {
@@ -154,6 +186,7 @@ function buildLeadSummary(lead: LeadItem) {
     `Category: ${lead.category}`,
     `Tier: ${lead.tier}`,
     `Qty: ${lead.qty}`,
+    `Score: ${lead.score}`,
     `Company: ${lead.company}`,
     `Email: ${lead.email}`,
     `Users/Seats: ${lead.usersSeats ?? "-"}`,
@@ -189,19 +222,27 @@ export default function AdminLeadsClient() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busyLeadId, setBusyLeadId] = useState<string | null>(null);
+  const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
+  const [emailDrafts, setEmailDrafts] = useState<Record<string, LeadAiEmailDraft>>({});
+  const [objectionReplies, setObjectionReplies] = useState<Record<string, LeadAiObjectionReply>>({});
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
     params.set("brand", filters.brand);
     params.set("status", filters.status);
+    params.set("scoreBand", filters.scoreBand);
     params.set("city", filters.city);
     params.set("dateRange", filters.dateRange);
     params.set("agent", filters.agent);
+    params.set("q", filters.query.trim());
     return params.toString();
   }, [filters]);
 
   const exportHref = useMemo(() => `/api/admin/leads/export?${query}`, [query]);
   const permissions = meta.permissions;
+  const activeLead = useMemo(() => leads.find((lead) => lead.leadId === activeLeadId) ?? null, [activeLeadId, leads]);
+  const activeLeadEmailDraft = activeLead ? emailDrafts[activeLead.leadId] ?? null : null;
+  const activeLeadObjectionReply = activeLead ? objectionReplies[activeLead.leadId] ?? null : null;
 
   async function loadLeads() {
     setLoading(true);
@@ -337,6 +378,101 @@ export default function AdminLeadsClient() {
     }
   }
 
+  async function generateAiSummary(leadId: string) {
+    setBusyLeadId(leadId);
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/ai/lead-summary", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId })
+      });
+      const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.message ?? "Unable to generate AI summary.");
+      }
+      setNotice("AI summary generated.");
+      await loadLeads();
+    } catch (summaryError) {
+      setError(summaryError instanceof Error ? summaryError.message : "Unable to generate AI summary.");
+    } finally {
+      setBusyLeadId(null);
+    }
+  }
+
+  async function generateAiEmailDraft(leadId: string) {
+    setBusyLeadId(leadId);
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/ai/email-draft", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId })
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        draft?: LeadAiEmailDraft;
+      };
+      if (!response.ok || !payload.ok || !payload.draft) {
+        throw new Error(payload.message ?? "Unable to generate AI email draft.");
+      }
+      setEmailDrafts((current) => ({ ...current, [leadId]: payload.draft as LeadAiEmailDraft }));
+      setNotice("AI email draft generated.");
+      await loadLeads();
+    } catch (draftError) {
+      setError(draftError instanceof Error ? draftError.message : "Unable to generate AI email draft.");
+    } finally {
+      setBusyLeadId(null);
+    }
+  }
+
+  async function generateAiObjectionReply(leadId: string, objection: (typeof OBJECTION_CHIPS)[number]) {
+    setBusyLeadId(leadId);
+    setError("");
+    setNotice("");
+
+    try {
+      const response = await fetch("/api/ai/objection-reply", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId, objection })
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        reply?: LeadAiObjectionReply;
+      };
+      if (!response.ok || !payload.ok || !payload.reply) {
+        throw new Error(payload.message ?? "Unable to generate objection reply.");
+      }
+      setObjectionReplies((current) => ({ ...current, [leadId]: payload.reply as LeadAiObjectionReply }));
+      setNotice("AI objection reply generated.");
+      await loadLeads();
+    } catch (replyError) {
+      setError(replyError instanceof Error ? replyError.message : "Unable to generate objection reply.");
+    } finally {
+      setBusyLeadId(null);
+    }
+  }
+
+  async function copyTextToClipboard(value: string, successMessage: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setNotice(successMessage);
+      setError("");
+    } catch {
+      setError("Clipboard access failed. Please copy manually.");
+    }
+  }
+
   return (
     <div className="space-y-6">
       <header className="space-y-1">
@@ -344,7 +480,7 @@ export default function AdminLeadsClient() {
         <p className="text-sm text-[var(--color-text-secondary)]">
           Assignment, status flow, WhatsApp follow-up and attribution for all incoming RFQs.
         </p>
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <p className="rounded-lg border border-amber-300/45 bg-amber-200/10 px-3 py-2 text-xs text-amber-100">
           Data is confidential. Access is logged. Do not share externally.
         </p>
         <p className="text-xs text-[var(--color-text-secondary)]">
@@ -353,8 +489,19 @@ export default function AdminLeadsClient() {
         </p>
       </header>
 
-      <section className="rounded-2xl border border-[var(--color-border)] bg-white p-4">
-        <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-6" : "md:grid-cols-5"}`}>
+      <section className="admin-card rounded-2xl p-4">
+        <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-8" : "md:grid-cols-7"}`}>
+          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+            Search
+            <input
+              type="text"
+              value={filters.query}
+              onChange={(event) => setFilters((current) => ({ ...current, query: event.target.value }))}
+              placeholder="RFQ ID, phone, email, name"
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
+            />
+          </label>
+
           <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
             Brand
             <select
@@ -400,6 +547,22 @@ export default function AdminLeadsClient() {
                   {city}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+            Score
+            <select
+              value={filters.scoreBand}
+              onChange={(event) =>
+                setFilters((current) => ({ ...current, scoreBand: event.target.value as FilterState["scoreBand"] }))
+              }
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="hot">Hot (80+)</option>
+              <option value="warm">Warm (45-79)</option>
+              <option value="cold">Cold (&lt;45)</option>
             </select>
           </label>
 
@@ -450,14 +613,14 @@ export default function AdminLeadsClient() {
         </div>
       </section>
 
-      {error ? <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p> : null}
+      {error ? <p className="rounded-lg border border-rose-300/45 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">{error}</p> : null}
       {notice ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>
+        <p className="rounded-lg border border-emerald-300/45 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">{notice}</p>
       ) : null}
       {loading ? <p className="text-sm text-[var(--color-text-secondary)]">Loading leads...</p> : null}
 
-      <section className="overflow-x-auto rounded-2xl border border-[var(--color-border)] bg-white">
-        <table className="min-w-[2500px] divide-y divide-[var(--color-border)] text-sm">
+      <section className="admin-card overflow-x-auto rounded-2xl">
+        <table className="min-w-[2600px] divide-y divide-[var(--color-border)] text-sm">
           <thead className="bg-[var(--color-alt-bg)] text-left text-xs uppercase tracking-wide text-[var(--color-text-secondary)]">
             <tr>
               <th className="px-4 py-3">Created</th>
@@ -473,6 +636,7 @@ export default function AdminLeadsClient() {
               <th className="px-4 py-3">Path / Referrer</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Priority</th>
+              <th className="px-4 py-3">Score</th>
               <th className="px-4 py-3">Assigned Agent</th>
               <th className="px-4 py-3">Next Follow-up</th>
               <th className="px-4 py-3">Actions</th>
@@ -506,7 +670,7 @@ export default function AdminLeadsClient() {
                 const whatsappHref = getLeadWhatsAppLink({ message, assignedTo: draft.assignedTo || null });
 
                 return (
-                  <tr key={lead.leadId} className="align-top">
+                  <tr key={lead.leadId} className="align-top odd:bg-transparent even:bg-[var(--color-alt-bg)]/40">
                     <td className="px-4 py-4 text-xs text-[var(--color-text-secondary)]">
                       <p>{formatDate(lead.createdAt)}</p>
                       <p>{lead.leadId}</p>
@@ -575,6 +739,19 @@ export default function AdminLeadsClient() {
                       </select>
                     </td>
                     <td className="px-4 py-4">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-1 text-[11px] font-semibold ${
+                          lead.score >= 80
+                            ? "bg-rose-400/15 text-rose-200"
+                            : lead.score >= 45
+                              ? "bg-amber-400/15 text-amber-200"
+                              : "bg-slate-200/15 text-slate-200"
+                        }`}
+                      >
+                        {lead.score}
+                      </span>
+                    </td>
+                    <td className="px-4 py-4">
                       {permissions.canAssign ? (
                         <select
                           value={draft.assignedTo}
@@ -599,7 +776,7 @@ export default function AdminLeadsClient() {
                         type="datetime-local"
                         value={draft.nextFollowUpAt}
                         onChange={(event) => updateDraft(lead.leadId, "nextFollowUpAt", event.target.value)}
-                        className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-2 text-xs"
+                        className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2 text-xs"
                       />
                       <p className="mt-1 text-xs text-[var(--color-text-secondary)]">Last contacted: {formatDate(lead.lastContactedAt)}</p>
                     </td>
@@ -636,6 +813,13 @@ export default function AdminLeadsClient() {
                         >
                           Mark as contacted
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveLeadId(lead.leadId)}
+                          className="inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs font-semibold text-[var(--color-text-primary)]"
+                        >
+                          View detail
+                        </button>
                         <p className="text-[11px] text-[var(--color-text-secondary)]">
                           For compliance, please use official quotes only.
                         </p>
@@ -648,7 +832,7 @@ export default function AdminLeadsClient() {
                           onChange={(event) => updateDraft(lead.leadId, "note", event.target.value)}
                           rows={2}
                           placeholder="Add note"
-                          className="w-full rounded-lg border border-[var(--color-border)] bg-white px-2 py-2 text-xs"
+                          className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2 text-xs"
                         />
                         <button
                           type="button"
@@ -678,6 +862,165 @@ export default function AdminLeadsClient() {
           </tbody>
         </table>
       </section>
+
+      <Modal open={Boolean(activeLead)} onClose={() => setActiveLeadId(null)} title={activeLead ? `Lead ${activeLead.leadId}` : "Lead detail"}>
+        {activeLead ? (
+          <div className="space-y-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">AI assistant</p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => generateAiSummary(activeLead.leadId)}
+                  disabled={busyLeadId === activeLead.leadId}
+                  className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text-primary)] disabled:opacity-60"
+                >
+                  {busyLeadId === activeLead.leadId ? "Generating..." : "Generate AI Summary"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => generateAiEmailDraft(activeLead.leadId)}
+                  disabled={busyLeadId === activeLead.leadId}
+                  className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text-primary)] disabled:opacity-60"
+                >
+                  {busyLeadId === activeLead.leadId ? "Generating..." : "Draft Email"}
+                </button>
+              </div>
+            </div>
+            {activeLead.aiSummary ? (
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-alt-bg)] p-3">
+                <p className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Summary</p>
+                <p className="mt-1 text-sm text-[var(--color-text-primary)]">{activeLead.aiSummary.summary}</p>
+                <p className="mt-2 text-xs">
+                  <span className="font-semibold text-[var(--color-text-primary)]">Next step:</span> {activeLead.aiSummary.nextStep}
+                </p>
+                <p className="mt-1 text-xs">
+                  <span className="font-semibold text-[var(--color-text-primary)]">Priority:</span> {activeLead.aiSummary.priority} •{" "}
+                  {formatDate(activeLead.aiSummary.generatedAt)}
+                </p>
+              </div>
+            ) : (
+              <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+                No AI summary generated yet.
+              </p>
+            )}
+
+            {activeLeadEmailDraft ? (
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Draft email</p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      copyTextToClipboard(
+                        `Subject: ${activeLeadEmailDraft.subject}\n\n${activeLeadEmailDraft.body}`,
+                        "AI email draft copied."
+                      )
+                    }
+                    className="inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--color-border)] px-2 text-xs font-semibold text-[var(--color-text-primary)]"
+                  >
+                    Copy
+                  </button>
+                </div>
+                <p className="mt-1 text-sm font-semibold text-[var(--color-text-primary)]">{activeLeadEmailDraft.subject}</p>
+                <p className="mt-2 whitespace-pre-line text-xs text-[var(--color-text-primary)]">{activeLeadEmailDraft.body}</p>
+                <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                  Source: {activeLeadEmailDraft.source} • {formatDate(activeLeadEmailDraft.generatedAt)}
+                </p>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Objection replies</p>
+              <div className="flex flex-wrap gap-2">
+                {OBJECTION_CHIPS.map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => generateAiObjectionReply(activeLead.leadId, chip)}
+                    disabled={busyLeadId === activeLead.leadId}
+                    className="inline-flex min-h-8 items-center justify-center rounded-full border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text-primary)] disabled:opacity-60"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+              {activeLeadObjectionReply ? (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-alt-bg)] p-3">
+                  <p className="text-xs font-semibold text-[var(--color-text-primary)]">{activeLeadObjectionReply.objection}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-primary)]">{activeLeadObjectionReply.shortReply}</p>
+                  <p className="mt-1 text-xs text-[var(--color-text-secondary)]">{activeLeadObjectionReply.longReply}</p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Source: {activeLeadObjectionReply.source} • {formatDate(activeLeadObjectionReply.generatedAt)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copyTextToClipboard(
+                          `${activeLeadObjectionReply.shortReply}\n\n${activeLeadObjectionReply.longReply}`,
+                          "AI objection reply copied."
+                        )
+                      }
+                      className="inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--color-border)] px-2 text-xs font-semibold text-[var(--color-text-primary)]"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-xs text-[var(--color-text-secondary)]">
+                  Choose an objection chip to generate response options.
+                </p>
+              )}
+            </div>
+
+            <dl className="grid gap-2 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Contact</dt>
+                <dd className="font-medium text-[var(--color-text-primary)]">
+                  {activeLead.contactName} ({activeLead.company})
+                </dd>
+                <dd>{activeLead.phone}</dd>
+                <dd>{activeLead.email}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Scope</dt>
+                <dd>{activeLead.brand}</dd>
+                <dd>{activeLead.category}</dd>
+                <dd>{activeLead.tier}</dd>
+                <dd>Score: {activeLead.score}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Timeline</dt>
+                <dd>{activeLead.timeline || "-"}</dd>
+                <dd>City: {activeLead.city}</dd>
+                <dd>Qty: {activeLead.qty}</dd>
+              </div>
+              <div>
+                <dt className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Attribution</dt>
+                <dd>{activeLead.source || "-"}</dd>
+                <dd>{activeLead.pagePath || "-"}</dd>
+              </div>
+            </dl>
+
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">Notes timeline</p>
+              <ul className="mt-2 space-y-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-page-bg)] p-3">
+                {activeLead.activityNotes.length === 0 ? (
+                  <li className="text-xs text-[var(--color-text-secondary)]">No notes captured yet.</li>
+                ) : (
+                  activeLead.activityNotes.map((note) => (
+                    <li key={note.id} className="text-xs">
+                      <span className="font-medium text-[var(--color-text-primary)]">{formatDate(note.createdAt)}</span> {note.author}: {note.text}
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   );
 }

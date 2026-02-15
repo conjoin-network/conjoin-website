@@ -10,6 +10,7 @@ import RelatedLinks from "@/app/components/RelatedLinks";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import { BRAND_TILES, getBrandBySlug } from "@/lib/brands-data";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
+import { PLATFORM_PRODUCTS } from "@/lib/platform-catalog";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
@@ -86,6 +87,12 @@ export default async function BrandDetailPage({
     [displayName.toLowerCase(), ...brand.categories.map((category) => category.toLowerCase())],
     3
   );
+  const productGroups = PLATFORM_PRODUCTS.filter((product) => product.brandSlug === slug)
+    .reduce<Record<string, typeof PLATFORM_PRODUCTS>>((acc, product) => {
+      const bucket = acc[product.category] ?? [];
+      acc[product.category] = [...bucket, product];
+      return acc;
+    }, {});
   const faqItems = [
     {
       question: `How quickly can we receive a ${displayName} quote?`,
@@ -138,6 +145,19 @@ export default async function BrandDetailPage({
         item: absoluteUrl(`/brands/${slug}`)
       }
     ]
+  };
+  const serviceJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `${displayName} procurement advisory`,
+    provider: {
+      "@type": "Organization",
+      name: "Conjoin Network Private Limited",
+      url: absoluteUrl("/")
+    },
+    areaServed: ["Chandigarh", "Punjab", "Haryana", "North India"],
+    serviceType: brand.categories.join(", "),
+    url: absoluteUrl(`/brands/${slug}`)
   };
 
   return (
@@ -193,6 +213,43 @@ export default async function BrandDetailPage({
         </div>
       </Section>
 
+      <Section tone="alt" className="py-10 md:py-14">
+        <h2 className="mb-4 text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">Product catalog by category</h2>
+        {Object.keys(productGroups).length === 0 ? (
+          <Card className="space-y-2">
+            <p className="text-sm">Official product matrix is being expanded for this brand.</p>
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Request a quote and we&apos;ll map the right-fit SKUs and licensing options.
+            </p>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {Object.entries(productGroups).map(([group, items]) => (
+              <div key={group} className="space-y-2">
+                <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{group}</h3>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {items.map((item) => (
+                    <Card key={item.id} className="space-y-2 p-4">
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)]">{item.name}</p>
+                      <p className="text-xs">{item.description}</p>
+                      <p className="text-[11px] uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+                        {item.licenseModel}
+                      </p>
+                      <Link
+                        href={`/request-quote?brand=${encodeURIComponent(displayName)}&category=${encodeURIComponent(group)}&product=${encodeURIComponent(item.name)}&source=/brands/${slug}`}
+                        className="text-xs font-semibold text-[var(--color-primary)] hover:underline"
+                      >
+                        Quote this product
+                      </Link>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
       <Section className="py-10 md:py-14">
         <h2 className="mb-4 text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">Procurement outcomes</h2>
         <div className="grid gap-4 md:grid-cols-3">
@@ -242,6 +299,9 @@ export default async function BrandDetailPage({
             <a href={whatsappHref} target="_blank" rel="noreferrer" className="text-sm font-semibold text-[var(--color-primary)] hover:underline">
               WhatsApp Sales
             </a>
+            <Link href="/contact" className="text-sm font-semibold text-[var(--color-primary)] hover:underline">
+              Talk to specialist
+            </Link>
           </Card>
         </div>
       </Section>
@@ -280,6 +340,11 @@ export default async function BrandDetailPage({
         id={`brand-breadcrumb-${slug}`}
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <Script
+        id={`brand-service-${slug}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
       />
     </div>
   );

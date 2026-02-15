@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
@@ -32,6 +32,7 @@ type WizardState = {
   company: string;
   email: string;
   phone: string;
+  whatsappOptIn: boolean;
   notes: string;
   website: string;
   sourcePage: string;
@@ -47,6 +48,8 @@ type WizardState = {
 
 const steps = ["Brand", "Product", "Users / Devices", "Deployment", "Contact"] as const;
 const timelineOptions = ["Today", "This Week", "This Month", "Planned Window"] as const;
+const DRAFT_KEY = "conjoin_rfq_draft_v2";
+const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const primaryBrands: LeadBrand[] = ["Microsoft", "Seqrite", "Cisco", "Other"];
 const quickSelectBrands: LeadBrand[] = ["Microsoft", "Seqrite"];
 const brandSearchOptions: Array<{ label: string; brand: LeadBrand; note: string }> = [
@@ -164,7 +167,7 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
 export default function RequestQuoteWizard() {
   const router = useRouter();
   const [step, setStep] = useState(1);
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
   const [productQuery, setProductQuery] = useState("");
   const [brandQuery, setBrandQuery] = useState(() => {
@@ -197,7 +200,7 @@ export default function RequestQuoteWizard() {
       }
     }
 
-    return {
+    const defaultState: WizardState = {
       brand: incomingBrand.brand,
       brandLabel: incomingBrand.brandLabel,
       category,
@@ -211,6 +214,7 @@ export default function RequestQuoteWizard() {
       company: "",
       email: "",
       phone: "",
+      whatsappOptIn: true,
       notes: "",
       website: "",
       sourcePage: (params.get("source") ?? "/request-quote").trim() || "/request-quote",
@@ -223,7 +227,47 @@ export default function RequestQuoteWizard() {
       pagePath: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/request-quote",
       referrer: typeof window !== "undefined" ? document.referrer : ""
     };
+
+    if (typeof window === "undefined") {
+      return defaultState;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (!raw) {
+        return defaultState;
+      }
+      const parsed = JSON.parse(raw) as { savedAt?: number; state?: Partial<WizardState>; step?: number };
+      if (!parsed?.savedAt || Date.now() - parsed.savedAt > DRAFT_TTL_MS || !parsed.state) {
+        window.localStorage.removeItem(DRAFT_KEY);
+        return defaultState;
+      }
+
+      return {
+        ...defaultState,
+        ...parsed.state,
+        sourcePage: defaultState.sourcePage,
+        source: defaultState.source,
+        pagePath: defaultState.pagePath,
+        referrer: defaultState.referrer
+      };
+    } catch {
+      return defaultState;
+    }
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const payload = JSON.stringify({
+      savedAt: Date.now(),
+      step,
+      state
+    });
+    window.localStorage.setItem(DRAFT_KEY, payload);
+  }, [state, step]);
 
   const filteredBrandOptions = useMemo(() => {
     const query = brandQuery.trim().toLowerCase();
@@ -399,43 +443,55 @@ export default function RequestQuoteWizard() {
 
     const quantity = toNumber(state.quantity);
 
-    try {
-      const response = await fetch("/api/quote", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          brand: state.brand,
-          otherBrand: state.brand === "Other" ? state.brandLabel : "",
-          category: state.category,
-          plan: state.product,
-          deployment: state.deployment,
-          usersSeats: state.brand === "Microsoft" ? quantity : "",
-          endpoints: state.brand === "Seqrite" ? quantity : "",
-          servers: state.brand === "Seqrite" && showServers ? toNumber(state.servers) : "",
-          ciscoUsers: state.brand === "Cisco" || state.brand === "Other" ? quantity : "",
-          ciscoSites: "",
-          budgetRange: "",
-          city: state.city,
-          source: state.source,
-          sourcePage: state.sourcePage,
-          utmSource: state.utmSource,
-          utmMedium: state.utmMedium,
-          utmCampaign: state.utmCampaign,
-          utmContent: state.utmContent,
-          utmTerm: state.utmTerm,
-          pagePath: state.pagePath,
-          referrer: state.referrer,
-          timeline: state.timeline,
-          notes: state.notes,
-          website: state.website,
-          contactName: state.contactName,
-          company: state.company,
-          email: state.email,
-          phone: state.phone
-        })
-      });
+    const payload = {
+      brand: state.brand,
+      otherBrand: state.brand === "Other" ? state.brandLabel : "",
+      category: state.category,
+      plan: state.product,
+      deployment: state.deployment,
+      usersSeats: state.brand === "Microsoft" ? quantity : "",
+      endpoints: state.brand === "Seqrite" ? quantity : "",
+      servers: state.brand === "Seqrite" && showServers ? toNumber(state.servers) : "",
+      ciscoUsers: state.brand === "Cisco" || state.brand === "Other" ? quantity : "",
+      ciscoSites: "",
+      budgetRange: "",
+      city: state.city,
+      source: state.source,
+      sourcePage: state.sourcePage,
+      utmSource: state.utmSource,
+      utmMedium: state.utmMedium,
+      utmCampaign: state.utmCampaign,
+      utmContent: state.utmContent,
+      utmTerm: state.utmTerm,
+      pagePath: state.pagePath,
+      referrer: state.referrer,
+      timeline: state.timeline,
+      whatsappOptIn: state.whatsappOptIn,
+      notes: state.notes,
+      website: state.website,
+      contactName: state.contactName,
+      company: state.company,
+      email: state.email,
+      phone: state.phone
+    };
 
-      let data: { ok?: boolean; message?: string; leadId?: string } | null = null;
+    try {
+      let response: Response;
+      try {
+        response = await fetch("/api/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      } catch {
+        response = await fetch("/api/quote", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      let data: { ok?: boolean; success?: boolean; message?: string; leadId?: string; rfqId?: string } | null = null;
       const contentType = response.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
         data = (await response.json()) as { ok?: boolean; message?: string; leadId?: string };
@@ -450,14 +506,21 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      if (!response.ok || !data?.ok) {
+      if (!response.ok || (!data?.ok && !data?.success)) {
         setStatus("error");
         setNotice(data?.message ?? `Unable to submit request (HTTP ${response.status}).`);
         return;
       }
 
+      const resolvedRfqId = data?.rfqId ?? data?.leadId ?? "";
+      setStatus("success");
+      setNotice(`RFQ received. Reference ID: ${resolvedRfqId || "pending"}. Redirecting...`);
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(DRAFT_KEY);
+      }
+
       const query = new URLSearchParams({
-        leadId: data.leadId ?? "",
+        leadId: resolvedRfqId,
         brand: state.brandLabel,
         city: state.city,
         qty: String(quantity),
@@ -466,7 +529,9 @@ export default function RequestQuoteWizard() {
         timeline: state.timeline
       });
 
-      router.push(`/thank-you?${query.toString()}`);
+      window.setTimeout(() => {
+        router.push(`/thank-you?${query.toString()}`);
+      }, 550);
     } catch (error) {
       setStatus("error");
       setNotice(
@@ -749,6 +814,18 @@ export default function RequestQuoteWizard() {
             {step === 3 ? (
               <div className="space-y-4">
                 <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                  {quantityLabel} slider
+                  <input
+                    type="range"
+                    min="1"
+                    max="5000"
+                    step="1"
+                    value={Math.min(5000, Math.max(1, toNumber(state.quantity) || 1))}
+                    onChange={(event) => patch({ quantity: event.target.value })}
+                    className="w-full accent-[var(--color-primary)]"
+                  />
+                </label>
+                <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                   {quantityLabel}
                   <input
                     type="number"
@@ -875,6 +952,15 @@ export default function RequestQuoteWizard() {
                       ))}
                     </select>
                   </label>
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
+                    <input
+                      type="checkbox"
+                      checked={state.whatsappOptIn}
+                      onChange={(event) => patch({ whatsappOptIn: event.target.checked })}
+                      className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
+                    />
+                    WhatsApp follow-up allowed on provided number
+                  </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
                     Notes (optional)
                     <textarea
@@ -903,7 +989,13 @@ export default function RequestQuoteWizard() {
               <p
                 role="alert"
                 aria-live="polite"
-                className={`rounded-xl border px-3 py-2 text-sm ${status === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-amber-200 bg-amber-50 text-amber-700"}`}
+                className={`rounded-xl border px-3 py-2 text-sm ${
+                  status === "error"
+                    ? "border-rose-200 bg-rose-50 text-rose-700"
+                    : status === "success"
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                      : "border-amber-200 bg-amber-50 text-amber-700"
+                }`}
               >
                 {notice}
               </p>
@@ -922,6 +1014,7 @@ export default function RequestQuoteWizard() {
               {step < steps.length ? (
                 <button
                   type="button"
+                  data-testid="wizard-next"
                   onClick={next}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-55"
                   style={{ background: accent }}
@@ -932,6 +1025,7 @@ export default function RequestQuoteWizard() {
               ) : (
                 <button
                   type="button"
+                  data-testid="wizard-submit"
                   onClick={submit}
                   className="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white disabled:opacity-60"
                   style={{ background: accent }}

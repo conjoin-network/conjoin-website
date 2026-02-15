@@ -70,6 +70,7 @@ function parseBoolean(value: string | undefined, fallbackValue: boolean) {
 
 function getSessionSecret() {
   return (
+    process.env.CRM_ADMIN_PASSWORD?.trim() ||
     process.env.ADMIN_SESSION_SECRET?.trim() ||
     process.env.OWNER_PASS?.trim() ||
     process.env.ADMIN_PASSWORD?.trim() ||
@@ -125,8 +126,17 @@ export function getPortalUsers(): PortalUserConfig[] {
   const users: Array<PortalUserConfig | null> = [
     makeUser({
       role: "OWNER",
-      username: process.env.OWNER_USER || process.env.ADMIN_USER || "admin",
-      password: process.env.OWNER_PASS || process.env.ADMIN_PASSWORD || process.env.ADMIN_PASS,
+      username:
+        process.env.CRM_ADMIN_EMAIL ||
+        process.env.CRM_ADMIN_USER ||
+        process.env.OWNER_USER ||
+        process.env.ADMIN_USER ||
+        "admin",
+      password:
+        process.env.CRM_ADMIN_PASSWORD ||
+        process.env.OWNER_PASS ||
+        process.env.ADMIN_PASSWORD ||
+        process.env.ADMIN_PASS,
       displayName: process.env.OWNER_NAME || "Owner",
       canExport: true,
       canAssign: true

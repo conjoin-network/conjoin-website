@@ -9,15 +9,16 @@
 
 ## Now / Next / Later
 
-- **Now**: `P1-01`
-- **Next**: `P1-02`, `P1-03`, `P2-01`
-- **Later**: `P2-02`, `P2-03`, `P3-01`, `P3-02`
+- **Now**: `P2-01`
+- **Next**: `P2-02`, `P2-03`
+- **Later**: `P3-01`, `P3-02`
 
 ## Latest Batch Update
 
 - ✅ Path bug audit re-checked (`src/*Users/msleox*`) and no invalid nested paths found.
 - ✅ Go-live UI blockers fixed: logo/tagline authority pass, hero panel contrast, mobile slider clipping guard, hamburger reliability, header micro-polish.
 - ✅ QA rerun completed (lint/typecheck/build + smoke + viewport checks + RFQ revenue flow checks).
+- ✅ AI CRM batch completed: lead summary + draft email + objection replies, all persisted into lead notes with audit events.
 
 ## Task Board
 
@@ -32,9 +33,9 @@
 | A1 | Visibility | Pipeline board in admin | DONE | Codex | P0 | - |
 | P0-01 | Revenue Blockers | RFQ submission reliability and persistence | DONE | Codex | P0 | A1 |
 | P0-02 | Revenue Blockers | Event log and audit trail foundation | DONE | Codex | P0 | P0-01 |
-| P1-01 | AI CRM | AI lead summary in lead detail | DOING | Codex | P1 | P0-02 |
-| P1-02 | AI CRM | AI email draft for quote response | TODO | Codex | P1 | P1-01 |
-| P1-03 | AI CRM | AI objection reply chips | TODO | Codex | P1 | P1-01 |
+| P1-01 | AI CRM | AI lead summary in lead detail | DONE | Codex | P1 | P0-02 |
+| P1-02 | AI CRM | AI email draft for quote response | DONE | Codex | P1 | P1-01 |
+| P1-03 | AI CRM | AI objection reply chips | DONE | Codex | P1 | P1-01 |
 | P2-01 | Automation | SLA rules engine and lead tasks | TODO | Codex | P2 | P0-02 |
 | P2-02 | Automation | Follow-up sequences + automation runner | TODO | Codex | P2 | P2-01 |
 | P2-03 | Automation | Round-robin assignment | TODO | Codex | P2 | P2-01 |

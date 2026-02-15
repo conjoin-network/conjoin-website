@@ -1,4 +1,4 @@
-import productRegistryData from "@/data/product-registry.json";
+import productRegistryData from "../data/product-registry.json";
 export type DirectoryBrand = "Microsoft" | "Seqrite" | "Cisco" | "Other";
 
 export type DeploymentType = "Cloud" | "On-Prem" | "Hybrid";

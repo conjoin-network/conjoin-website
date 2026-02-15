@@ -16,6 +16,9 @@ export const metadata: Metadata = buildMetadata({
 });
 
 const trustItems = ["Partner-led", "Response < 30 mins", "Canada + India delivery"];
+const panelPrimaryButtonClass = "min-h-10 w-full sm:w-auto px-4 text-xs";
+const panelSecondaryButtonClass =
+  "min-h-10 w-full sm:w-auto border-slate-300 bg-slate-50 px-4 text-xs text-slate-900 hover:border-slate-400 hover:bg-slate-100";
 
 const processSteps = [
   {
@@ -57,7 +60,7 @@ const heroSlides = [
     title: "Workspace service line",
     description: "Microsoft 365, endpoint governance, and modern workplace rollout.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("workspace")}>
+      <div className="flex h-full flex-col rounded-3xl p-4 pb-14 text-slate-900 sm:p-5 sm:pb-14 md:p-6 md:pb-6" style={withThemeStyles("workspace")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Workspace
@@ -66,7 +69,7 @@ const heroSlides = [
           <p className="text-sm text-slate-600">Rollout clarity for users, devices, identity, and adoption operations.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
           {[
             ["Email & Collaboration", "Exchange", "Teams", "SharePoint"],
             ["Identity", "Entra ID", "SSO", "Conditional access"],
@@ -74,7 +77,7 @@ const heroSlides = [
           ].map(([title, a, b, c]) => (
             <div
               key={title}
-              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)] sm:p-4"
             >
               <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
               <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
@@ -89,14 +92,14 @@ const heroSlides = [
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <ButtonLink href="/request-quote?brand=Microsoft&source=/" variant="primary" className="min-h-10 px-4 text-xs">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
+          <ButtonLink href="/request-quote?brand=Microsoft&source=/" variant="primary" className={panelPrimaryButtonClass}>
             Request Quote
           </ButtonLink>
           <ButtonLink
             href="/solutions/workspace"
             variant="secondary"
-            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+            className={panelSecondaryButtonClass}
           >
             Explore Solutions
           </ButtonLink>
@@ -109,7 +112,7 @@ const heroSlides = [
     title: "Secure service line",
     description: "Endpoint, email, and backup resilience for business continuity.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("secure")}>
+      <div className="flex h-full flex-col rounded-3xl p-4 pb-14 text-slate-900 sm:p-5 sm:pb-14 md:p-6 md:pb-6" style={withThemeStyles("secure")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Secure
@@ -118,7 +121,7 @@ const heroSlides = [
           <p className="text-sm text-slate-600">Policy-first rollout for endpoint, email, and recovery governance.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
           {[
             {
               title: "Endpoint Protection",
@@ -135,7 +138,7 @@ const heroSlides = [
           ].map((block) => (
             <div
               key={block.title}
-              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)] sm:p-4"
             >
               <h3 className="text-sm font-semibold text-slate-900">{block.title}</h3>
               <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
@@ -150,15 +153,15 @@ const heroSlides = [
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
           <ButtonLink
             href="/solutions/secure"
             variant="secondary"
-            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+            className={panelSecondaryButtonClass}
           >
             View details
           </ButtonLink>
-          <ButtonLink href="/request-quote?brand=Seqrite&source=/" variant="primary" className="min-h-10 px-4 text-xs">
+          <ButtonLink href="/request-quote?brand=Seqrite&source=/" variant="primary" className={panelPrimaryButtonClass}>
             Request Quote
           </ButtonLink>
         </div>
@@ -170,7 +173,7 @@ const heroSlides = [
     title: "Vision service line",
     description: "Surveillance and monitoring architecture for multi-site operations.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("vision")}>
+      <div className="flex h-full flex-col rounded-3xl p-4 pb-14 text-slate-900 sm:p-5 sm:pb-14 md:p-6 md:pb-6" style={withThemeStyles("vision")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Vision
@@ -179,7 +182,7 @@ const heroSlides = [
           <p className="text-sm text-slate-600">Coverage, retention, and monitoring workflows aligned for operational continuity.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-2 min-[390px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
           {[
             ["Monitoring", "Live dashboards", "Centralized alerts", "Operator handover"],
             ["Recording", "NVR/VMS planning", "Retention design", "Audit readiness"],
@@ -187,7 +190,7 @@ const heroSlides = [
           ].map(([title, a, b, c]) => (
             <div
               key={title}
-              className="interactive-card rounded-xl border border-slate-200 bg-white p-4 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)]"
+              className="interactive-card rounded-xl border border-slate-200 bg-white p-3 shadow-[0_8px_20px_-16px_rgba(15,23,42,0.35)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_-18px_rgba(37,99,235,0.35)] sm:p-4"
             >
               <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
               <ul className="mt-2 space-y-1.5 text-xs text-slate-500">
@@ -202,14 +205,14 @@ const heroSlides = [
           ))}
         </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <ButtonLink href="/request-quote?brand=Cisco&source=/" variant="primary" className="min-h-10 px-4 text-xs">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:flex sm:items-center sm:justify-between sm:gap-3">
+          <ButtonLink href="/request-quote?brand=Cisco&source=/" variant="primary" className={panelPrimaryButtonClass}>
             Request Quote
           </ButtonLink>
           <ButtonLink
             href="/solutions/vision"
             variant="secondary"
-            className="min-h-10 border-slate-300 bg-white px-4 text-xs text-slate-900 hover:bg-slate-50"
+            className={panelSecondaryButtonClass}
           >
             Explore Solutions
           </ButtonLink>
@@ -225,7 +228,7 @@ export default function Home() {
       <Section className="pb-9 pt-6 md:pb-11 md:pt-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-stretch">
           <header className="space-y-4 py-2 md:py-3">
-            <h1 className="text-[clamp(2rem,5vw,2.8rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <h1 className="text-[clamp(1.75rem,7vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-[var(--color-text-primary)]">
               Partner-led IT service lines for modern business operations.
             </h1>
             <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)] md:text-base md:leading-7">
@@ -252,8 +255,8 @@ export default function Home() {
           <Carousel
             slides={heroSlides}
             autoplayMs={2000}
-            className="h-full aspect-[4/3] sm:aspect-auto"
-            heightClassName="min-h-[560px] sm:min-h-[500px] md:min-h-[450px]"
+            className="h-full w-full max-w-full"
+            heightClassName="min-h-[460px] sm:min-h-[480px] md:min-h-[450px]"
           />
         </div>
       </Section>

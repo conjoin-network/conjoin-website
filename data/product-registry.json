@@ -308,6 +308,12 @@
             "description": "Cloud workloads and productivity subscription requirement category.",
             "licenseModel": "Commercial model depends on OEM and scope",
             "deploymentOptions": ["Cloud", "Hybrid"]
+          },
+          {
+            "name": "Surveillance & CCTV",
+            "description": "Surveillance, monitoring and control-room requirement category for multi-site operations.",
+            "licenseModel": "Commercial model depends on OEM and scope",
+            "deploymentOptions": ["On-Prem", "Hybrid"]
           }
         ]
       }

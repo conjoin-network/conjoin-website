@@ -22,6 +22,7 @@ const sampleLead: LeadRecord = {
   leadId: "LD-20260214-1024",
   status: "NEW",
   priority: "WARM",
+  score: 72,
   assignedTo: "Zeena",
   lastContactedAt: null,
   firstContactAt: null,

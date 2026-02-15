@@ -1,0 +1,164 @@
+{
+  "baseUrl": "http://127.0.0.1:4310",
+  "generatedAt": "2026-02-15T06:11:08.094Z",
+  "checks": [
+    {
+      "width": 360,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 360,
+      "route": "/ (mobile menu)",
+      "status": 200,
+      "noOverflow": true,
+      "menuVisible": true,
+      "menuClosedAfterRouteChange": true
+    },
+    {
+      "width": 375,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 375,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 375,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 375,
+      "route": "/ (mobile menu)",
+      "status": 200,
+      "noOverflow": true,
+      "menuVisible": true,
+      "menuClosedAfterRouteChange": true
+    },
+    {
+      "width": 390,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 390,
+      "route": "/ (mobile menu)",
+      "status": 200,
+      "noOverflow": true,
+      "menuVisible": true,
+      "menuClosedAfterRouteChange": true
+    },
+    {
+      "width": 414,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 414,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 414,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 414,
+      "route": "/ (mobile menu)",
+      "status": 200,
+      "noOverflow": true,
+      "menuVisible": true,
+      "menuClosedAfterRouteChange": true
+    },
+    {
+      "width": 768,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 768,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1024,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1024,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1024,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/search",
+      "status": 200,
+      "noOverflow": true
+    },
+    {
+      "width": 1440,
+      "route": "/request-quote",
+      "status": 200,
+      "noOverflow": true
+    }
+  ]
+}

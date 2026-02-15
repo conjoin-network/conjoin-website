@@ -33,8 +33,8 @@ export default async function AdminLoginPage() {
           <div className="rounded-2xl border border-[var(--color-border)] bg-white p-6">
             <h1 className="text-2xl font-semibold text-[var(--color-text-primary)] md:text-3xl">Admin Not Configured</h1>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
-              Set portal credentials in environment variables (for example <code>OWNER_USER</code> and <code>OWNER_PASS</code>)
-              to enable the admin portal.
+              Set portal credentials in environment variables (for example <code>CRM_ADMIN_EMAIL</code> and{" "}
+              <code>CRM_ADMIN_PASSWORD</code>, or <code>OWNER_USER</code>/<code>OWNER_PASS</code>) to enable the admin portal.
             </p>
           </div>
         )}

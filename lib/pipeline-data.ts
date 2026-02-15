@@ -111,7 +111,7 @@ export const PIPELINE_TASKS: PipelineTask[] = [
     id: "P1-01",
     phase: "AI CRM",
     title: "AI lead summary in lead detail",
-    status: "DOING",
+    status: "DONE",
     owner: "Codex",
     priority: "P1",
     dependsOn: ["P0-02"],
@@ -121,21 +121,21 @@ export const PIPELINE_TASKS: PipelineTask[] = [
     id: "P1-02",
     phase: "AI CRM",
     title: "AI email draft for quote response",
-    status: "TODO",
+    status: "DONE",
     owner: "Codex",
     priority: "P1",
     dependsOn: ["P1-01"],
-    notes: "Produce subject/body draft, copy action, save in lead notes."
+    notes: "Produces subject/body draft, copy action, saves note, and logs event."
   },
   {
     id: "P1-03",
     phase: "AI CRM",
     title: "AI objection reply chips",
-    status: "TODO",
+    status: "DONE",
     owner: "Codex",
     priority: "P1",
     dependsOn: ["P1-01"],
-    notes: "Short and long reply generation for common sales objections."
+    notes: "Generates short + long replies for common objections, persists note, logs event."
   },
   {
     id: "P2-01",
@@ -189,6 +189,6 @@ export const PIPELINE_TASKS: PipelineTask[] = [
   }
 ];
 
-export const PIPELINE_NOW = ["P1-01"];
-export const PIPELINE_NEXT = ["P1-02", "P1-03", "P2-01"];
-export const PIPELINE_LATER = ["P2-02", "P2-03", "P3-01", "P3-02"];
+export const PIPELINE_NOW = ["P2-01"];
+export const PIPELINE_NEXT = ["P2-02", "P2-03"];
+export const PIPELINE_LATER = ["P3-01", "P3-02"];

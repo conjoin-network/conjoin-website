@@ -3,7 +3,13 @@
 import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function AdminLoginClient() {
+type AdminLoginClientProps = {
+  defaultRedirect?: string;
+};
+
+const ALLOWED_NEXT_PREFIXES = ["/admin", "/crm"];
+
+export default function AdminLoginClient({ defaultRedirect = "/admin/leads" }: AdminLoginClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [username, setUsername] = useState("");
@@ -32,7 +38,10 @@ export default function AdminLoginClient() {
       }
 
       const nextPath = searchParams.get("next");
-      const redirectTo = nextPath && nextPath.startsWith("/admin") ? nextPath : "/admin/leads";
+      const redirectTo =
+        nextPath && ALLOWED_NEXT_PREFIXES.some((prefix) => nextPath.startsWith(prefix))
+          ? nextPath
+          : defaultRedirect;
       router.replace(redirectTo);
       router.refresh();
     } catch {

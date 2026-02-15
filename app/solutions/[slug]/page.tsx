@@ -7,6 +7,7 @@ import FaqAccordion from "@/app/components/FaqAccordion";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import Section from "@/app/components/Section";
 import { getTheme, withThemeStyles } from "@/lib/brand/themes";
+import { ORG_NAME } from "@/lib/contact";
 import { getSolutionBySlug, SOLUTION_LINES } from "@/lib/solutions-data";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
@@ -56,6 +57,19 @@ export default async function SolutionDetailPage({ params }: { params: Promise<P
         text: faq.answer
       }
     }))
+  };
+  const serviceJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: solution.heroTitle,
+    description: solution.heroSubtitle,
+    provider: {
+      "@type": "Organization",
+      name: ORG_NAME,
+      url: absoluteUrl("/")
+    },
+    areaServed: ["Chandigarh", "Punjab", "Haryana", "North India"],
+    serviceType: theme.label
   };
 
   return (
@@ -179,6 +193,16 @@ export default async function SolutionDetailPage({ params }: { params: Promise<P
         dangerouslySetInnerHTML={{
           __html: JSON.stringify({
             ...faqJsonLd,
+            url: absoluteUrl(`/solutions/${solution.slug}`)
+          })
+        }}
+      />
+      <Script
+        id={`solutions-service-${solution.slug}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            ...serviceJsonLd,
             url: absoluteUrl(`/solutions/${solution.slug}`)
           })
         }}

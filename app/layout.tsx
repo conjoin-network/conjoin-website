@@ -78,7 +78,8 @@ export const metadata: Metadata = {
     title: "ConjoinNetwork | Procurement-Ready IT Licensing & Security",
     description: "Licensing, migration, security, renewals and support with compliance-ready commercial proposals.",
     images: [absoluteUrl("/brand/conjoin-logo.png")]
-  }
+  },
+  themeColor: "#0b1220"
 };
 
 export default function RootLayout({
@@ -154,8 +155,8 @@ export default function RootLayout({
                       priority
                     />
                   </span>
-                  <span className="max-w-[20rem] text-xs font-medium tracking-[0.03em] text-[var(--color-text-secondary)]">
-                    IT Procurement Advisory
+                  <span className="max-w-[21rem] text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)]">
+                    Procurement-led IT. Delivered with clarity.
                   </span>
                 </Link>
                 <div className="flex min-w-0 justify-center">
@@ -200,8 +201,8 @@ export default function RootLayout({
                         priority
                       />
                     </span>
-                    <span className="hidden max-w-[10.5rem] text-[10px] font-medium tracking-[0.03em] text-[var(--color-text-secondary)] min-[390px]:inline">
-                      IT Procurement Advisory
+                    <span className="hidden max-w-[12.5rem] text-[10px] font-medium tracking-[0.02em] text-[var(--color-text-secondary)] md:inline">
+                      Procurement-led IT. Delivered with clarity.
                     </span>
                   </Link>
                   <div className="flex items-center gap-2">

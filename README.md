@@ -5,7 +5,7 @@ Corporate, procurement-friendly lead engine for Microsoft, Seqrite and multi-bra
 ## Live Scope
 - One-screen public pages with short, scannable above-the-fold structure
 - Brand-aware quote wizard at `/request-quote` (Microsoft / Seqrite / Cisco-Other paths)
-- Lead intake API at `/api/quote` with JSON + file storage in `data/leads.json`
+- Lead intake API at `/api/quote` with CRM persistence in SQLite (`data/crm-leads.sqlite`) for local/VPS
 - Thank-you flow at `/thank-you` with WhatsApp continuation
 - Search index at `/search`
 - SEO route network:
@@ -13,13 +13,16 @@ Corporate, procurement-friendly lead engine for Microsoft, Seqrite and multi-bra
   - `/knowledge`, `/knowledge/[slug]`
   - `/products/[slug]`
   - `/locations/[slug]`
-- CRM-lite dashboard at `/admin/leads` (password login + cookie session)
+- CRM-lite dashboard at `/crm/leads` (password login + cookie session)
 - Role-ready admin session with `OWNER`, `MANAGER`, `AGENT`, `SUPPORT`
 - Management dashboards:
+  - `/crm`
+  - `/crm/leads`
   - `/admin/leads`
   - `/admin/agents`
   - `/admin/scoreboard`
   - `/admin/messages`
+- UI component preview (internal): `/ui-kit` (noindex)
 
 ## Environment Variables
 Create `.env.local`:
@@ -29,6 +32,8 @@ Create `.env.local`:
 OWNER_USER="owner"
 OWNER_PASS="change-me"
 OWNER_NAME="Owner"
+CRM_ADMIN_EMAIL=""
+CRM_ADMIN_PASSWORD=""
 
 MANAGER_USER=""
 MANAGER_PASS=""
@@ -76,10 +81,10 @@ SMTP_PASS=""
 MAIL_FROM="sales@conjoinnetwork.com"
 
 # Lead storage behavior
-# file (recommended for VPS/container with writable volume) | memory
-LEAD_STORAGE_MODE="file"
-# For serverless only: set true only for temporary demos (data can reset)
-ALLOW_EPHEMERAL_LEADS="false"
+# For serverless production, durable storage is required.
+# Optional escape hatch (not recommended for Vercel/serverless):
+ALLOW_SQLITE_PRODUCTION="false"
+DATABASE_URL="file:./data/platform.db"
 
 # Optional WhatsApp API skeleton config
 WHATSAPP_VERIFY_TOKEN=""
@@ -133,6 +138,12 @@ PORT=4310 pnpm dev
 npm run start:4310
 ```
 
+### Phase-2 seed (catalog foundation)
+
+```bash
+npm run seed:platform
+```
+
 ## Compliance Notes
 - Conjoin is a reseller/partner.
 - Product names/logos belong to their owners.
@@ -140,7 +151,7 @@ npm run start:4310
 - Final licensing is governed by OEM terms.
 
 ## Admin Login
-- Open `/admin/login`
+- Open `/crm` (or `/admin/login`)
 - Enter role credentials (`OWNER`, `MANAGER`, `AGENT`, `SUPPORT`).
 - Role behavior:
   - `OWNER`: all leads + assignment + export

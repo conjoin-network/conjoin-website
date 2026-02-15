@@ -1,0 +1,77 @@
+{
+  "baseUrl": "http://127.0.0.1:4310",
+  "generatedAt": "2026-02-15T04:52:57.811Z",
+  "scenarios": [
+    {
+      "id": "S1",
+      "name": "Microsoft 365 - Chandigarh - This Week",
+      "status": 200,
+      "ok": true,
+      "leadId": "LD-20260215-4530",
+      "message": null
+    },
+    {
+      "id": "S2",
+      "name": "Seqrite endpoint - Mohali - This Month",
+      "status": 200,
+      "ok": true,
+      "leadId": "LD-20260215-6582",
+      "message": null
+    },
+    {
+      "id": "S3",
+      "name": "CCTV / Surveillance - Panchkula - Urgent",
+      "status": 200,
+      "ok": true,
+      "leadId": "LD-20260215-2950",
+      "message": null
+    },
+    {
+      "id": "S4",
+      "name": "Optional fields empty (notes blank) should submit",
+      "status": 200,
+      "ok": true,
+      "leadId": "LD-20260215-5977",
+      "message": null
+    },
+    {
+      "id": "S6",
+      "name": "Large notes text (500+ chars) should submit",
+      "status": 200,
+      "ok": true,
+      "leadId": "LD-20260215-1623",
+      "message": null
+    }
+  ],
+  "validationScenario": {
+    "ok": true,
+    "reason": "Client-side block triggered",
+    "apiQuoteCalls": 0,
+    "notice": "Complete name, company, email, phone and city before submit."
+  },
+  "adminVerification": {
+    "loginStatus": 200,
+    "listStatus": 200,
+    "expectedLeadCount": 5,
+    "foundLeadCount": 5,
+    "foundLeadIds": [
+      "LD-20260215-4530",
+      "LD-20260215-6582",
+      "LD-20260215-2950",
+      "LD-20260215-5977",
+      "LD-20260215-1623"
+    ]
+  },
+  "adminWorkflow": {
+    "ok": true,
+    "leadId": "LD-20260215-4530",
+    "assignStatus": 200,
+    "quoteStatus": 200,
+    "persistedStatus": "QUOTED",
+    "persistedAgent": "Nidhi",
+    "note": "QA auto-check: quote shared"
+  },
+  "screenshots": [
+    "/Users/msleox/Documents/conjoin/web/docs/screenshots/rfq-revenue-pass/scenario-5-validation-block-mobile.png"
+  ]
+}

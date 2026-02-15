@@ -33,6 +33,11 @@ export default async function AdminLeadsPage() {
               Console Home
             </Link>
             {session.isManagement ? (
+              <Link href="/admin/pipeline" className="hover:underline">
+                Pipeline
+              </Link>
+            ) : null}
+            {session.isManagement ? (
               <>
                 <Link href="/admin/agents" className="hover:underline">
                   Agents
@@ -42,6 +47,9 @@ export default async function AdminLeadsPage() {
                 </Link>
                 <Link href="/admin/messages" className="hover:underline">
                   Message Queue
+                </Link>
+                <Link href="/admin/events" className="hover:underline">
+                  Events
                 </Link>
               </>
             ) : null}

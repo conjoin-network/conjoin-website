@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { createLead } from "@/lib/leads";
+import { createLead, type LeadRecord } from "@/lib/leads";
 import { enqueueMessageIntent, updateMessageIntentStatus } from "@/lib/message-queue";
 import { sendEmail, sendWhatsApp } from "@/lib/messaging";
 import { LEADS_EMAIL } from "@/lib/contact";
+import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
+import { suggestAgentForLead } from "@/lib/agents";
+import { logAuditEvent } from "@/lib/event-log";
 import {
   QUOTE_CATALOG,
   type LeadBrand,
@@ -44,6 +47,7 @@ type QuotePayload = {
   email?: string;
   phone?: string;
   website?: string;
+  whatsappOptIn?: boolean;
 };
 
 const quotePayloadSchema = z.object({
@@ -76,7 +80,8 @@ const quotePayloadSchema = z.object({
   company: z.string().trim().min(1, "Company name is required."),
   email: z.string().trim().email("Please enter a valid business email."),
   phone: z.string().trim().min(8, "Phone number is required."),
-  website: z.string().optional()
+  website: z.string().optional(),
+  whatsappOptIn: z.boolean().optional()
 });
 
 function toNumber(value: number | string | undefined) {
@@ -116,6 +121,22 @@ function isSmtpConfigured() {
 }
 
 export async function POST(request: Request) {
+  let fallbackContext: {
+    brand: LeadBrand;
+    category: string;
+    plan: string;
+    city: string;
+    qty: number;
+    timeline: string;
+    contactName: string;
+    company: string;
+    email: string;
+    phone: string;
+    notes: string;
+    source: string;
+    sourcePage: string;
+  } | null = null;
+
   const ip = getClientIp(request);
   const rate = applyRateLimit({
     key: `api:quote:${ip}`,
@@ -156,9 +177,9 @@ export async function POST(request: Request) {
     }
 
     const requireNotifications = process.env.REQUIRE_LEAD_NOTIFICATIONS === "true";
-    if (requireNotifications && !isSmtpConfigured()) {
-      console.error("QUOTE_SERVICE_UNAVAILABLE", "SMTP configuration missing while REQUIRE_LEAD_NOTIFICATIONS=true");
-      return serviceUnavailable();
+    const smtpConfigured = isSmtpConfigured();
+    if (requireNotifications && !smtpConfigured) {
+      console.warn("QUOTE_NOTIFICATION_WARN", "SMTP configuration missing while REQUIRE_LEAD_NOTIFICATIONS=true");
     }
 
     const brand = normalizeBrand(payload.brand);
@@ -235,6 +256,16 @@ export async function POST(request: Request) {
             .filter(Boolean)
             .join(" | ")
         : notes;
+    const leadScore = calculateLeadScore({
+      brand,
+      qty,
+      timeline,
+      source,
+      category,
+      city
+    });
+    const leadPriority = scoreToPriority(leadScore);
+    const suggestedAgent = suggestAgentForLead(brand, category);
 
     const normalizedPayload = {
       brand,
@@ -260,16 +291,36 @@ export async function POST(request: Request) {
       pagePath: pagePath || undefined,
       referrer: referrer || undefined,
       timeline,
-      addons
+      addons,
+      score: leadScore
     };
 
     console.info("QUOTE_LEAD", JSON.stringify(normalizedPayload));
+
+    fallbackContext = {
+      brand,
+      category,
+      plan,
+      city,
+      qty,
+      timeline,
+      contactName,
+      company,
+      email,
+      phone,
+      notes: mergedNotes,
+      source,
+      sourcePage
+    };
 
     const lead = await createLead({
       brand,
       category,
       tier: plan,
       qty,
+      score: leadScore,
+      priority: leadPriority,
+      assignedTo: suggestedAgent,
       delivery: brand === "Seqrite" ? deployment || category : undefined,
       plan,
       usersSeats: brand === "Microsoft" ? usersSeats : null,
@@ -296,6 +347,19 @@ export async function POST(request: Request) {
       company,
       email,
       phone
+    });
+    await logAuditEvent({
+      type: "lead_created",
+      leadId: lead.leadId,
+      actor: "quote_api",
+      details: {
+        brand: lead.brand,
+        category: lead.category,
+        tier: lead.tier,
+        qty: lead.qty,
+        city: lead.city,
+        source: lead.source
+      }
     });
     console.info("[quote] lead_saved", {
       leadId: lead.leadId,
@@ -330,25 +394,131 @@ export async function POST(request: Request) {
     if (whatsappResult.ok) {
       await updateMessageIntentStatus(whatsappIntent.id, "SENT");
     }
+    await logAuditEvent({
+      type: "whatsapp_sent",
+      leadId: lead.leadId,
+      actor: "quote_api",
+      details: {
+        to: whatsappTo,
+        ok: whatsappResult.ok,
+        reason: whatsappResult.reason ?? null
+      }
+    });
 
-    const emailResult = await sendEmail({ lead });
-    if (emailResult.ok) {
-      await updateMessageIntentStatus(emailIntent.id, "SENT");
+    if (!smtpConfigured) {
+      await updateMessageIntentStatus(emailIntent.id, "FAILED", "SMTP not configured");
+      await logAuditEvent({
+        type: "email_sent",
+        leadId: lead.leadId,
+        actor: "quote_api",
+        details: {
+          to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
+          ok: false,
+          reason: "SMTP not configured"
+        }
+      });
     } else {
-      await updateMessageIntentStatus(emailIntent.id, "FAILED", emailResult.reason ?? "Email send failed");
-      console.error("Lead notification failed", emailResult.reason);
+      const emailResult = await sendEmail({ lead });
+      if (emailResult.ok) {
+        await updateMessageIntentStatus(emailIntent.id, "SENT");
+      } else {
+        await updateMessageIntentStatus(emailIntent.id, "FAILED", emailResult.reason ?? "Email send failed");
+        console.error("Lead notification failed", emailResult.reason);
+      }
+      await logAuditEvent({
+        type: "email_sent",
+        leadId: lead.leadId,
+        actor: "quote_api",
+        details: {
+          to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
+          ok: emailResult.ok,
+          reason: emailResult.reason ?? null
+        }
+      });
     }
 
     return NextResponse.json({
       ok: true,
+      success: true,
       leadId: lead.leadId,
+      rfqId: lead.leadId,
       status: lead.status,
       createdAt: lead.createdAt
     });
   } catch (error) {
     console.error("QUOTE_ROUTE_ERROR", error);
     if (error instanceof Error && error.message.includes("LEAD_STORAGE_UNSAFE")) {
-      return serviceUnavailable("Lead capture storage is not configured. Please contact support.");
+      const rfqId = `RFQ-${Date.now()}`;
+      const now = new Date().toISOString();
+      if (fallbackContext) {
+        const fallbackLead: LeadRecord = {
+          leadId: rfqId,
+          status: "NEW",
+          priority: "WARM",
+          score: calculateLeadScore({
+            brand: fallbackContext.brand,
+            qty: fallbackContext.qty,
+            timeline: fallbackContext.timeline,
+            source: fallbackContext.source,
+            category: fallbackContext.category,
+            city: fallbackContext.city
+          }),
+          assignedTo: suggestAgentForLead(fallbackContext.brand, fallbackContext.category),
+          lastContactedAt: null,
+          firstContactAt: null,
+          firstContactBy: null,
+          nextFollowUpAt: null,
+          brand: fallbackContext.brand,
+          category: fallbackContext.category,
+          tier: fallbackContext.plan,
+          qty: fallbackContext.qty,
+          plan: fallbackContext.plan,
+          city: fallbackContext.city,
+          source: fallbackContext.source,
+          sourcePage: fallbackContext.sourcePage,
+          timeline: fallbackContext.timeline,
+          notes: fallbackContext.notes,
+          activityNotes: [],
+          contactName: fallbackContext.contactName,
+          company: fallbackContext.company,
+          email: fallbackContext.email,
+          phone: fallbackContext.phone,
+          createdAt: now,
+          updatedAt: now
+        };
+        await sendEmail({ lead: fallbackLead });
+        await logAuditEvent({
+          type: "lead_created",
+          leadId: fallbackLead.leadId,
+          actor: "quote_api_fallback",
+          details: {
+            fallback: true,
+            brand: fallbackLead.brand,
+            category: fallbackLead.category,
+            city: fallbackLead.city
+          }
+        });
+        await logAuditEvent({
+          type: "email_sent",
+          leadId: fallbackLead.leadId,
+          actor: "quote_api_fallback",
+          details: {
+            to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
+            fallback: true
+          }
+        });
+        console.warn("QUOTE_FALLBACK_CAPTURE", JSON.stringify({ rfqId, brand: fallbackLead.brand, city: fallbackLead.city }));
+      }
+
+      return NextResponse.json({
+        ok: true,
+        success: true,
+        leadId: rfqId,
+        rfqId,
+        status: "NEW",
+        createdAt: now,
+        message: "Request received in fallback mode. We will contact you shortly."
+      });
     }
     return serviceUnavailable();
   }

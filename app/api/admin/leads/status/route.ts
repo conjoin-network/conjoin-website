@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { getLeadById, updateLeadStatus } from "@/lib/leads";
+import { logAuditEvent } from "@/lib/event-log";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/quote-catalog";
 
 export async function POST(request: Request) {
@@ -31,6 +32,16 @@ export async function POST(request: Request) {
   if (!updated) {
     return NextResponse.redirect(new URL("/admin/leads?error=missing", request.url), 303);
   }
+  await logAuditEvent({
+    type: "status_changed",
+    leadId: updated.leadId,
+    actor: session.displayName || session.role,
+    details: {
+      from: lead.status,
+      to: updated.status,
+      source: "status_form"
+    }
+  });
 
   const safeRedirect = redirectPath.startsWith("/admin/leads") ? redirectPath : "/admin/leads";
   return NextResponse.redirect(new URL(safeRedirect, request.url), 303);

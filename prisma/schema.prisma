@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  category    String
+  logo        String?
+  description String
+  metaTitle   String
+  metaDesc    String
+  products    Product[]
+  leads       Lead[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([category])
+  @@index([name])
+}
+
+model Product {
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  brandId         String
+  category        String
+  deploymentTypes Json
+  pricingJson     Json?
+  featuresJson    Json
+  description     String
+  isPopular       Boolean  @default(false)
+  metaTitle       String
+  metaDesc        String
+  brand           Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  leads           Lead[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([brandId, category])
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  rfqId       String   @unique
+  brandId     String?
+  productId   String?
+  quantity    Int
+  deployment  String?
+  timeline    String?
+  contactData Json
+  status      String   @default("NEW")
+  score       Int      @default(0)
+  assignedTo  String?
+  source      String?
+  notes       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  brand       Brand?   @relation(fields: [brandId], references: [id])
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@index([status, createdAt])
+  @@index([brandId, score, assignedTo])
+}
+
+model Agent {
+  id         String   @id @default(cuid())
+  name       String
+  email      String   @unique
+  phone      String?
+  role       String
+  expertise  Json
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([role, isActive])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String
+  content     String
+  category    String
+  tags        Json
+  published   Boolean  @default(false)
+  publishedAt DateTime?
+  metaTitle   String
+  metaDesc    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([published, publishedAt])
+  @@index([category])
+}

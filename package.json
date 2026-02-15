@@ -14,7 +14,13 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "qa:smoke": "bash scripts/ensure-workdir.sh && node scripts/qa-smoke.mjs",
-    "qa:golive": "bash scripts/ensure-workdir.sh && node scripts/qa-golive.mjs"
+    "qa:golive": "bash scripts/ensure-workdir.sh && node scripts/qa-golive.mjs",
+    "qa:rfq": "bash scripts/ensure-workdir.sh && node scripts/qa-rfq-revenue-pass.mjs",
+    "qa:rfq:persistence": "bash scripts/ensure-workdir.sh && node scripts/qa-rfq-persistence-check.mjs",
+    "qa:rfq:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-rfq-proof.mjs",
+    "qa:phase2:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-phase2-screenshots.mjs",
+    "qa:phase3:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-phase3-pipeline.mjs",
+    "seed:platform": "node --experimental-strip-types scripts/seed.ts"
   },
   "dependencies": {
     "next": "16.1.6",

@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export default function AdminLogoutButton() {
+export default function AdminLogoutButton({ redirectTo = "/admin/login" }: { redirectTo?: string }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +15,7 @@ export default function AdminLogoutButton() {
         credentials: "same-origin"
       });
     } finally {
-      router.replace("/admin/login");
+      router.replace(redirectTo);
       router.refresh();
       setLoading(false);
     }

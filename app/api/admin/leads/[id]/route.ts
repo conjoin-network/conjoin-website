@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isValidAgentName } from "@/lib/agents";
 import { getAdminActorLabel, getPortalSessionFromRequest } from "@/lib/admin-session";
 import { getLeadById, patchLead } from "@/lib/leads";
+import { logAuditEvent } from "@/lib/event-log";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
 
 type UpdatePayload = {
@@ -85,6 +86,41 @@ export async function PATCH(
 
   if (!updated) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });
+  }
+
+  if (existingLead.status !== updated.status) {
+    await logAuditEvent({
+      type: "status_changed",
+      leadId: updated.leadId,
+      actor,
+      details: {
+        from: existingLead.status,
+        to: updated.status
+      }
+    });
+  }
+
+  if ((existingLead.assignedTo ?? "") !== (updated.assignedTo ?? "")) {
+    await logAuditEvent({
+      type: "lead_assigned",
+      leadId: updated.leadId,
+      actor,
+      details: {
+        from: existingLead.assignedTo ?? null,
+        to: updated.assignedTo ?? null
+      }
+    });
+  }
+
+  if (note) {
+    await logAuditEvent({
+      type: "note_added",
+      leadId: updated.leadId,
+      actor,
+      details: {
+        note: note.slice(0, 180)
+      }
+    });
   }
 
   return NextResponse.json({ ok: true, lead: updated });

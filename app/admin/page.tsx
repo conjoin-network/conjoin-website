@@ -17,6 +17,11 @@ export const metadata: Metadata = {
 
 const links = [
   {
+    href: "/admin/pipeline",
+    title: "Pipeline",
+    description: "Track execution status across P0-P3 with now/next/later visibility."
+  },
+  {
     href: "/admin/leads",
     title: "Leads",
     description: "Manage assignments, status, notes, and follow-up actions."
@@ -35,6 +40,11 @@ const links = [
     href: "/admin/messages",
     title: "Messages",
     description: "Review queued messaging intents for email and WhatsApp."
+  },
+  {
+    href: "/admin/events",
+    title: "Events",
+    description: "Audit timeline of lead creation, assignment, status and messaging events."
   }
 ];
 
@@ -57,7 +67,7 @@ export default async function AdminHomePage() {
           <p className="text-xs text-[var(--color-text-secondary)]">
             Signed in as {session.displayName} ({session.role})
           </p>
-          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <p className="rounded-lg border border-amber-300/45 bg-amber-200/10 px-3 py-2 text-xs text-amber-100">
             Data is confidential. Access is logged. Do not share externally.
           </p>
         </header>
@@ -67,7 +77,7 @@ export default async function AdminHomePage() {
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-2xl border border-[var(--color-border)] bg-white p-5 transition hover:-translate-y-0.5 hover:border-[var(--color-primary)]/35 hover:shadow-[0_14px_28px_-20px_rgba(0,113,227,0.35)]"
+              className="admin-card rounded-2xl p-5 transition hover:-translate-y-0.5 hover:border-[var(--color-primary)]/35 hover:shadow-[0_14px_28px_-20px_rgba(59,130,246,0.45)]"
             >
               <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">{link.title}</h2>
               <p className="mt-2 text-sm text-[var(--color-text-secondary)]">{link.description}</p>

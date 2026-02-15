@@ -17,3 +17,30 @@ export const AGENT_OPTIONS: AgentOption[] = [
 export function isValidAgentName(value: string) {
   return AGENT_OPTIONS.some((agent) => agent.name === value);
 }
+
+function pickFromPool(pool: string[]) {
+  if (pool.length === 0) {
+    return null;
+  }
+  const index = Math.abs(Date.now()) % pool.length;
+  return pool[index] ?? null;
+}
+
+export function suggestAgentForLead(brand: string, category = "") {
+  const normalizedBrand = brand.trim().toLowerCase();
+  const normalizedCategory = category.trim().toLowerCase();
+
+  if (normalizedBrand === "microsoft") {
+    return pickFromPool(["Zeena", "Nidhi"]);
+  }
+  if (normalizedBrand === "seqrite") {
+    return pickFromPool(["Nidhi", "Girish"]);
+  }
+  if (normalizedBrand === "cisco" || normalizedCategory.includes("network")) {
+    return pickFromPool(["Rimpy", "Bharat"]);
+  }
+  if (normalizedCategory.includes("support")) {
+    return "Kiran";
+  }
+  return pickFromPool(["Girish", "Nidhi", "Rimpy"]);
+}

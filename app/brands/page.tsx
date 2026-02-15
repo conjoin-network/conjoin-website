@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Card from "@/app/components/Card";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import BrandsCatalogClient from "@/app/brands/BrandsCatalogClient";
 import {
   BRAND_CATEGORIES,
   BRAND_CATEGORY_HINTS,
-  getBrandsByCategory
+  BRAND_TILES
 } from "@/lib/brands-data";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 import { buildMetadata } from "@/lib/seo";
@@ -20,15 +20,6 @@ export const metadata: Metadata = buildMetadata({
 });
 
 export default function BrandsPage() {
-  const categoryAccent: Record<(typeof BRAND_CATEGORIES)[number], string> = {
-    Security: "rgba(14, 116, 144, 0.16)",
-    Networking: "rgba(59, 130, 246, 0.16)",
-    "Cloud & Productivity": "rgba(37, 99, 235, 0.16)",
-    "Enterprise Software": "rgba(79, 70, 229, 0.16)",
-    "Endpoint & Devices": "rgba(15, 118, 110, 0.16)",
-    "Data Center & Backup": "rgba(51, 65, 85, 0.16)"
-  };
-
   return (
     <div>
       <Section className="pb-10 pt-10 md:pb-14 md:pt-12">
@@ -49,43 +40,7 @@ export default function BrandsPage() {
       </Section>
 
       <Section tone="alt" className="py-10 md:py-14">
-        <div className="space-y-8">
-          {BRAND_CATEGORIES.map((category) => {
-            const brands = getBrandsByCategory(category);
-            return (
-              <section key={category} className="space-y-3">
-                <div className="space-y-1">
-                  <h2 className="text-2xl font-semibold text-[var(--color-text-primary)]">{category}</h2>
-                  <p className="text-sm">{BRAND_CATEGORY_HINTS[category]}</p>
-                </div>
-                <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
-                  {brands.map((brand) => (
-                    <Link
-                      key={brand.slug}
-                      href={`/request-quote?brand=${encodeURIComponent(brand.name)}&source=/brands`}
-                    >
-                      <Card className="space-y-3 p-4 transition hover:-translate-y-0.5">
-                        <span
-                          aria-hidden
-                          className="block h-1 w-16 rounded-full"
-                          style={{ backgroundColor: categoryAccent[category] }}
-                        />
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{brand.name}</h3>
-                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                            LIVE
-                          </span>
-                        </div>
-                        <p className="text-xs">{brand.description}</p>
-                        <p className="text-xs font-semibold text-[var(--color-primary)]">Request quote for this brand</p>
-                      </Card>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+        <BrandsCatalogClient brands={BRAND_TILES} categories={[...BRAND_CATEGORIES]} categoryHints={BRAND_CATEGORY_HINTS} />
       </Section>
 
       <Section className="py-10 md:py-14">

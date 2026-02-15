@@ -11,16 +11,6 @@ export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
     matchPrefix: "/solutions"
   },
   {
-    href: "/microsoft",
-    label: "Microsoft",
-    matchPrefix: "/microsoft"
-  },
-  {
-    href: "/seqrite",
-    label: "Seqrite",
-    matchPrefix: "/seqrite"
-  },
-  {
     href: "/brands",
     label: "Brands",
     matchPrefix: "/brands"
@@ -29,6 +19,11 @@ export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
     href: "/knowledge",
     label: "Knowledge",
     matchPrefix: "/knowledge"
+  },
+  {
+    href: "/contact",
+    label: "Contact",
+    matchPrefix: "/contact"
   }
 ];
 

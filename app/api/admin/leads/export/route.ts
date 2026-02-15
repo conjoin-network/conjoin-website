@@ -9,8 +9,10 @@ function parseFilters(url: URL): LeadFilters {
   return {
     brand: url.searchParams.get("brand") ?? "all",
     status: url.searchParams.get("status") ?? "all",
+    scoreBand: url.searchParams.get("scoreBand") ?? "all",
     city: url.searchParams.get("city") ?? "all",
     agent: url.searchParams.get("agent") ?? "all",
+    q: url.searchParams.get("q") ?? "",
     dateRange
   };
 }
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
     "updatedAt",
     "status",
     "priority",
+    "score",
     "assignedTo",
     "nextFollowUpAt",
     "lastContactedAt",
@@ -82,6 +85,7 @@ export async function GET(request: Request) {
     lead.updatedAt,
     lead.status,
     lead.priority,
+    lead.score,
     lead.assignedTo ?? "",
     lead.nextFollowUpAt ?? "",
     lead.lastContactedAt ?? "",
