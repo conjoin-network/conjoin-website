@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
-import { event as trackEvent } from "@/lib/ga";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
 function inferBrand(pathname: string) {
@@ -97,11 +96,6 @@ export default function FloatingWhatsApp() {
       target="_blank"
       rel="noreferrer"
       aria-label="Chat on WhatsApp"
-      onClick={() =>
-        trackEvent("whatsapp_click", {
-          page_path: pathname
-        })
-      }
       className={`floating-whatsapp interactive-btn fixed z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
       style={{ "--floating-bottom-offset": `${bottomOffset}px` } as CSSProperties}
     >

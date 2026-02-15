@@ -12,7 +12,6 @@ import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
-import { GA_ID } from "@/lib/ga";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -92,7 +91,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const gaId = GA_ID.trim();
   const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? "";
   const year = new Date().getFullYear();
   const orgJsonLd = {
@@ -347,10 +345,6 @@ export default function RootLayout({
           </footer>
         </div>
         <FloatingWhatsApp />
-        {gaId ? (
-          <>
-          </>
-        ) : null}
         {clarityProjectId ? (
           <Script
             id="clarity-init"
