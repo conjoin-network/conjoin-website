@@ -22,8 +22,8 @@ body {
 }
 
 :root {
-  --header-height-mobile: 68px;
-  --header-height-desktop: 82px;
+  --header-height-mobile: 72px;
+  --header-height-desktop: 88px;
 }
 
 h1,
@@ -147,8 +147,8 @@ textarea:focus-visible {
 .brand-mark {
   position: relative;
   display: inline-flex;
-  height: 2.65rem;
-  width: 2.65rem;
+  height: 2.78rem;
+  width: 2.78rem;
   align-items: center;
   justify-content: center;
   border-radius: 999px;
@@ -158,8 +158,8 @@ textarea:focus-visible {
 .brand-image {
   position: relative;
   z-index: 1;
-  height: 2.5rem;
-  width: 2.5rem;
+  height: 2.4rem;
+  width: 2.4rem;
   object-fit: contain;
 }
 
@@ -207,6 +207,12 @@ textarea:focus-visible {
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--floating-bottom-offset, 20px));
   box-shadow: 0 12px 25px -14px rgba(18, 140, 126, 0.9);
+}
+
+.floating-whatsapp.is-near-footer {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
 }
 
 .floating-whatsapp:active {
@@ -333,13 +339,13 @@ textarea:focus-visible {
   }
 
   .brand-mark {
-    height: 2.95rem;
-    width: 2.95rem;
+    height: 2.48rem;
+    width: 2.48rem;
   }
 
   .brand-image {
-    height: 2.75rem;
-    width: 2.75rem;
+    height: 2.15rem;
+    width: 2.15rem;
   }
 
   .cta-pulse {
@@ -358,8 +364,13 @@ textarea:focus-visible {
 
 @media (max-width: 479px) {
   .brand-mark {
-    height: 2.88rem;
-    width: 2.88rem;
+    height: 2.42rem;
+    width: 2.42rem;
+  }
+
+  .brand-image {
+    height: 2.1rem;
+    width: 2.1rem;
   }
 }
 

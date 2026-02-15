@@ -85,7 +85,7 @@ export default function Carousel({
 
   return (
     <section
-      className={`relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[linear-gradient(155deg,#ffffff,#f8fbff)] ${heightClassName} ${className}`.trim()}
+      className={`relative overflow-visible rounded-3xl border border-[var(--color-border)] bg-[linear-gradient(155deg,#ffffff,#f8fbff)] pb-10 md:pb-12 ${heightClassName} ${className}`.trim()}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onTouchStart={(event) => onTouchStart(event.touches[0]?.clientX ?? 0)}
@@ -119,22 +119,13 @@ export default function Carousel({
         </div>
       </div>
 
-      {slides.map((slide, slideIndex) => {
-        const active = slideIndex === index;
-        return (
-          <article
-            key={slide.id}
-            aria-hidden={!active}
-            className={`absolute inset-0 z-10 transition-all duration-300 ${
-              active ? "translate-x-0 opacity-100" : "pointer-events-none translate-x-1 opacity-0"
-            }`}
-          >
-            {slide.panel}
-          </article>
-        );
-      })}
+      <div className="relative z-10 h-full">
+        <article key={slides[index].id} className="h-full animate-[fade-in_220ms_ease-out]">
+          {slides[index].panel}
+        </article>
+      </div>
 
-      <div className="absolute inset-x-0 bottom-4 z-20 flex items-center justify-center gap-2">
+      <div className="absolute inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-20 flex items-center justify-center gap-2 md:bottom-5">
         {slides.map((slide, dotIndex) => {
           const active = dotIndex === index;
           return (

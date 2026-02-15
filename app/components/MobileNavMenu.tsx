@@ -11,6 +11,7 @@ export default function MobileNavMenu() {
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const scrollYRef = useRef(0);
+  const pathnameRef = useRef(pathname);
 
   useEffect(() => {
     const body = document.body;
@@ -54,13 +55,20 @@ export default function MobileNavMenu() {
   }, [open]);
 
   useEffect(() => {
-    if (!open) {
+    if (pathnameRef.current === pathname) {
+      return;
+    }
+
+    const previousPath = pathnameRef.current;
+    pathnameRef.current = pathname;
+
+    if (!open || previousPath === pathname) {
       return;
     }
 
     const closeOnRouteChange = window.setTimeout(() => setOpen(false), 0);
     return () => window.clearTimeout(closeOnRouteChange);
-  }, [open, pathname]);
+  }, [pathname, open]);
 
   useEffect(() => {
     if (!open) {
@@ -99,14 +107,14 @@ export default function MobileNavMenu() {
   }, [open]);
 
   return (
-    <div className="relative z-[65]">
+    <div className="relative z-[80] shrink-0">
       <button
         type="button"
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => setOpen(true)}
         aria-expanded={open}
         aria-controls="mobile-nav-drawer"
         aria-label="Toggle navigation menu"
-        className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-primary)]"
+        className="header-icon-btn pointer-events-auto relative z-[80] inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-primary)]"
       >
         <span aria-hidden className="text-lg leading-none">
           ☰
@@ -119,7 +127,7 @@ export default function MobileNavMenu() {
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
-          className="mobile-nav-overlay fixed inset-0 z-[70] bg-slate-900/30 backdrop-blur-[1px]"
+          className="mobile-nav-overlay fixed inset-0 z-[90] bg-slate-900/30 backdrop-blur-[1px]"
           onClick={() => setOpen(false)}
         >
           <div
@@ -134,7 +142,7 @@ export default function MobileNavMenu() {
                 ref={closeButtonRef}
                 type="button"
                 onClick={() => setOpen(false)}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40"
+                className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] transition hover:border-[var(--color-primary)]/40"
               >
                 <span aria-hidden className="text-xl leading-none">×</span>
                 <span className="sr-only">Close menu</span>

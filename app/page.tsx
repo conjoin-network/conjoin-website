@@ -72,7 +72,7 @@ const heroSlides = [
           <p className="text-sm text-[var(--color-text-secondary)]">Rollout clarity for users, devices, identity, and adoption operations.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {[
             ["Email & Collaboration", "Exchange", "Teams", "SharePoint"],
             ["Identity", "Entra ID", "SSO", "Conditional access"],
@@ -126,7 +126,7 @@ const heroSlides = [
           <p className="text-sm text-[var(--color-text-secondary)]">Policy-first rollout for endpoint, email, and recovery governance.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {[
             {
               title: "Endpoint Protection",
@@ -189,7 +189,7 @@ const heroSlides = [
           <p className="text-sm text-[var(--color-text-secondary)]">Coverage, retention, and monitoring workflows aligned for operational continuity.</p>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {[
             ["Monitoring", "Live dashboards", "Centralized alerts", "Operator handover"],
             ["Recording", "NVR/VMS planning", "Retention design", "Audit readiness"],
@@ -255,7 +255,12 @@ export default function Home() {
             </ul>
           </header>
 
-          <Carousel slides={heroSlides} autoplayMs={2000} className="h-full" heightClassName="min-h-[380px] md:min-h-[430px]" />
+          <Carousel
+            slides={heroSlides}
+            autoplayMs={2000}
+            className="h-full aspect-[4/3] sm:aspect-auto"
+            heightClassName="min-h-[520px] sm:min-h-[460px] md:min-h-[430px]"
+          />
         </div>
       </Section>
 

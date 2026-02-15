@@ -9,6 +9,7 @@ import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import BreadcrumbJsonLd from "@/app/components/BreadcrumbJsonLd";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -96,6 +97,18 @@ export default function RootLayout({
     email: getOrgEmails(),
     contactPoint: getOrgContactPoints()
   };
+  const localBusinessJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "LocalBusiness",
+    name: ORG_NAME,
+    url: SITE_URL,
+    image: absoluteUrl("/brand/conjoin-logo.png"),
+    telephone: getOrgPhones(),
+    email: getOrgEmails(),
+    address: ORG_POSTAL_ADDRESS,
+    areaServed: ORG_AREA_SERVED,
+    contactPoint: getOrgContactPoints()
+  };
   const footerWhatsApp = getWhatsAppLink(
     buildQuoteMessage({ brand: "Microsoft or Seqrite", city: "Chandigarh", requirement: "Licensing and security quote" })
   );
@@ -107,7 +120,7 @@ export default function RootLayout({
       >
         <div className="flex min-h-screen flex-col">
           <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-            <Container className="min-h-[68px] py-2.5 md:min-h-[82px] md:py-4">
+            <Container className="min-h-[76px] py-3 md:min-h-[90px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
                   href="/"
@@ -118,8 +131,8 @@ export default function RootLayout({
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
-                      width={38}
-                      height={38}
+                      width={52}
+                      height={52}
                       className="brand-image"
                       priority
                     />
@@ -135,7 +148,7 @@ export default function RootLayout({
                   <Link
                     href="/search"
                     aria-label="Search"
-                    className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    className="header-icon-btn inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                   >
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
                       <path
@@ -147,7 +160,7 @@ export default function RootLayout({
                       />
                     </svg>
                   </Link>
-                  <ButtonLink href="/request-quote" variant="primary" className="min-h-[42px] whitespace-nowrap">
+                  <ButtonLink href="/request-quote" variant="primary" className="min-h-11 whitespace-nowrap">
                     Request Quote
                   </ButtonLink>
                 </div>
@@ -164,8 +177,8 @@ export default function RootLayout({
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
-                        width={46}
-                        height={46}
+                        width={60}
+                        height={60}
                         className="brand-image"
                         priority
                       />
@@ -178,7 +191,7 @@ export default function RootLayout({
                     <Link
                       href="/search"
                       aria-label="Search"
-                      className="header-icon-btn inline-flex h-10 w-10 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                      className="header-icon-btn inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
                     >
                       <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
                         <path
@@ -190,7 +203,7 @@ export default function RootLayout({
                         />
                       </svg>
                     </Link>
-                    <ButtonLink href="/request-quote" variant="primary" className="min-h-[42px] px-3 text-xs whitespace-nowrap max-[360px]:px-2">
+                    <ButtonLink href="/request-quote" variant="primary" className="min-h-11 px-3 text-xs whitespace-nowrap max-[360px]:px-2">
                       Request Quote
                     </ButtonLink>
                     <MobileNavMenu />
@@ -233,8 +246,8 @@ export default function RootLayout({
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <p className="font-semibold text-[var(--color-text-primary)]">Site links</p>
-                  <div className="flex flex-col gap-1">
+                    <p className="font-semibold text-[var(--color-text-primary)]">Site links</p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 lg:grid-cols-3">
                     <Link href="/products" className="hover:underline">
                       Products
                     </Link>
@@ -315,6 +328,12 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
+        <Script
+          id="localbusiness-jsonld"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
+        />
+        <BreadcrumbJsonLd />
       </body>
     </html>
   );
