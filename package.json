@@ -28,6 +28,11 @@
     "e2e": "bash scripts/ensure-workdir.sh && playwright test",
     "e2e:install": "playwright install chromium --with-deps",
     "rum:check": "bash scripts/ensure-workdir.sh && node scripts/rum-check.mjs",
+    "google:setup:gcp": "bash scripts/ensure-workdir.sh && bash scripts/google/setup-gcp.sh",
+    "google:setup:gsc": "bash scripts/ensure-workdir.sh && node scripts/google/gsc-automation.mjs",
+    "google:setup:ads": "bash scripts/ensure-workdir.sh && node scripts/google/ads-scaffold.mjs",
+    "google:monitor:gsc": "bash scripts/ensure-workdir.sh && node scripts/google/gsc-monitor.mjs",
+    "google:setup:all": "pnpm google:setup:gcp && pnpm google:setup:gsc && pnpm google:setup:ads && pnpm google:monitor:gsc",
     "seed:platform": "node --experimental-strip-types scripts/seed.ts"
   },
   "dependencies": {

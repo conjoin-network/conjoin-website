@@ -1,0 +1,14 @@
+{
+  "ok": false,
+  "status": "blocked",
+  "reason": "gcloud_not_installed",
+  "projectName": "ConjoinNetwork",
+  "projectId": "conjoinnetwork-260215-13947",
+  "serviceAccount": "conjoin-automation@conjoinnetwork-260215-13947.iam.gserviceaccount.com",
+  "requiredApis": [
+    "searchconsole.googleapis.com",
+    "siteverification.googleapis.com",
+    "googleads.googleapis.com"
+  ],
+  "next": "Install Google Cloud SDK, run gcloud auth login, and rerun this script."
+}

@@ -1,0 +1,8 @@
+{
+  "ok": false,
+  "status": "blocked",
+  "reason": "missing_google_oauth_access_token",
+  "siteUrl": "https://conjoinnetwork.com/",
+  "sitemapUrl": "https://conjoinnetwork.com/sitemap.xml",
+  "next": "Set GOOGLE_OAUTH_ACCESS_TOKEN and rerun scripts/google/gsc-automation.mjs"
+}

@@ -1,0 +1,9 @@
+Search Console verification token: PENDING
+
+Set GOOGLE_OAUTH_ACCESS_TOKEN and rerun:
+node scripts/google/gsc-automation.mjs
+
+Expected DNS record format:
+Type: TXT
+Host: @
+Value: google-site-verification=<token-from-api>

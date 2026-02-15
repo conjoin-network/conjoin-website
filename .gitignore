@@ -49,3 +49,4 @@ artifacts/
 playwright-report/
 test-results/
 data/rum-events.json
+docs/google-setup/keys/*.json
