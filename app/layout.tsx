@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
@@ -78,8 +78,12 @@ export const metadata: Metadata = {
     title: "ConjoinNetwork | Procurement-Ready IT Licensing & Security",
     description: "Licensing, migration, security, renewals and support with compliance-ready commercial proposals.",
     images: [absoluteUrl("/brand/conjoin-logo.png")]
-  },
-  themeColor: "#0b1220"
+  }
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b1220",
+  colorScheme: "dark"
 };
 
 export default function RootLayout({
@@ -132,10 +136,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark" style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}>
-      <head>
-        <meta name="theme-color" content="#0b1220" />
-        <meta name="color-scheme" content="dark" />
-      </head>
+      <head />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
         style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}
