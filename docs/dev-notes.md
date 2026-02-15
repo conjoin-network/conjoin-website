@@ -29,6 +29,7 @@
 - `sitemap.xml`: `public, s-maxage=3600, stale-while-revalidate=86400`
 - `robots.txt`: `public, s-maxage=86400, stale-while-revalidate=86400`
 - `api/*`, `admin/*`, `crm/*`: `no-store`
+- `stale-while-revalidate` follows edge/CDN semantics: users can receive cached content while background revalidation refreshes the cache.
 
 ## Lighthouse CI gate
 
@@ -65,3 +66,8 @@
   - `SENTRY_DSN` (Sentry envelope mode)
   - `ERROR_LOG_DSN` (generic webhook mode)
   - If neither is set, error capture is no-op beyond server logs.
+- Enable locally:
+  - `SENTRY_DSN=<dsn> PORT=4310 pnpm start`
+  - or `ERROR_LOG_DSN=https://<webhook-url> PORT=4310 pnpm start`
+- Enable in Vercel:
+  - add `SENTRY_DSN` or `ERROR_LOG_DSN` in Project Settings -> Environment Variables.

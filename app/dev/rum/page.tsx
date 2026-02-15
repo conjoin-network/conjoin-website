@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getRumSummary } from "@/lib/rum-store";
+import { notFound } from "next/navigation";
+import { getRecentRumEvents, getRumSummary } from "@/lib/rum-store";
 import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
 
@@ -16,7 +17,11 @@ export const metadata: Metadata = {
 };
 
 export default async function RumDashboardPage() {
-  const summary = await getRumSummary();
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
+  const [summary, recentEvents] = await Promise.all([getRumSummary(), getRecentRumEvents(50)]);
 
   return (
     <Section className="py-10 md:py-14">
@@ -45,6 +50,38 @@ export default async function RumDashboardPage() {
         </div>
 
         <p className="text-xs text-[var(--color-text-secondary)]">Updated: {summary.updatedAt}</p>
+
+        <Card className="space-y-3 p-5">
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Last 50 events</h2>
+          {recentEvents.length === 0 ? (
+            <p className="text-sm text-[var(--color-text-secondary)]">No events captured yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[680px] text-left text-xs text-[var(--color-text-secondary)]">
+                <thead className="text-[11px] uppercase tracking-[0.06em] text-[var(--color-text-primary)]">
+                  <tr>
+                    <th className="px-2 py-1">Time</th>
+                    <th className="px-2 py-1">Metric</th>
+                    <th className="px-2 py-1">Value</th>
+                    <th className="px-2 py-1">Rating</th>
+                    <th className="px-2 py-1">Path</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentEvents.map((event) => (
+                    <tr key={event.id} className="border-t border-[var(--color-border)]">
+                      <td className="px-2 py-1.5">{new Date(event.createdAt).toLocaleString()}</td>
+                      <td className="px-2 py-1.5">{event.name}</td>
+                      <td className="px-2 py-1.5">{event.value}</td>
+                      <td className="px-2 py-1.5">{event.rating}</td>
+                      <td className="px-2 py-1.5">{event.path}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
       </div>
     </Section>
   );

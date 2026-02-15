@@ -119,6 +119,17 @@ export default function RootLayout({
     email: getOrgEmails(),
     contactPoint: getOrgContactPoints()
   };
+  const webSiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: ORG_NAME,
+    url: SITE_URL,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_URL}/search?q={search_term_string}`,
+      "query-input": "required name=search_term_string"
+    }
+  };
   const localBusinessJsonLd = {
     "@context": "https://schema.org",
     "@type": "LocalBusiness",
@@ -369,6 +380,7 @@ export default function RootLayout({
           />
         ) : null}
         <JsonLd id="organization-jsonld" data={orgJsonLd} />
+        <JsonLd id="website-jsonld" data={webSiteJsonLd} />
         <JsonLd id="localbusiness-jsonld" data={localBusinessJsonLd} />
         <WebVitalsReporter />
       </body>

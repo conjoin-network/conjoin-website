@@ -35,11 +35,11 @@ jobs:
       - name: Build
         run: pnpm build:ci
 
+      - name: SEO checks
+        run: pnpm seo:check
+
       - name: Runtime smoke
         run: pnpm smoke
-
-      - name: Install Chromium
-        run: pnpm e2e:install
 
       - name: Lighthouse gate
         run: pnpm perf:check

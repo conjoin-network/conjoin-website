@@ -147,3 +147,8 @@ export async function getRumSummary() {
     storagePath: rumFilePath
   };
 }
+
+export async function getRecentRumEvents(limit = 50) {
+  const events = rotateEvents(await readEvents());
+  return events.slice(-Math.max(1, limit)).reverse();
+}
