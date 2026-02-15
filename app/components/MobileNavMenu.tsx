@@ -107,14 +107,14 @@ export default function MobileNavMenu() {
   }, [open]);
 
   return (
-    <div className="relative z-[80] shrink-0">
+    <div className="relative z-[100] shrink-0">
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-controls="mobile-nav-drawer"
         aria-label="Toggle navigation menu"
-        className="header-icon-btn pointer-events-auto relative z-[80] inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-primary)]"
+        className="header-icon-btn pointer-events-auto relative z-[100] inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-primary)]"
       >
         <span aria-hidden className="text-lg leading-none">
           ☰
@@ -127,7 +127,7 @@ export default function MobileNavMenu() {
           role="dialog"
           aria-modal="true"
           aria-label="Mobile navigation"
-          className="mobile-nav-overlay fixed inset-0 z-[90] bg-slate-900/30 backdrop-blur-[1px]"
+          className="mobile-nav-overlay fixed inset-0 z-[95] bg-slate-900/30 backdrop-blur-[2px]"
           onClick={() => setOpen(false)}
         >
           <div

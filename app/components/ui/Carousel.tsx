@@ -85,7 +85,7 @@ export default function Carousel({
 
   return (
     <section
-      className={`relative overflow-visible rounded-3xl border border-[var(--color-border)] bg-[linear-gradient(155deg,#ffffff,#f8fbff)] pb-10 md:pb-12 ${heightClassName} ${className}`.trim()}
+      className={`relative overflow-visible rounded-3xl border border-[var(--color-border)] bg-[linear-gradient(155deg,#ffffff,#f8fbff)] pb-12 md:pb-12 ${heightClassName} ${className}`.trim()}
       onMouseEnter={() => setIsHovering(true)}
       onMouseLeave={() => setIsHovering(false)}
       onTouchStart={(event) => onTouchStart(event.touches[0]?.clientX ?? 0)}
@@ -125,7 +125,7 @@ export default function Carousel({
         </article>
       </div>
 
-      <div className="absolute inset-x-0 bottom-[calc(12px+env(safe-area-inset-bottom,0px))] z-20 flex items-center justify-center gap-2 md:bottom-5">
+      <div className="absolute inset-x-0 bottom-[calc(16px+env(safe-area-inset-bottom,0px))] z-20 flex items-center justify-center gap-2 md:bottom-5">
         {slides.map((slide, dotIndex) => {
           const active = dotIndex === index;
           return (

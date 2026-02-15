@@ -99,6 +99,18 @@ async function run() {
   await mobilePage.locator('section[aria-roledescription="carousel"]').first().screenshot({
     path: path.join(outDir, "hero-right-slider-mobile-after.png")
   });
+  await mobilePage.getByRole("button", { name: /toggle navigation menu/i }).click();
+  await mobilePage.waitForTimeout(220);
+  await mobilePage.screenshot({
+    path: path.join(outDir, "mobile-menu-open-after.png"),
+    fullPage: false
+  });
+  await mobilePage.keyboard.press("Escape");
+  await mobilePage.waitForTimeout(220);
+  await mobilePage.screenshot({
+    path: path.join(outDir, "mobile-menu-closed-after.png"),
+    fullPage: false
+  });
   await mobilePage.screenshot({ path: path.join(outDir, "home-mobile-after.png"), fullPage: false });
 
   const mobileDots = mobilePage.locator('[aria-label^="Go to slide "]');

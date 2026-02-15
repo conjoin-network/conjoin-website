@@ -7,6 +7,7 @@ import Container from "@/app/components/Container";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import AnalyticsPageView from "@/app/components/AnalyticsPageView";
+import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
@@ -133,27 +134,28 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
       >
+        <HeaderScrollState />
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-            <Container className="min-h-[76px] py-3 md:min-h-[90px] md:py-4">
+          <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
+            <Container className="min-h-[80px] py-3 md:min-h-[96px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
+                  className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
                 >
                   <span className="brand-mark" aria-hidden>
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
-                      width={52}
-                      height={52}
+                      width={258}
+                      height={113}
                       className="brand-image"
                       priority
                     />
                   </span>
-                  <span className="max-w-[18rem] text-[10px] font-medium tracking-[0.04em] text-[var(--color-text-secondary)]">
-                    Procurement Advisory
+                  <span className="max-w-[20rem] text-xs font-medium tracking-[0.03em] text-[var(--color-text-secondary)]">
+                    IT Procurement Advisory
                   </span>
                 </Link>
                 <div className="flex min-w-0 justify-center">
@@ -186,20 +188,20 @@ export default function RootLayout({
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
+                  className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
                 >
                     <span className="brand-mark" aria-hidden>
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
-                        width={60}
-                        height={60}
+                        width={258}
+                        height={113}
                         className="brand-image"
                         priority
                       />
                     </span>
-                    <span className="hidden max-w-[10rem] text-[10px] font-medium tracking-[0.04em] text-[var(--color-text-secondary)] min-[390px]:inline">
-                      Procurement Advisory
+                    <span className="hidden max-w-[10.5rem] text-[10px] font-medium tracking-[0.03em] text-[var(--color-text-secondary)] min-[390px]:inline">
+                      IT Procurement Advisory
                     </span>
                   </Link>
                   <div className="flex items-center gap-2">

@@ -57,7 +57,7 @@ const heroSlides = [
     title: "Workspace service line",
     description: "Microsoft 365, endpoint governance, and modern workplace rollout.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("workspace")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("workspace")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Workspace
@@ -109,7 +109,7 @@ const heroSlides = [
     title: "Secure service line",
     description: "Endpoint, email, and backup resilience for business continuity.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("secure")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("secure")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Secure
@@ -170,7 +170,7 @@ const heroSlides = [
     title: "Vision service line",
     description: "Surveillance and monitoring architecture for multi-site operations.",
     panel: (
-      <div className="flex h-full flex-col rounded-3xl p-5 text-slate-900 md:p-6" style={withThemeStyles("vision")}>
+      <div className="flex h-full flex-col rounded-3xl p-5 pb-14 text-slate-900 md:p-6 md:pb-6" style={withThemeStyles("vision")}>
         <div className="space-y-2">
           <span className="inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
             Vision
@@ -253,7 +253,7 @@ export default function Home() {
             slides={heroSlides}
             autoplayMs={2000}
             className="h-full aspect-[4/3] sm:aspect-auto"
-            heightClassName="min-h-[520px] sm:min-h-[460px] md:min-h-[430px]"
+            heightClassName="min-h-[560px] sm:min-h-[500px] md:min-h-[450px]"
           />
         </div>
       </Section>

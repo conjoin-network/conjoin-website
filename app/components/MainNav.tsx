@@ -17,7 +17,7 @@ export default function MainNav({ className = "" }: { className?: string }) {
             href={item.href}
             className={`interactive-link rounded-lg px-2 py-1 transition ${
               active
-                ? "bg-[var(--color-alt-bg)] text-[var(--color-text-primary)] shadow-[inset_0_-2px_0_0_var(--color-primary)]"
+                ? "nav-link-active bg-[var(--color-alt-bg)] text-[var(--color-text-primary)]"
                 : "hover:bg-[var(--color-alt-bg)] hover:text-[var(--color-text-primary)]"
             }`}
           >
