@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
+import ThankYouConversion from "@/app/thank-you/ThankYouConversion";
 import { getLeadById } from "@/lib/leads";
 import { SALES_EMAIL, mailto } from "@/lib/contact";
 import { absoluteUrl } from "@/lib/seo";
@@ -55,6 +56,14 @@ export default async function ThankYouPage({
   return (
     <Section tone="alt" className="py-10 md:py-14">
       <div className="mx-auto max-w-3xl space-y-6">
+        <ThankYouConversion
+          leadId={params.leadId}
+          brand={brand}
+          requirement={requirement}
+          qty={qty}
+          city={city}
+          timeline={timeline}
+        />
         <header className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-5xl">We received your request</h1>
           <p className="text-sm md:text-base">We received your request. Our team will contact you.</p>

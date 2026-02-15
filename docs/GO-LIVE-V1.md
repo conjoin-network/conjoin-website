@@ -18,6 +18,7 @@
 - Attribution capture on `/api/quote`:
   - `brand`, `category`, `plan`, `deployment`, quantity fields, `city`, `timeline`, `source`, UTM values, `pagePath`, `referrer`.
 - Thank-you confirmation at `/thank-you` with WhatsApp continuation CTA.
+- Thank-you page fires conversion events (GA4 + Google Ads) when tracking IDs are configured.
 - Search at `/search` grouped into Brands, Products, Locations, and Knowledge.
 
 ## What Is Coming Soon
@@ -65,6 +66,10 @@
    - Optional:
      - `NEXT_PUBLIC_SITE_URL="https://conjoinnetwork.com"`
      - `NEXT_PUBLIC_WHATSAPP_URL="https://wa.me/919466663015"`
+     - `NEXT_PUBLIC_GA4_ID="G-XXXXXXXXXX"`
+     - `NEXT_PUBLIC_GOOGLE_ADS_ID="AW-XXXXXXXXX"`
+     - `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL="xxxxxxxxxxxxxx"`
+     - `NEXT_PUBLIC_CLARITY_PROJECT_ID=""`
      - `WHATSAPP_PROVIDER=""`
      - `WHATSAPP_ACCESS_TOKEN=""`
      - `WHATSAPP_PHONE_NUMBER_ID=""`

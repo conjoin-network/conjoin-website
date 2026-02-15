@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Container from "@/app/components/Container";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
+import AnalyticsPageView from "@/app/components/AnalyticsPageView";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
@@ -84,6 +85,20 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const ga4Id = process.env.NEXT_PUBLIC_GA4_ID?.trim() ?? "";
+  const googleAdsId = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() ?? "";
+  const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? "";
+  const analyticsScriptId = ga4Id || googleAdsId;
+  const gtagInit = [
+    "window.dataLayer = window.dataLayer || [];",
+    "function gtag(){dataLayer.push(arguments);}",
+    "window.gtag = gtag;",
+    "gtag('js', new Date());",
+    ga4Id ? `gtag('config', '${ga4Id}', { anonymize_ip: true });` : "",
+    googleAdsId ? `gtag('config', '${googleAdsId}');` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
   const year = new Date().getFullYear();
   const orgJsonLd = {
     "@context": "https://schema.org",
@@ -323,6 +338,26 @@ export default function RootLayout({
           </footer>
         </div>
         <FloatingWhatsApp />
+        {analyticsScriptId ? (
+          <>
+            <Script
+              id="gtag-loader"
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(analyticsScriptId)}`}
+              strategy="afterInteractive"
+            />
+            <Script id="gtag-init" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: gtagInit }} />
+            <AnalyticsPageView ga4Id={ga4Id || undefined} adsId={googleAdsId || undefined} />
+          </>
+        ) : null}
+        {clarityProjectId ? (
+          <Script
+            id="clarity-init"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window, document, "clarity", "script", "${clarityProjectId}");`
+            }}
+          />
+        ) : null}
         <Script
           id="organization-jsonld"
           type="application/ld+json"
