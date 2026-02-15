@@ -6,8 +6,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Container from "@/app/components/Container";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
-import GoogleAnalytics from "@/app/components/GoogleAnalytics";
-import AnalyticsRouteTracker from "@/app/components/AnalyticsRouteTracker";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
@@ -351,8 +349,6 @@ export default function RootLayout({
         <FloatingWhatsApp />
         {gaId ? (
           <>
-            <GoogleAnalytics />
-            <AnalyticsRouteTracker />
           </>
         ) : null}
         {clarityProjectId ? (
