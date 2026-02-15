@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Script from "next/script";
 import { notFound } from "next/navigation";
 import Card from "@/app/components/Card";
+import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
@@ -125,11 +125,7 @@ export default async function LocationPage({
         <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
 
-      <Script
-        id={`local-business-${location.slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
-      />
+      <JsonLd id={`local-business-${location.slug}`} data={localBusinessJsonLd} />
     </div>
   );
 }

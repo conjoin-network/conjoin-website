@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Script from "next/script";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import JsonLd from "@/app/components/JsonLd";
 import { BRAND_TILES, getBrandBySlug } from "@/lib/brands-data";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
 import { PLATFORM_PRODUCTS } from "@/lib/platform-catalog";
@@ -331,21 +331,9 @@ export default async function BrandDetailPage({
         <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
 
-      <Script
-        id={`brand-faq-${slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
-      <Script
-        id={`brand-breadcrumb-${slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
-      <Script
-        id={`brand-service-${slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }}
-      />
+      <JsonLd id={`brand-faq-${slug}`} data={faqJsonLd} />
+      <JsonLd id={`brand-breadcrumb-${slug}`} data={breadcrumbJsonLd} />
+      <JsonLd id={`brand-service-${slug}`} data={serviceJsonLd} />
     </div>
   );
 }

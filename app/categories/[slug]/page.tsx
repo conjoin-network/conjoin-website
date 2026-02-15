@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Script from "next/script";
 import { notFound } from "next/navigation";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
+import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import RelatedLinks from "@/app/components/RelatedLinks";
@@ -184,16 +184,8 @@ export default async function CategoryPage({
         <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
 
-      <Script
-        id={`category-breadcrumb-${category.slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
-      />
-      <Script
-        id={`category-faq-${category.slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
-      />
+      <JsonLd id={`category-breadcrumb-${category.slug}`} data={breadcrumbJsonLd} />
+      <JsonLd id={`category-faq-${category.slug}`} data={faqJsonLd} />
     </div>
   );
 }

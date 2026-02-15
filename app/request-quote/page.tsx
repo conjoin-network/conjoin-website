@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Script from "next/script";
+import JsonLd from "@/app/components/JsonLd";
 import RequestQuoteWizard from "@/app/request-quote/RequestQuoteWizard";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
@@ -38,7 +38,7 @@ export default function RequestQuotePage() {
   return (
     <>
       <RequestQuoteWizard />
-      <Script id="request-quote-faq-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <JsonLd id="request-quote-faq-jsonld" data={faqJsonLd} />
     </>
   );
 }

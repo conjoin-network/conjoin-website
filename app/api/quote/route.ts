@@ -6,6 +6,7 @@ import { LEADS_EMAIL } from "@/lib/contact";
 import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
 import { suggestAgentForLead } from "@/lib/agents";
 import { logAuditEvent } from "@/lib/event-log";
+import { captureServerError } from "@/lib/error-logger";
 import {
   QUOTE_CATALOG,
   type LeadBrand,
@@ -446,7 +447,11 @@ export async function POST(request: Request) {
       createdAt: lead.createdAt
     });
   } catch (error) {
-    console.error("QUOTE_ROUTE_ERROR", error);
+    await captureServerError(error, {
+      route: "/api/quote",
+      phase: "post",
+      fallbackEligible: Boolean(fallbackContext)
+    });
     if (error instanceof Error && error.message.includes("LEAD_STORAGE_UNSAFE")) {
       const rfqId = `RFQ-${Date.now()}`;
       const now = new Date().toISOString();

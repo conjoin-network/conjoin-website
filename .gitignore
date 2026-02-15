@@ -44,3 +44,8 @@ data/*.sqlite-wal
 data/*.sqlite-shm
 docs/screenshots/
 docs/qa-*.json
+artifacts/
+.lighthouseci/
+playwright-report/
+test-results/
+data/rum-events.json

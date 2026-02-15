@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import FaqAccordion from "@/app/components/FaqAccordion";
+import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
@@ -156,8 +156,8 @@ export default async function KnowledgeArticlePage({
         />
       </Section>
 
-      <Script id={`knowledge-article-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <Script id={`knowledge-faq-${slug}`} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      <JsonLd id={`knowledge-article-${slug}`} data={articleJsonLd} />
+      <JsonLd id={`knowledge-faq-${slug}`} data={faqJsonLd} />
     </div>
   );
 }

@@ -11,7 +11,8 @@ import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
-import BreadcrumbJsonLd from "@/app/components/BreadcrumbJsonLd";
+import WebVitalsReporter from "@/app/components/WebVitalsReporter";
+import JsonLd from "@/app/components/JsonLd";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -367,17 +368,9 @@ export default function RootLayout({
             }}
           />
         ) : null}
-        <Script
-          id="organization-jsonld"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
-        />
-        <Script
-          id="localbusiness-jsonld"
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
-        />
-        <BreadcrumbJsonLd />
+        <JsonLd id="organization-jsonld" data={orgJsonLd} />
+        <JsonLd id="localbusiness-jsonld" data={localBusinessJsonLd} />
+        <WebVitalsReporter />
       </body>
     </html>
   );

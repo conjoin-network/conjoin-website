@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Script from "next/script";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import JsonLd from "@/app/components/JsonLd";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
 import { PRODUCT_PAGES, getProductBySlug } from "@/lib/products-data";
+import { ORG_NAME } from "@/lib/contact";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
 export function generateStaticParams() {
@@ -65,6 +66,53 @@ export default async function ProductPage({
       name: item.question,
       acceptedAnswer: { "@type": "Answer", text: item.answer }
     }))
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/")
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Products",
+        item: absoluteUrl("/products")
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: product.title,
+        item: absoluteUrl(`/products/${slug}`)
+      }
+    ]
+  };
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description,
+    category: "IT Security and Procurement Services",
+    brand: {
+      "@type": "Brand",
+      name: ORG_NAME
+    },
+    url: absoluteUrl(`/products/${slug}`),
+    offers: {
+      "@type": "Offer",
+      availability: "https://schema.org/InStock",
+      priceSpecification: {
+        "@type": "PriceSpecification",
+        priceCurrency: "INR",
+        price: "0"
+      },
+      eligibleRegion: "IN",
+      description: "Quote-led commercial model. Final pricing depends on scope and quantity."
+    }
   };
 
   return (
@@ -152,16 +200,15 @@ export default async function ProductPage({
         <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
 
-      <Script
+      <JsonLd
         id={`product-faq-${slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            ...faqJsonLd,
-            url: absoluteUrl(`/products/${slug}`)
-          })
+        data={{
+          ...faqJsonLd,
+          url: absoluteUrl(`/products/${slug}`)
         }}
       />
+      <JsonLd id={`product-structured-${slug}`} data={productJsonLd} />
+      <JsonLd id={`product-breadcrumb-${slug}`} data={breadcrumbJsonLd} />
     </div>
   );
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { notFound } from "next/navigation";
 import { ButtonLink } from "@/app/components/Button";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import Section from "@/app/components/Section";
+import JsonLd from "@/app/components/JsonLd";
 import { getTheme, withThemeStyles } from "@/lib/brand/themes";
 import { ORG_NAME } from "@/lib/contact";
 import { getSolutionBySlug, SOLUTION_LINES } from "@/lib/solutions-data";
@@ -70,6 +70,30 @@ export default async function SolutionDetailPage({ params }: { params: Promise<P
     },
     areaServed: ["Chandigarh", "Punjab", "Haryana", "North India"],
     serviceType: theme.label
+  };
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/")
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Solutions",
+        item: absoluteUrl("/solutions")
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: solution.title,
+        item: absoluteUrl(`/solutions/${solution.slug}`)
+      }
+    ]
   };
 
   return (
@@ -187,26 +211,21 @@ export default async function SolutionDetailPage({ params }: { params: Promise<P
         </ButtonLink>
       </div>
 
-      <Script
+      <JsonLd
         id={`solutions-faq-${solution.slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            ...faqJsonLd,
-            url: absoluteUrl(`/solutions/${solution.slug}`)
-          })
+        data={{
+          ...faqJsonLd,
+          url: absoluteUrl(`/solutions/${solution.slug}`)
         }}
       />
-      <Script
+      <JsonLd
         id={`solutions-service-${solution.slug}`}
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            ...serviceJsonLd,
-            url: absoluteUrl(`/solutions/${solution.slug}`)
-          })
+        data={{
+          ...serviceJsonLd,
+          url: absoluteUrl(`/solutions/${solution.slug}`)
         }}
       />
+      <JsonLd id={`solutions-breadcrumb-${solution.slug}`} data={breadcrumbJsonLd} />
     </div>
   );
 }

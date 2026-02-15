@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import Script from "next/script";
 import Card from "@/app/components/Card";
+import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
@@ -125,11 +125,7 @@ export default function ContactPage() {
         <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
 
-      <Script
-        id="contact-localbusiness-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
-      />
+      <JsonLd id="contact-localbusiness-jsonld" data={localBusinessJsonLd} />
     </div>
   );
 }

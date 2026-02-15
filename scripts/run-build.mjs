@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import path from "node:path";
 
 const env = { ...process.env };
 const ciLike = Boolean(env.CI || env.VERCEL || env.GITHUB_ACTIONS);
@@ -25,7 +26,8 @@ function run(command, args) {
   return result.status ?? 1;
 }
 
-const auditExitCode = run("npm", ["run", "audit:forbidden"]);
+const auditScript = path.join(process.cwd(), "scripts", "audit-forbidden-strings.mjs");
+const auditExitCode = run("node", [auditScript]);
 if (auditExitCode !== 0) {
   process.exit(auditExitCode);
 }

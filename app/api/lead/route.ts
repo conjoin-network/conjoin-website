@@ -6,6 +6,7 @@ import { sendEmail } from "@/lib/messaging";
 import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
 import { suggestAgentForLead } from "@/lib/agents";
 import { logAuditEvent } from "@/lib/event-log";
+import { captureServerError } from "@/lib/error-logger";
 import { z } from "zod";
 
 type LeadPayload = {
@@ -194,7 +195,11 @@ export async function POST(request: Request) {
       leadId: lead.leadId
     });
   } catch (error) {
-    console.error("CONTACT_LEAD_ERROR", error);
+    await captureServerError(error, {
+      route: "/api/lead",
+      phase: "post",
+      fallbackEligible: Boolean(fallbackContext)
+    });
     if (error instanceof Error && error.message.includes("LEAD_STORAGE_UNSAFE")) {
       const leadId = `RFQ-${Date.now()}`;
       const now = new Date().toISOString();
