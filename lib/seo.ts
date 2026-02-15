@@ -1,6 +1,33 @@
 import type { Metadata } from "next";
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://conjoinnetwork.com";
+const SITE_URL_FALLBACK = "https://conjoinnetwork.com";
+
+function resolveSiteUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!raw) {
+    return SITE_URL_FALLBACK;
+  }
+
+  try {
+    const normalized = raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`;
+    const url = new URL(normalized);
+    url.protocol = "https:";
+    if (url.hostname.startsWith("www.")) {
+      url.hostname = url.hostname.replace(/^www\./, "");
+    }
+    if (url.hostname.endsWith(".vercel.app")) {
+      return SITE_URL_FALLBACK;
+    }
+    url.pathname = "/";
+    url.search = "";
+    url.hash = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return SITE_URL_FALLBACK;
+  }
+}
+
+export const SITE_URL = resolveSiteUrl();
 
 export function absoluteUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;

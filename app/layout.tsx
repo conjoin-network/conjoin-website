@@ -43,14 +43,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://conjoinnetwork.com"),
   title: {
     default: "ConjoinNetwork | Procurement-Ready IT Licensing & Security",
     template: "%s | ConjoinNetwork"
   },
   description: "Procurement-focused Microsoft, Seqrite and OEM solution advisory for North India businesses.",
   alternates: {
-    canonical: absoluteUrl("/")
+    canonical: "/"
   },
   icons: {
     icon: [
