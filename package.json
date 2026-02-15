@@ -20,6 +20,7 @@
     "qa:rfq:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-rfq-proof.mjs",
     "qa:phase2:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-phase2-screenshots.mjs",
     "qa:phase3:shots": "bash scripts/ensure-workdir.sh && node scripts/capture-phase3-pipeline.mjs",
+    "seo:check": "bash scripts/ensure-workdir.sh && node scripts/seo-check.mjs",
     "seed:platform": "node --experimental-strip-types scripts/seed.ts"
   },
   "dependencies": {
