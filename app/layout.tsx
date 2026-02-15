@@ -131,12 +131,17 @@ export default function RootLayout({
   );
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning data-theme="dark" style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}>
+      <head>
+        <meta name="theme-color" content="#0b1220" />
+        <meta name="color-scheme" content="dark" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
+        style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}
       >
         <HeaderScrollState />
-        <div className="flex min-h-screen flex-col">
+        <div className="flex min-h-screen flex-col bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">
           <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
             <Container className="min-h-[80px] py-3 md:min-h-[96px] md:py-4">
               <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
@@ -230,7 +235,7 @@ export default function RootLayout({
               </div>
             </Container>
           </header>
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">{children}</main>
           <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
             <Container className="space-y-6 pb-24 pt-10 text-sm text-[var(--color-text-secondary)] md:py-10">
               <div className="grid gap-6 md:grid-cols-3">

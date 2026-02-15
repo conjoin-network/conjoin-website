@@ -12,16 +12,21 @@ body {
   background: var(--color-page-bg);
   color: var(--color-text-primary);
   font-family: var(--font-geist-sans), Arial, sans-serif;
+  min-height: 100vh;
   line-height: 1.65;
   text-rendering: optimizeLegibility;
 }
 
 html,
 body {
+  background: var(--color-page-bg);
+  color: var(--color-text-primary);
+  min-height: 100%;
   overflow-x: clip;
 }
 
 :root {
+  color-scheme: dark;
   --header-height-mobile: 80px;
   --header-height-desktop: 96px;
 }
@@ -125,6 +130,17 @@ textarea:focus-visible {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 32%, transparent);
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+textarea,
+select {
+  color: var(--color-text-primary);
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"])::placeholder,
+textarea::placeholder {
+  color: var(--color-text-secondary);
+}
+
 .type-h1 {
   font-size: clamp(2.15rem, 4.9vw, 3.75rem);
   line-height: 1.05;
@@ -160,7 +176,7 @@ textarea:focus-visible {
   background:
     radial-gradient(circle at 88% 12%, #0f70f31c, transparent 44%),
     radial-gradient(circle at 12% 92%, #14b8a614, transparent 38%),
-    linear-gradient(180deg, #ffffff, #f9fbff);
+    linear-gradient(180deg, #0f1729, #111827);
   box-shadow: var(--shadow-soft);
   background-size: 120% 120%;
   animation: hero-breathe 22s ease-in-out infinite;
@@ -171,7 +187,7 @@ textarea:focus-visible {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(380px circle at 52% 36%, rgba(255, 255, 255, 0.22), transparent 68%);
+  background: radial-gradient(380px circle at 52% 36%, rgba(37, 99, 235, 0.2), transparent 68%);
   opacity: 0.45;
 }
 
