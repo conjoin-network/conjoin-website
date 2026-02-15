@@ -66,7 +66,7 @@
    - Optional:
      - `NEXT_PUBLIC_SITE_URL="https://conjoinnetwork.com"`
      - `NEXT_PUBLIC_WHATSAPP_URL="https://wa.me/919466663015"`
-     - `NEXT_PUBLIC_GA4_ID="G-XXXXXXXXXX"`
+     - `NEXT_PUBLIC_GA_ID="G-XXXXXXXXXX"`
      - `NEXT_PUBLIC_GOOGLE_ADS_ID="AW-XXXXXXXXX"`
      - `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL="xxxxxxxxxxxxxx"`
      - `NEXT_PUBLIC_CLARITY_PROJECT_ID=""`

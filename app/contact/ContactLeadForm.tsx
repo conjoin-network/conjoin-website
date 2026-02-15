@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
+import { event as trackEvent } from "@/lib/ga";
 
 type FormState = {
   name: string;
@@ -29,6 +31,7 @@ const initialState: FormState = {
 };
 
 export default function ContactLeadForm() {
+  const pathname = usePathname() ?? "/contact";
   const [state, setState] = useState<FormState>(initialState);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
@@ -62,6 +65,11 @@ export default function ContactLeadForm() {
 
       setStatus("success");
       setNotice(payload.message || "Request received. We will contact you shortly.");
+      trackEvent("generate_lead", {
+        lead_type: "contact",
+        method: "form",
+        page_path: pathname
+      });
       setState(initialState);
     } catch {
       setStatus("error");
