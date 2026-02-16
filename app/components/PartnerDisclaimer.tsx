@@ -14,7 +14,7 @@ export default function PartnerDisclaimer({
 
   return (
     <aside
-      className={`rounded-xl border border-[var(--color-border)] bg-white/85 px-4 py-3 text-xs leading-relaxed text-[var(--color-text-secondary)] ${
+      className={`rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_92%,transparent)] px-4 py-3 text-xs leading-relaxed text-[var(--color-text-secondary)] ${
         className ?? ""
       }`.trim()}
     >
