@@ -59,6 +59,9 @@ const brandSearchOptions: Array<{ label: string; brand: LeadBrand; note: string 
   { label: "Cisco", brand: "Cisco", note: "Networking, security and collaboration solutions" },
   { label: "Other OEM", brand: "Other", note: "Generic procurement scope for additional brands" }
 ];
+const formFieldClass =
+  "form-field-surface w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 caret-slate-900 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-200";
+const formTextareaClass = `${formFieldClass} min-h-28`;
 
 function toNumber(value: string) {
   const next = Number.parseInt(value, 10);
@@ -360,6 +363,10 @@ export default function RequestQuoteWizard() {
   }, [quantityLabel, showServers, state]);
 
   function patch(values: Partial<WizardState>) {
+    if (status === "error") {
+      setStatus("idle");
+      setNotice("");
+    }
     setState((current) => ({ ...current, ...values }));
   }
 
@@ -493,14 +500,18 @@ export default function RequestQuoteWizard() {
         });
       }
 
-      let data: { ok?: boolean; success?: boolean; message?: string; leadId?: string; rfqId?: string } | null = null;
+      let data: { ok?: boolean; success?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string } | null = null;
       const contentType = response.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
-        data = (await response.json()) as { ok?: boolean; message?: string; leadId?: string };
+        data = (await response.json()) as { ok?: boolean; success?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string };
       } else {
         const text = await response.text();
         data = {
           ok: false,
+          error:
+            response.status >= 500
+              ? "Server error while submitting RFQ. Please retry or contact sales."
+              : text?.trim() || "Unable to submit request.",
           message:
             response.status >= 500
               ? "Server error while submitting RFQ. Please retry or contact sales."
@@ -510,7 +521,7 @@ export default function RequestQuoteWizard() {
 
       if (!response.ok || (!data?.ok && !data?.success)) {
         setStatus("error");
-        setNotice(data?.message ?? `Unable to submit request (HTTP ${response.status}).`);
+        setNotice(data?.error ?? data?.message ?? `Unable to submit request (HTTP ${response.status}).`);
         return;
       }
 
@@ -528,6 +539,7 @@ export default function RequestQuoteWizard() {
         trackAdsConversion("conversion", { send_to: sendTo, value: 1 });
       }
       setStatus("success");
+      setNotice("");
       setNotice(`RFQ received. Reference ID: ${resolvedRfqId || "pending"}. Redirecting...`);
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
@@ -701,7 +713,7 @@ export default function RequestQuoteWizard() {
                       }}
                       onKeyDown={onBrandInputKeyDown}
                       placeholder="Type Microsoft, Seqrite, Cisco..."
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                     />
                   </label>
 
@@ -712,7 +724,7 @@ export default function RequestQuoteWizard() {
                       className="absolute left-0 right-0 top-[calc(100%+8px)] z-30 max-h-72 overflow-auto rounded-xl border border-[var(--color-border)] bg-white p-2 shadow-[0_12px_26px_rgba(15,23,42,0.08)]"
                     >
                       {filteredBrandOptions.length === 0 ? (
-                        <li className="px-3 py-2 text-sm text-[var(--color-text-secondary)]">No match found.</li>
+                        <li className="px-3 py-2 text-sm text-slate-500">No match found.</li>
                       ) : (
                         filteredBrandOptions.map((option, index) => {
                           const active = index === activeBrandIndex;
@@ -729,11 +741,11 @@ export default function RequestQuoteWizard() {
                                 onClick={() => selectBrand(option.brand, option.label)}
                                 onMouseEnter={() => setActiveBrandIndex(index)}
                                 className={`w-full rounded-lg px-3 py-2 text-left transition ${
-                                  active ? "bg-[var(--color-alt-bg)]" : "hover:bg-[var(--color-alt-bg)]"
+                                  active ? "bg-slate-100" : "hover:bg-slate-100"
                                 }`}
                               >
-                                <p className="text-sm font-semibold text-[var(--color-text-primary)]">{option.label}</p>
-                                <p className="text-xs text-[var(--color-text-secondary)]">{option.note}</p>
+                                <p className="text-sm font-semibold text-slate-900">{option.label}</p>
+                                <p className="text-xs text-slate-600">{option.note}</p>
                               </button>
                             </li>
                           );
@@ -787,7 +799,7 @@ export default function RequestQuoteWizard() {
                     value={productQuery}
                     onChange={(event) => setProductQuery(event.target.value)}
                     placeholder="Type product name"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                    className={formFieldClass}
                   />
                 </label>
                 <p className="text-xs text-[var(--color-text-secondary)]">Selection remains locked in summary after you continue.</p>
@@ -846,7 +858,7 @@ export default function RequestQuoteWizard() {
                     min="1"
                     value={state.quantity}
                     onChange={(event) => patch({ quantity: event.target.value })}
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                    className={formFieldClass}
                     autoComplete="off"
                   />
                 </label>
@@ -858,7 +870,7 @@ export default function RequestQuoteWizard() {
                       min="0"
                       value={state.servers}
                       onChange={(event) => patch({ servers: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                       autoComplete="off"
                     />
                   </label>
@@ -903,7 +915,7 @@ export default function RequestQuoteWizard() {
                       type="text"
                       value={state.contactName}
                       onChange={(event) => patch({ contactName: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                       autoComplete="name"
                     />
                   </label>
@@ -913,7 +925,7 @@ export default function RequestQuoteWizard() {
                       type="text"
                       value={state.company}
                       onChange={(event) => patch({ company: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                       autoComplete="organization"
                     />
                   </label>
@@ -923,7 +935,7 @@ export default function RequestQuoteWizard() {
                       type="tel"
                       value={state.phone}
                       onChange={(event) => patch({ phone: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                       autoComplete="tel"
                     />
                   </label>
@@ -933,7 +945,7 @@ export default function RequestQuoteWizard() {
                       type="email"
                       value={state.email}
                       onChange={(event) => patch({ email: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                       autoComplete="email"
                     />
                   </label>
@@ -942,7 +954,7 @@ export default function RequestQuoteWizard() {
                     <select
                       value={state.city}
                       onChange={(event) => patch({ city: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                     >
                       <option value="">Select city</option>
                       {CITY_OPTIONS.map((city) => (
@@ -957,7 +969,7 @@ export default function RequestQuoteWizard() {
                     <select
                       value={state.timeline}
                       onChange={(event) => patch({ timeline: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formFieldClass}
                     >
                       {timelineOptions.map((timeline) => (
                         <option key={timeline} value={timeline}>
@@ -981,7 +993,7 @@ export default function RequestQuoteWizard() {
                       rows={4}
                       value={state.notes}
                       onChange={(event) => patch({ notes: event.target.value })}
-                      className="w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm"
+                      className={formTextareaClass}
                     />
                   </label>
                   <div className="hidden" aria-hidden="true">

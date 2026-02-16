@@ -141,6 +141,25 @@ textarea::placeholder {
   color: var(--color-text-secondary);
 }
 
+.form-field-surface {
+  color: #0f172a;
+  caret-color: #0f172a;
+}
+
+.form-field-surface::placeholder {
+  color: #64748b;
+}
+
+.form-field-surface:-webkit-autofill,
+.form-field-surface:-webkit-autofill:hover,
+.form-field-surface:-webkit-autofill:focus,
+.form-field-surface:-webkit-autofill:active {
+  -webkit-text-fill-color: #0f172a;
+  caret-color: #0f172a;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  transition: background-color 100000s ease-in-out 0s;
+}
+
 .type-h1 {
   font-size: clamp(2.15rem, 4.9vw, 3.75rem);
   line-height: 1.05;

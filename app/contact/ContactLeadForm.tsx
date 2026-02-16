@@ -35,8 +35,14 @@ export default function ContactLeadForm() {
   const [state, setState] = useState<FormState>(initialState);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
+  const fieldClass =
+    "form-field-surface w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 caret-slate-900 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-200";
 
   function patch(values: Partial<FormState>) {
+    if (status === "error") {
+      setStatus("idle");
+      setNotice("");
+    }
     setState((current) => ({ ...current, ...values }));
   }
 
@@ -56,14 +62,15 @@ export default function ContactLeadForm() {
           referrer: typeof document !== "undefined" ? document.referrer : ""
         })
       });
-      const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
+      const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
       if (!response.ok || !payload.ok) {
         setStatus("error");
-        setNotice(payload.message || "Unable to submit request.");
+        setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
         return;
       }
 
       setStatus("success");
+      setNotice("");
       setNotice(payload.message || "Request received. We will contact you shortly.");
       trackAdsConversion("lead_submit", {
         value: 1,
@@ -92,7 +99,7 @@ export default function ContactLeadForm() {
             required
             value={state.name}
             onChange={(event) => patch({ name: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -101,7 +108,7 @@ export default function ContactLeadForm() {
             required
             value={state.company}
             onChange={(event) => patch({ company: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -111,7 +118,7 @@ export default function ContactLeadForm() {
             type="email"
             value={state.email}
             onChange={(event) => patch({ email: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -121,7 +128,7 @@ export default function ContactLeadForm() {
             type="tel"
             value={state.phone}
             onChange={(event) => patch({ phone: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -131,7 +138,7 @@ export default function ContactLeadForm() {
             value={state.requirement}
             onChange={(event) => patch({ requirement: event.target.value })}
             placeholder="Microsoft licensing, Seqrite renewal, etc."
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -142,7 +149,7 @@ export default function ContactLeadForm() {
             min={1}
             value={state.users}
             onChange={(event) => patch({ users: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -151,7 +158,7 @@ export default function ContactLeadForm() {
             required
             value={state.city}
             onChange={(event) => patch({ city: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -159,7 +166,7 @@ export default function ContactLeadForm() {
           <select
             value={state.timeline}
             onChange={(event) => patch({ timeline: event.target.value })}
-            className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+            className={fieldClass}
           >
             <option value="Today">Today</option>
             <option value="This Week">This Week</option>
@@ -174,7 +181,7 @@ export default function ContactLeadForm() {
           rows={4}
           value={state.message}
           onChange={(event) => patch({ message: event.target.value })}
-          className="w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm"
+          className={fieldClass}
         />
       </label>
 
