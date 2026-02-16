@@ -59,7 +59,7 @@ const brandSearchOptions: Array<{ label: string; brand: LeadBrand; note: string 
   { label: "Other OEM", brand: "Other", note: "Generic procurement scope for additional brands" }
 ];
 const formFieldClass =
-  "form-field-surface w-full rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-500 caret-slate-900 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-200";
+  "form-field-surface w-full rounded-xl border border-[var(--color-border)] px-4 py-3 text-sm focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-500/35";
 const formTextareaClass = `${formFieldClass} min-h-28`;
 
 function toNumber(value: string) {

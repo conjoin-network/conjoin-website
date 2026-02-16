@@ -29,6 +29,19 @@ body {
   color-scheme: dark;
   --header-height-mobile: 80px;
   --header-height-desktop: 96px;
+  --form-field-bg: #171717;
+  --form-field-fg: #ffffff;
+  --form-field-border: #404040;
+  --form-field-placeholder: #a3a3a3;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --form-field-bg: #ffffff;
+    --form-field-fg: #111827;
+    --form-field-border: #d4d4d8;
+    --form-field-placeholder: #6b7280;
+  }
 }
 
 h1,
@@ -133,30 +146,40 @@ textarea:focus-visible {
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
 textarea,
 select {
-  color: var(--color-text-primary);
+  color: var(--form-field-fg);
+  background-color: var(--form-field-bg);
+  border-color: var(--form-field-border);
+  caret-color: var(--form-field-fg);
 }
 
 input:not([type="checkbox"]):not([type="radio"]):not([type="range"])::placeholder,
 textarea::placeholder {
-  color: var(--color-text-secondary);
+  color: var(--form-field-placeholder);
 }
 
 .form-field-surface {
-  color: #0f172a;
-  caret-color: #0f172a;
+  background-color: var(--form-field-bg);
+  color: var(--form-field-fg);
+  border-color: var(--form-field-border);
+  caret-color: var(--form-field-fg);
 }
 
 .form-field-surface::placeholder {
-  color: #64748b;
+  color: var(--form-field-placeholder);
+}
+
+select option {
+  background-color: var(--form-field-bg);
+  color: var(--form-field-fg);
 }
 
 .form-field-surface:-webkit-autofill,
 .form-field-surface:-webkit-autofill:hover,
 .form-field-surface:-webkit-autofill:focus,
 .form-field-surface:-webkit-autofill:active {
-  -webkit-text-fill-color: #0f172a;
-  caret-color: #0f172a;
-  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: var(--form-field-fg);
+  caret-color: var(--form-field-fg);
+  box-shadow: 0 0 0 1000px var(--form-field-bg) inset;
   transition: background-color 100000s ease-in-out 0s;
 }
 

@@ -36,7 +36,7 @@ export default function ContactLeadForm() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
   const fieldClass =
-    "form-field-surface w-full rounded-xl border border-[var(--color-border)] bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 caret-slate-900 focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-200";
+    "form-field-surface w-full rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-sm focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-500/35";
 
   function patch(values: Partial<FormState>) {
     if (status === "error") {
