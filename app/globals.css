@@ -35,13 +35,11 @@ body {
   --form-field-placeholder: #a3a3a3;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --form-field-bg: #ffffff;
-    --form-field-fg: #111827;
-    --form-field-border: #d4d4d8;
-    --form-field-placeholder: #6b7280;
-  }
+html[data-theme="light"] {
+  --form-field-bg: #ffffff;
+  --form-field-fg: #111827;
+  --form-field-border: #d4d4d8;
+  --form-field-placeholder: #6b7280;
 }
 
 h1,
