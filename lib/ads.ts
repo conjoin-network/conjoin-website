@@ -1,5 +1,5 @@
 export const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "AW-17956533755";
-export const ADS_CONVERSION_PLACEHOLDER_LABEL = "REPLACE_LATER";
+export const ADS_CONVERSION_LABEL = "rS5QCNas4vkbEPvrq_JC";
 
 declare global {
   interface Window {
@@ -7,7 +7,7 @@ declare global {
   }
 }
 
-export function getAdsSendTo(label = ADS_CONVERSION_PLACEHOLDER_LABEL) {
+export function getAdsSendTo(label = ADS_CONVERSION_LABEL) {
   if (!ADS_ID) {
     return "";
   }
