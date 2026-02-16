@@ -6,7 +6,6 @@ import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import {
   ORG_AREA_SERVED,
   ORG_NAME,
@@ -120,11 +119,6 @@ export default async function LocationPage({
           ]}
         />
       </Section>
-
-      <Section tone="alt" className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
-      </Section>
-
       <JsonLd id={`local-business-${location.slug}`} data={localBusinessJsonLd} />
     </div>
   );

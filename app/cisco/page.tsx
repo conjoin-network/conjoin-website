@@ -3,7 +3,6 @@ import Link from "next/link";
 import Card from "@/app/components/Card";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import { buildMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildMetadata({
@@ -69,10 +68,6 @@ export default function CiscoPage() {
             </Card>
           ))}
         </div>
-      </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="Cisco OEM documentation" />
       </Section>
     </div>
   );

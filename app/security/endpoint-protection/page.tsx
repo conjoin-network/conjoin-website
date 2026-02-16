@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
 import { ButtonLink } from "@/app/components/Button";
-import OemDisclaimer from "@/app/components/OemDisclaimer";
 import { buildMetadata } from "@/lib/seo";
 
 const title = "Endpoint Security for Business | Conjoin Network";
@@ -58,10 +57,6 @@ export default function EndpointProtectionPage() {
             Request a Quote
           </ButtonLink>
         </Card>
-      </Section>
-
-      <Section>
-        <OemDisclaimer lastVerified="12 Feb 2026" sourceLabel="Seqrite official documentation" />
       </Section>
     </div>
   );

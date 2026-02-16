@@ -5,7 +5,6 @@ import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import Section from "@/app/components/Section";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import { buildCampaignQuoteHref, buildCampaignWhatsAppHref, type CampaignQuery } from "@/lib/campaign-links";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
 import { buildMetadata } from "@/lib/seo";
@@ -108,7 +107,6 @@ export default async function SeqriteCampaignPage({ searchParams }: PageProps) {
       </Section>
 
       <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="Seqrite OEM documentation" />
         <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
           <Link href="/request-quote" className="hover:underline">
             Request Quote

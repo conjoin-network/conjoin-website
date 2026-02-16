@@ -6,9 +6,12 @@ type PartnerDisclaimerProps = {
 
 export default function PartnerDisclaimer({
   className,
-  lastVerified = "12 Feb 2026",
-  sourceLabel = "OEM documentation"
+  lastVerified,
+  sourceLabel
 }: PartnerDisclaimerProps) {
+  void lastVerified;
+  void sourceLabel;
+
   return (
     <aside
       className={`rounded-xl border border-[var(--color-border)] bg-white/85 px-4 py-3 text-xs leading-relaxed text-[var(--color-text-secondary)] ${
@@ -19,16 +22,12 @@ export default function PartnerDisclaimer({
       <p className="mt-1">
         Specifications and inclusions shown are sourced from OEM documentation and may change.
       </p>
-      <p className="mt-1">
-        Final licensing and terms are governed by the OEM.
-      </p>
+      <p className="mt-1">Final licensing and terms are governed by the OEM.</p>
       <p className="mt-1">
         Conjoin Network is a reseller/partner; no affiliation is implied beyond authorized sales/channel
         relationships.
       </p>
-      <p className="mt-2 text-[11px]">
-        Last verified: {lastVerified} • Source: {sourceLabel}
-      </p>
+      <p className="mt-2 text-[11px]">Last verified: 12 Feb 2026 • Source: OEM documentation</p>
     </aside>
   );
 }

@@ -5,7 +5,6 @@ import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import Section from "@/app/components/Section";
 import { CATEGORY_PAGES, getCategoryBySlug, getCategoryBrands } from "@/lib/categories-data";
@@ -179,11 +178,6 @@ export default async function CategoryPage({
           ]}
         />
       </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
-      </Section>
-
       <JsonLd id={`category-breadcrumb-${category.slug}`} data={breadcrumbJsonLd} />
       <JsonLd id={`category-faq-${category.slug}`} data={faqJsonLd} />
     </div>

@@ -4,7 +4,6 @@ import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import JsonLd from "@/app/components/JsonLd";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import Section from "@/app/components/Section";
 import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import {
@@ -288,11 +287,6 @@ export default function Microsoft365ChandigarhPage() {
           <ContactLeadForm />
         </div>
       </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="Microsoft OEM documentation" />
-      </Section>
-
       <div className="fixed inset-x-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] md:hidden bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)]">
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_94%,transparent)] p-2 backdrop-blur-sm">
           <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-3 text-sm font-semibold text-white">

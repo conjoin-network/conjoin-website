@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import Section from "@/app/components/Section";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
 import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
@@ -1080,7 +1079,6 @@ export default function RequestQuoteWizard() {
                 </div>
               ))}
             </dl>
-            <PartnerDisclaimer className="mt-4" />
             <div className="text-xs text-[var(--color-text-secondary)]">
               <p>Response in about 15 minutes during business hours.</p>
             </div>

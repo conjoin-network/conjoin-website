@@ -4,7 +4,6 @@ import Card from "@/app/components/Card";
 import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import {
   ORG_AREA_SERVED,
@@ -120,11 +119,6 @@ export default function ContactPage() {
           </p>
         </div>
       </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
-      </Section>
-
       <JsonLd id="contact-localbusiness-jsonld" data={localBusinessJsonLd} />
     </div>
   );

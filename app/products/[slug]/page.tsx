@@ -5,7 +5,6 @@ import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import JsonLd from "@/app/components/JsonLd";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
 import { PRODUCT_PAGES, getProductBySlug } from "@/lib/products-data";
@@ -195,11 +194,6 @@ export default async function ProductPage({
           ]}
         />
       </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
-      </Section>
-
       <JsonLd
         id={`product-faq-${slug}`}
         data={{

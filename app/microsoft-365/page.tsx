@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
 import { ButtonLink } from "@/app/components/Button";
-import OemDisclaimer from "@/app/components/OemDisclaimer";
 import { buildMetadata } from "@/lib/seo";
 
 const title = "Microsoft 365 for Business & Enterprise | Conjoin Network";
@@ -59,10 +58,6 @@ export default function Microsoft365Page() {
             Request a Quote
           </ButtonLink>
         </Card>
-      </Section>
-
-      <Section>
-        <OemDisclaimer lastVerified="12 Feb 2026" sourceLabel="Microsoft official documentation" />
       </Section>
     </div>
   );

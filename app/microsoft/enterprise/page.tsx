@@ -4,7 +4,6 @@ import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
 import { buildMetadata } from "@/lib/seo";
 
@@ -86,10 +85,6 @@ export default function MicrosoftEnterprisePage() {
             description: article.category
           }))}
         />
-      </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="Microsoft OEM documentation" />
       </Section>
     </div>
   );

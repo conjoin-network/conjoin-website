@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import BrandsCatalogClient from "@/app/brands/BrandsCatalogClient";
 import {
   BRAND_CATEGORIES,
@@ -63,7 +62,6 @@ export default function BrandsPage() {
             WhatsApp Sales
           </a>
         </div>
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
       </Section>
     </div>
   );

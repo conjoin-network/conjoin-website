@@ -6,7 +6,6 @@ import FaqAccordion from "@/app/components/FaqAccordion";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
 import RelatedLinks from "@/app/components/RelatedLinks";
-import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import JsonLd from "@/app/components/JsonLd";
 import { BRAND_TILES, getBrandBySlug } from "@/lib/brands-data";
 import { getRelatedKnowledge } from "@/lib/knowledge-data";
@@ -326,11 +325,6 @@ export default async function BrandDetailPage({
           ]}
         />
       </Section>
-
-      <Section className="py-10 md:py-14">
-        <PartnerDisclaimer sourceLabel="OEM documentation" />
-      </Section>
-
       <JsonLd id={`brand-faq-${slug}`} data={faqJsonLd} />
       <JsonLd id={`brand-breadcrumb-${slug}`} data={breadcrumbJsonLd} />
       <JsonLd id={`brand-service-${slug}`} data={serviceJsonLd} />
