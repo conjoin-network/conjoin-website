@@ -63,7 +63,10 @@ export default function ContactLeadForm() {
         })
       });
       const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
-      if (!response.ok || !payload.ok) {
+      const isSuccessStatus = response.status === 200 || response.status === 202;
+      const isSuccess = isSuccessStatus && payload.ok === true;
+
+      if (!isSuccess) {
         setStatus("error");
         setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
         return;

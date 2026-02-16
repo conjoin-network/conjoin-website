@@ -518,7 +518,10 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      if (!response.ok || (!data?.ok && !data?.success)) {
+      const isSuccessStatus = response.status === 200 || response.status === 202;
+      const isSuccess = isSuccessStatus && (data?.ok === true || data?.success === true);
+
+      if (!isSuccess) {
         setStatus("error");
         setNotice(data?.error ?? data?.message ?? `Unable to submit request (HTTP ${response.status}).`);
         return;
@@ -539,7 +542,12 @@ export default function RequestQuoteWizard() {
       }
       setStatus("success");
       setNotice("");
-      setNotice(`RFQ received. Reference ID: ${resolvedRfqId || "pending"}. Redirecting...`);
+      const queuedOrSuccessMessage = data?.message?.trim();
+      if (queuedOrSuccessMessage) {
+        setNotice(`${queuedOrSuccessMessage}${resolvedRfqId ? ` Reference ID: ${resolvedRfqId}.` : ""} Redirecting...`);
+      } else {
+        setNotice(`RFQ received. Reference ID: ${resolvedRfqId || "pending"}. Redirecting...`);
+      }
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
       }
