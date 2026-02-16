@@ -1,6 +1,7 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { LEADS_EMAIL } from "@/lib/contact";
-import { createLead, type LeadRecord } from "@/lib/leads";
+import { createLead } from "@/lib/leads";
 import { applyRateLimit, getClientIp, isHoneypotTriggered } from "@/lib/request-guards";
 import { sendEmail } from "@/lib/messaging";
 import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
@@ -27,22 +28,6 @@ type LeadPayload = {
   message?: unknown;
 };
 
-type FallbackContext = {
-  requirement: string;
-  users: number;
-  city: string;
-  timeline: string;
-  source: string;
-  sourcePage: string;
-  pagePath: string;
-  referrer?: string;
-  notes: string;
-  contactName: string;
-  company: string;
-  email: string;
-  phone: string;
-};
-
 const SAFE_HEADER_KEYS = new Set([
   "user-agent",
   "origin",
@@ -55,15 +40,16 @@ const SAFE_HEADER_KEYS = new Set([
 ]);
 
 const DELIVERY_ENV_KEYS = ["SMTP_HOST", "SMTP_USER", "SMTP_PASS"] as const;
+const QUEUED_MESSAGE = "Request received. Delivery is queued and our team will contact you shortly.";
 
 const normalizedLeadSchema = z
   .object({
     name: z.string().trim().min(1, "Name is required.").max(120, "Name is too long."),
-    company: z.string().trim().min(1, "Company is required.").max(160, "Company is too long."),
+    company: z.string().trim().max(160, "Company is too long.").default(""),
     email: z.string().trim().max(200).default(""),
     phone: z.string().trim().max(32).default(""),
     requirement: z.string().trim().min(1, "Requirement is required.").max(500, "Requirement is too long."),
-    users: z.number().int().positive("Users/Devices must be greater than zero."),
+    users: z.number().int().positive("Users/Devices must be greater than zero.").default(1),
     city: z.string().trim().max(80).default("Chandigarh"),
     timeline: z.string().trim().max(80).default("This Week"),
     source: z.string().trim().max(120).default("contact-form"),
@@ -101,12 +87,12 @@ const normalizedLeadSchema = z
     }
   });
 
-function jsonError(status: number, error: string) {
-  return NextResponse.json({ ok: false, error, message: error }, { status });
+function jsonError(status: number, requestId: string, error: string) {
+  return NextResponse.json({ ok: false, requestId, error }, { status });
 }
 
-function jsonSuccess(status: number, payload?: Record<string, unknown>) {
-  return NextResponse.json({ ok: true, ...(payload ?? {}) }, { status });
+function jsonSuccess(status: number, requestId: string, payload?: Record<string, unknown>) {
+  return NextResponse.json({ ok: true, requestId, ...(payload ?? {}) }, { status });
 }
 
 function normalizeString(value: unknown, maxLength: number, fallback = "") {
@@ -117,13 +103,19 @@ function normalizeString(value: unknown, maxLength: number, fallback = "") {
 }
 
 function normalizeUsers(value: unknown) {
+  if (value === undefined || value === null || value === "") {
+    return 1;
+  }
+
   if (typeof value === "number") {
     return Number.isFinite(value) ? Math.trunc(value) : 0;
   }
+
   if (typeof value === "string") {
     const parsed = Number.parseInt(value.trim(), 10);
     return Number.isFinite(parsed) ? parsed : 0;
   }
+
   return 0;
 }
 
@@ -196,81 +188,95 @@ function getMissingDeliveryEnvKeys() {
   return DELIVERY_ENV_KEYS.filter((key) => !process.env[key]?.trim());
 }
 
-function isStorageUnsafeError(error: unknown) {
-  return error instanceof Error && error.message.includes("LEAD_STORAGE_UNSAFE");
+async function safeCapture(error: unknown, context: Record<string, unknown>) {
+  try {
+    await captureServerError(error, context);
+  } catch (captureError) {
+    console.error("LEAD_API_CAPTURE_FAILED", JSON.stringify({ context, error: serializeError(captureError) }));
+  }
 }
 
-function logDeliveryDisabledWarning(missingEnvKeys: string[], leadId?: string) {
+async function safeAudit(input: Parameters<typeof logAuditEvent>[0], requestId: string) {
+  try {
+    await logAuditEvent(input);
+  } catch (error) {
+    console.error(
+      "LEAD_API_AUDIT_FAILED",
+      JSON.stringify({ requestId, type: input.type, leadId: input.leadId, error: serializeError(error) })
+    );
+  }
+}
+
+async function safeEmailAudit(leadId: string, actor: string, requestId: string, details: Record<string, unknown>) {
+  await safeAudit(
+    {
+      type: "email_sent",
+      leadId,
+      actor,
+      details: {
+        to: LEADS_EMAIL,
+        requestId,
+        ...details
+      }
+    },
+    requestId
+  );
+}
+
+function logDeliveryDisabledWarning(missingEnvKeys: string[], requestId: string, leadId?: string) {
   const envList = missingEnvKeys.length > 0 ? missingEnvKeys.join(", ") : DELIVERY_ENV_KEYS.join(", ");
-  const context = leadId ? { leadId } : {};
-  console.warn(`Lead captured but delivery disabled: missing ENV ${envList}`, JSON.stringify(context));
-}
-
-async function emailAudit(leadId: string, actor: string, details: Record<string, unknown>) {
-  await logAuditEvent({
-    type: "email_sent",
-    leadId,
-    actor,
-    details: {
-      to: LEADS_EMAIL,
-      ...details
-    }
-  });
+  console.warn(
+    "LEAD_DELIVERY_DISABLED",
+    JSON.stringify({ requestId, leadId: leadId ?? null, message: `Lead captured but delivery disabled: missing ENV ${envList}` })
+  );
 }
 
 export async function POST(request: Request) {
-  let fallbackContext: FallbackContext | null = null;
+  const requestId = randomUUID();
   let parsedBodyKeys: string[] = [];
 
-  const ip = getClientIp(request);
-  const rate = applyRateLimit({
-    key: `api:lead:${ip}`,
-    limit: 12,
-    windowMs: 10 * 60 * 1000
-  });
-
-  if (!rate.allowed) {
-    return NextResponse.json(
-      { ok: false, error: "Too many requests. Please retry shortly.", message: "Too many requests. Please retry shortly." },
-      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
-    );
-  }
-
-  let payload: LeadPayload;
   try {
-    payload = (await request.json()) as LeadPayload;
-    parsedBodyKeys = payload && typeof payload === "object" ? Object.keys(payload) : [];
-  } catch (error) {
-    console.error(
-      "LEAD_API_INVALID_JSON",
-      JSON.stringify({
-        ...requestContext(request, parsedBodyKeys),
-        error: serializeError(error)
-      })
-    );
-    return jsonError(400, "Invalid request payload.");
-  }
+    const ip = getClientIp(request);
+    const rate = applyRateLimit({
+      key: `api:lead:${ip}`,
+      limit: 12,
+      windowMs: 10 * 60 * 1000
+    });
 
-  const normalized = normalizePayload(payload);
-  const parsed = normalizedLeadSchema.safeParse(normalized);
+    if (!rate.allowed) {
+      console.warn(
+        "LEAD_API_RATE_LIMITED",
+        JSON.stringify({ requestId, retryAfterSeconds: rate.retryAfterSeconds, context: requestContext(request, parsedBodyKeys) })
+      );
+      return jsonError(400, requestId, "Too many requests. Please retry shortly.");
+    }
 
-  if (!parsed.success) {
-    const issueMessage = parsed.error.issues[0]?.message || "Please review the required fields and try again.";
-    console.warn(
-      "LEAD_API_VALIDATION_FAILED",
-      JSON.stringify({
-        ...requestContext(request, parsedBodyKeys),
-        error: issueMessage
-      })
-    );
-    return jsonError(400, issueMessage);
-  }
+    let payload: LeadPayload;
+    try {
+      payload = (await request.json()) as LeadPayload;
+      parsedBodyKeys = payload && typeof payload === "object" ? Object.keys(payload) : [];
+    } catch (error) {
+      console.error(
+        "LEAD_API_INVALID_JSON",
+        JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: serializeError(error) })
+      );
+      return jsonError(400, requestId, "Invalid JSON");
+    }
 
-  if (isHoneypotTriggered(parsed.data.website)) {
-    return jsonSuccess(200, { message: "Request accepted." });
-  }
+    const parsed = normalizedLeadSchema.safeParse(normalizePayload(payload));
+    if (!parsed.success) {
+      const issueMessage = parsed.error.issues[0]?.message || "Please review the required fields and try again.";
+      console.warn(
+        "LEAD_API_VALIDATION_FAILED",
+        JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: issueMessage })
+      );
+      return jsonError(400, requestId, issueMessage);
+    }
 
-  try {
+    if (isHoneypotTriggered(parsed.data.website)) {
+      return jsonSuccess(200, requestId, { message: "Request accepted." });
+    }
+
     const leadScore = calculateLeadScore({
       brand: "Other",
       qty: parsed.data.users,
@@ -280,61 +286,65 @@ export async function POST(request: Request) {
       city: parsed.data.city
     });
 
-    fallbackContext = {
-      requirement: parsed.data.requirement,
-      users: parsed.data.users,
-      city: parsed.data.city,
-      timeline: parsed.data.timeline,
-      source: parsed.data.source,
-      sourcePage: "/contact",
-      pagePath: parsed.data.pagePath,
-      referrer: parsed.data.referrer || request.headers.get("referer") || undefined,
-      notes: parsed.data.message,
-      contactName: parsed.data.name,
-      company: parsed.data.company,
-      email: parsed.data.email,
-      phone: parsed.data.phone
-    };
+    let lead;
+    try {
+      lead = await createLead({
+        brand: "Other",
+        category: "Contact Form",
+        tier: parsed.data.requirement,
+        qty: parsed.data.users,
+        score: leadScore,
+        priority: scoreToPriority(leadScore),
+        assignedTo: suggestAgentForLead("Other", "Contact Form"),
+        plan: parsed.data.requirement,
+        usersSeats: parsed.data.users,
+        city: parsed.data.city,
+        source: parsed.data.source,
+        sourcePage: "/contact",
+        pagePath: parsed.data.pagePath,
+        referrer: parsed.data.referrer || request.headers.get("referer") || undefined,
+        timeline: parsed.data.timeline,
+        notes: parsed.data.message,
+        contactName: parsed.data.name,
+        company: parsed.data.company || "Not provided",
+        email: parsed.data.email,
+        phone: parsed.data.phone
+      });
+    } catch (error) {
+      await safeCapture(error, {
+        requestId,
+        route: "/api/lead",
+        phase: "create_lead",
+        context: requestContext(request, parsedBodyKeys)
+      });
+      console.error(
+        "LEAD_API_CREATE_FAILED",
+        JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: serializeError(error) })
+      );
+      return jsonSuccess(202, requestId, { queued: true, message: QUEUED_MESSAGE });
+    }
 
-    const lead = await createLead({
-      brand: "Other",
-      category: "Contact Form",
-      tier: parsed.data.requirement,
-      qty: parsed.data.users,
-      score: leadScore,
-      priority: scoreToPriority(leadScore),
-      assignedTo: suggestAgentForLead("Other", "Contact Form"),
-      plan: parsed.data.requirement,
-      usersSeats: parsed.data.users,
-      city: parsed.data.city,
-      source: parsed.data.source,
-      sourcePage: "/contact",
-      pagePath: parsed.data.pagePath,
-      referrer: parsed.data.referrer || request.headers.get("referer") || undefined,
-      timeline: parsed.data.timeline,
-      notes: parsed.data.message,
-      contactName: parsed.data.name,
-      company: parsed.data.company,
-      email: parsed.data.email,
-      phone: parsed.data.phone
-    });
-
-    await logAuditEvent({
-      type: "lead_created",
-      leadId: lead.leadId,
-      actor: "contact_api",
-      details: {
-        category: lead.category,
-        tier: lead.tier,
-        qty: lead.qty,
-        city: lead.city,
-        source: lead.source
-      }
-    });
+    await safeAudit(
+      {
+        type: "lead_created",
+        leadId: lead.leadId,
+        actor: "contact_api",
+        details: {
+          category: lead.category,
+          tier: lead.tier,
+          qty: lead.qty,
+          city: lead.city,
+          source: lead.source,
+          requestId
+        }
+      },
+      requestId
+    );
 
     console.info(
       "CONTACT_LEAD",
       JSON.stringify({
+        requestId,
         leadId: lead.leadId,
         destination: LEADS_EMAIL,
         context: requestContext(request, parsedBodyKeys)
@@ -342,153 +352,77 @@ export async function POST(request: Request) {
     );
 
     const missingDeliveryEnvKeys = getMissingDeliveryEnvKeys();
-    const deliveryDisabled = process.env.NODE_ENV === "production" && missingDeliveryEnvKeys.length > 0;
-
-    if (deliveryDisabled) {
-      logDeliveryDisabledWarning(missingDeliveryEnvKeys, lead.leadId);
-      await emailAudit(lead.leadId, "contact_api", {
+    if (missingDeliveryEnvKeys.length > 0) {
+      logDeliveryDisabledWarning(missingDeliveryEnvKeys, requestId, lead.leadId);
+      await safeEmailAudit(lead.leadId, "contact_api", requestId, {
         ok: false,
-        reason: `missing env: ${missingDeliveryEnvKeys.join(", ")}`,
-        queued: true
+        queued: true,
+        reason: `missing env: ${missingDeliveryEnvKeys.join(", ")}`
       });
-
-      return jsonSuccess(202, {
+      return jsonSuccess(202, requestId, {
         queued: true,
         leadId: lead.leadId,
-        message: "Request received. Delivery is queued and our team will contact you shortly."
+        message: QUEUED_MESSAGE
       });
     }
 
-    const emailResult = await sendEmail({ lead });
-    await emailAudit(lead.leadId, "contact_api", {
+    let emailResult: { ok: boolean; reason?: string };
+    try {
+      emailResult = await sendEmail({ lead });
+    } catch (error) {
+      console.error(
+        "CONTACT_LEAD_EMAIL_THROWN",
+        JSON.stringify({ requestId, leadId: lead.leadId, error: serializeError(error) })
+      );
+      await safeEmailAudit(lead.leadId, "contact_api", requestId, {
+        ok: false,
+        queued: true,
+        reason: "email send threw"
+      });
+      return jsonSuccess(202, requestId, {
+        queued: true,
+        leadId: lead.leadId,
+        message: QUEUED_MESSAGE
+      });
+    }
+
+    await safeEmailAudit(lead.leadId, "contact_api", requestId, {
       ok: emailResult.ok,
       reason: emailResult.reason ?? null
     });
 
     if (!emailResult.ok) {
-      console.error(
-        "CONTACT_LEAD_EMAIL_FAILED",
-        JSON.stringify({
-          leadId: lead.leadId,
-          reason: emailResult.reason ?? "unknown"
-        })
+      console.warn(
+        "CONTACT_LEAD_EMAIL_NOT_SENT",
+        JSON.stringify({ requestId, leadId: lead.leadId, reason: emailResult.reason ?? "unknown" })
       );
-
-      if (process.env.NODE_ENV === "production" && (emailResult.reason ?? "").toLowerCase().includes("not configured")) {
-        logDeliveryDisabledWarning(getMissingDeliveryEnvKeys(), lead.leadId);
-        return jsonSuccess(202, {
-          queued: true,
-          leadId: lead.leadId,
-          message: "Request received. Delivery is queued and our team will contact you shortly."
-        });
-      }
+      return jsonSuccess(202, requestId, {
+        queued: true,
+        leadId: lead.leadId,
+        message: QUEUED_MESSAGE
+      });
     }
 
-    return jsonSuccess(200, {
+    return jsonSuccess(200, requestId, {
       leadId: lead.leadId,
       message: "Request received. We will contact you shortly."
     });
   } catch (error) {
-    await captureServerError(error, {
+    await safeCapture(error, {
+      requestId,
       route: "/api/lead",
-      phase: "post",
-      fallbackEligible: Boolean(fallbackContext)
+      phase: "post_unhandled",
+      context: requestContext(request, parsedBodyKeys)
     });
 
-    const serialized = serializeError(error);
     console.error(
-      "LEAD_API_POST_FAILED",
-      JSON.stringify({
-        ...requestContext(request, parsedBodyKeys),
-        error: serialized
-      })
+      "LEAD_API_UNHANDLED",
+      JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: serializeError(error) })
     );
 
-    if (isStorageUnsafeError(error)) {
-      const leadId = `RFQ-${Date.now()}`;
-      const now = new Date().toISOString();
-
-      if (fallbackContext) {
-        const fallbackLead: LeadRecord = {
-          leadId,
-          status: "NEW",
-          priority: "WARM",
-          score: calculateLeadScore({
-            brand: "Other",
-            qty: fallbackContext.users,
-            timeline: fallbackContext.timeline,
-            source: fallbackContext.source,
-            category: "Contact Form",
-            city: fallbackContext.city
-          }),
-          assignedTo: suggestAgentForLead("Other", "Contact Form"),
-          lastContactedAt: null,
-          firstContactAt: null,
-          firstContactBy: null,
-          nextFollowUpAt: null,
-          brand: "Other",
-          category: "Contact Form",
-          tier: fallbackContext.requirement,
-          qty: fallbackContext.users,
-          plan: fallbackContext.requirement,
-          usersSeats: fallbackContext.users,
-          city: fallbackContext.city,
-          source: fallbackContext.source,
-          sourcePage: fallbackContext.sourcePage,
-          pagePath: fallbackContext.pagePath,
-          referrer: fallbackContext.referrer,
-          timeline: fallbackContext.timeline,
-          notes: fallbackContext.notes,
-          activityNotes: [],
-          contactName: fallbackContext.contactName,
-          company: fallbackContext.company,
-          email: fallbackContext.email,
-          phone: fallbackContext.phone,
-          createdAt: now,
-          updatedAt: now
-        };
-
-        const emailResult = await sendEmail({ lead: fallbackLead });
-
-        await logAuditEvent({
-          type: "lead_created",
-          leadId: fallbackLead.leadId,
-          actor: "contact_api_fallback",
-          details: {
-            fallback: true,
-            city: fallbackLead.city,
-            source: fallbackLead.source
-          }
-        });
-
-        await emailAudit(fallbackLead.leadId, "contact_api_fallback", {
-          fallback: true,
-          ok: emailResult.ok,
-          reason: emailResult.reason ?? null
-        });
-
-        const missingDeliveryEnvKeys = getMissingDeliveryEnvKeys();
-        if (!emailResult.ok) {
-          logDeliveryDisabledWarning(missingDeliveryEnvKeys, leadId);
-        }
-
-        console.warn(
-          "CONTACT_FALLBACK_CAPTURE",
-          JSON.stringify({
-            leadId,
-            destination: LEADS_EMAIL,
-            queued: true
-          })
-        );
-      }
-
-      return jsonSuccess(202, {
-        queued: true,
-        leadId,
-        message: "Request received in fallback mode. We will contact you shortly."
-      });
-    }
-
-    return jsonError(500, "Internal Server Error");
+    return jsonSuccess(202, requestId, {
+      queued: true,
+      message: QUEUED_MESSAGE
+    });
   }
 }
