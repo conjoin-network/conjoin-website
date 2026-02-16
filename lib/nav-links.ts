@@ -11,6 +11,16 @@ export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
     matchPrefix: "/solutions"
   },
   {
+    href: "/microsoft-365-chandigarh",
+    label: "Microsoft 365",
+    matchPrefix: "/microsoft-365-chandigarh"
+  },
+  {
+    href: "/seqrite-chandigarh",
+    label: "Seqrite",
+    matchPrefix: "/seqrite-chandigarh"
+  },
+  {
     href: "/brands",
     label: "Brands",
     matchPrefix: "/brands"

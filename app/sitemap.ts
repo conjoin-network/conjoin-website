@@ -11,6 +11,8 @@ const STATIC_ROUTES = [
   "/knowledge",
   "/locations",
   "/products",
+  "/microsoft-365-chandigarh",
+  "/seqrite-chandigarh",
   "/request-quote",
   "/search"
 ];
