@@ -36,7 +36,18 @@ export function proxy(request: NextRequest) {
   );
 
   if (!hasConfiguredOwner) {
-    return withAdminHeaders(new NextResponse("Not Found", { status: 404 }));
+    if (isAdminApi) {
+      return withAdminHeaders(
+        NextResponse.json(
+          { ok: false, message: "Admin portal is not configured. Set OWNER_USER and OWNER_PASS." },
+          { status: 503 }
+        )
+      );
+    }
+
+    const loginUrl = new URL("/admin/login", request.url);
+    loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
+    return withAdminHeaders(NextResponse.redirect(loginUrl));
   }
 
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
