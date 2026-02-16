@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import Section from "@/app/components/Section";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
+import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
 import {
   BRAND_ACCENTS,
   CITY_OPTIONS,
@@ -166,6 +167,7 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
 
 export default function RequestQuoteWizard() {
   const router = useRouter();
+  const pathname = usePathname() ?? "/request-quote";
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
@@ -513,6 +515,18 @@ export default function RequestQuoteWizard() {
       }
 
       const resolvedRfqId = data?.rfqId ?? data?.leadId ?? "";
+      trackAdsConversion("quote_submit", {
+        value: 1,
+        method: "form",
+        page_path: pathname,
+        brand: state.brand || "",
+        category: state.category || "",
+        plan: state.product || ""
+      });
+      const sendTo = getAdsSendTo();
+      if (sendTo) {
+        trackAdsConversion("conversion", { send_to: sendTo, value: 1 });
+      }
       setStatus("success");
       setNotice(`RFQ received. Reference ID: ${resolvedRfqId || "pending"}. Redirecting...`);
       if (typeof window !== "undefined") {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import Container from "@/app/components/Container";
+import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
@@ -12,6 +13,7 @@ import MobileNavMenu from "@/app/components/MobileNavMenu";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
+import { ADS_ID } from "@/lib/ads";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -91,6 +93,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const adsId = ADS_ID;
   const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? "";
   const year = new Date().getFullYear();
   const orgJsonLd = {
@@ -258,13 +261,21 @@ export default function RootLayout({
                   </p>
                   <p>
                     Phone:{" "}
-                    <a href={tel(SALES_PHONE_LANDLINE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                    <AdsTrackedLink
+                      href={tel(SALES_PHONE_LANDLINE)}
+                      eventName="phone_click"
+                      className="font-semibold text-[var(--color-primary)] hover:underline"
+                    >
                       {SALES_PHONE_LANDLINE}
-                    </a>
+                    </AdsTrackedLink>
                     {" • "}
-                    <a href={tel(SALES_PHONE_MOBILE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+                    <AdsTrackedLink
+                      href={tel(SALES_PHONE_MOBILE)}
+                      eventName="phone_click"
+                      className="font-semibold text-[var(--color-primary)] hover:underline"
+                    >
                       {SALES_PHONE_MOBILE}
-                    </a>
+                    </AdsTrackedLink>
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -326,14 +337,15 @@ export default function RootLayout({
                 <div className="space-y-2">
                   <p className="font-semibold text-[var(--color-text-primary)]">Coverage</p>
                   <p>{COVERAGE.join(" • ")}</p>
-                  <a
+                  <AdsTrackedLink
                     href={footerWhatsApp}
+                    eventName="whatsapp_click"
                     target="_blank"
                     rel="noreferrer"
                     className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white"
                   >
                     WhatsApp Sales
-                  </a>
+                  </AdsTrackedLink>
                 </div>
               </div>
               <p className="text-xs">
@@ -345,6 +357,23 @@ export default function RootLayout({
           </footer>
         </div>
         <FloatingWhatsApp />
+        {adsId ? (
+          <>
+            <Script
+              id="google-ads-gtag-loader"
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(adsId)}`}
+              strategy="afterInteractive"
+            />
+            <Script
+              id="google-ads-gtag"
+              strategy="afterInteractive"
+              dangerouslySetInnerHTML={{
+                __html: `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag; gtag('js', new Date()); gtag('config', '${adsId}');`
+              }}
+            />
+          </>
+        ) : null}
         {clarityProjectId ? (
           <Script
             id="clarity-init"

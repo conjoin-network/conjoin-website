@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import Card from "@/app/components/Card";
 import FaqAccordion from "@/app/components/FaqAccordion";
 import JsonLd from "@/app/components/JsonLd";
@@ -151,17 +152,18 @@ export default function SeqriteChandigarhPage() {
               states within practical delivery radius.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a href={callHref} className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white">
+              <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white">
                 Call +91 9466663015
-              </a>
-              <a
+              </AdsTrackedLink>
+              <AdsTrackedLink
                 href={whatsappHref}
+                eventName="whatsapp_click"
                 target="_blank"
                 rel="noreferrer"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-slate-900 px-5 text-sm font-semibold text-white"
               >
                 WhatsApp
-              </a>
+              </AdsTrackedLink>
               <a
                 href="#lead-form"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-transparent px-5 text-sm font-semibold text-[var(--color-text-primary)]"
@@ -288,12 +290,12 @@ export default function SeqriteChandigarhPage() {
 
       <div className="fixed inset-x-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] md:hidden bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)]">
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_94%,transparent)] p-2 backdrop-blur-sm">
-          <a href={callHref} className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-3 text-sm font-semibold text-white">
+          <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-3 text-sm font-semibold text-white">
             Call
-          </a>
-          <a href={whatsappHref} target="_blank" rel="noreferrer" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--brand-whatsapp)] px-3 text-sm font-semibold text-white">
+          </AdsTrackedLink>
+          <AdsTrackedLink href={whatsappHref} eventName="whatsapp_click" target="_blank" rel="noreferrer" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--brand-whatsapp)] px-3 text-sm font-semibold text-white">
             WhatsApp
-          </a>
+          </AdsTrackedLink>
         </div>
       </div>
 
