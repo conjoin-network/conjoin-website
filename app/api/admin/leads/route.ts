@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { AGENT_OPTIONS } from "@/lib/agents";
-import { listLeads, readLeads, type LeadFilters } from "@/lib/leads";
+import { listCrmLeads } from "@/lib/crm";
+import type { LeadFilters } from "@/lib/leads";
 import { LEAD_STATUSES } from "@/lib/quote-catalog";
 
 function parseFilters(url: URL): LeadFilters {
@@ -93,18 +94,27 @@ export async function GET(request: Request) {
   } satisfies LeadFilters;
 
   try {
-    const storedLeads = await readLeads();
-    const visibleLeads = session.isManagement
-      ? storedLeads
-      : storedLeads.filter((lead) => lead.assignedTo === session.assignee);
-    const leads = listLeads(visibleLeads, scopedFilters);
+    const storedLeads = await listCrmLeads();
+    const visibleLeads = session.isManagement ? storedLeads : storedLeads.filter((lead) => lead.assignedTo === session.assignee);
 
-    const brands = [...new Set(visibleLeads.map((lead) => String(lead.brand)).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b)
-    );
-    const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) =>
-      a.localeCompare(b)
-    );
+    // Basic filtering similar to legacy listLeads
+    let leads = visibleLeads.slice();
+    if (scopedFilters.status && scopedFilters.status !== "all") {
+      const statusFilter = String(scopedFilters.status).toUpperCase();
+      leads = leads.filter((l) => String(l.status).toUpperCase() === statusFilter);
+    }
+    if (scopedFilters.city && scopedFilters.city !== "all") {
+      leads = leads.filter((l) => (l.city || "").toLowerCase().includes(String(scopedFilters.city).toLowerCase()));
+    }
+    if (scopedFilters.q && scopedFilters.q.trim()) {
+      const q = scopedFilters.q.trim().toLowerCase();
+      leads = leads.filter((l) =>
+        `${l.contactName} ${l.company} ${l.email} ${l.phone} ${l.notes}`.toLowerCase().includes(q)
+      );
+    }
+
+    const brands = [] as string[];
+    const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
     return NextResponse.json({
       ok: true,

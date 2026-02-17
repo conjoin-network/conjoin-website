@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
 
@@ -96,8 +96,8 @@ export default function ContactLeadForm() {
         })
       });
       const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
-      const isSuccessStatus = response.status === 200 || response.status === 202;
-      const isSuccess = isSuccessStatus && payload.ok === true;
+      const isSuccessStatus = response.ok; // accepts 200–299 (incl 201)
+      const isSuccess = isSuccessStatus && payload.ok !== false;
 
       if (!isSuccess) {
         setStatus("error");

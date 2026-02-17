@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/admin-session";
-import { listLeads, readLeads, type LeadFilters } from "@/lib/leads";
+import { listCrmLeads } from "@/lib/crm";
+import type { LeadFilters } from "@/lib/leads";
 
 function parseFilters(url: URL): LeadFilters {
   const dateRangeParam = url.searchParams.get("dateRange");
@@ -34,9 +35,9 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const filters = parseFilters(url);
-  const allLeads = await readLeads();
+  const allLeads = await listCrmLeads();
   const visibleLeads = session.isManagement ? allLeads : allLeads.filter((lead) => lead.assignedTo === session.assignee);
-  const leads = listLeads(visibleLeads, filters);
+  const leads = visibleLeads; // minimal export from CRM-normalized shape
 
   const headers = [
     "leadId",
@@ -79,46 +80,49 @@ export async function GET(request: Request) {
     "activityNotes"
   ];
 
-  const rows = leads.map((lead) => [
-    lead.leadId,
-    lead.createdAt,
-    lead.updatedAt,
-    lead.status,
-    lead.priority,
-    lead.score,
-    lead.assignedTo ?? "",
-    lead.nextFollowUpAt ?? "",
-    lead.lastContactedAt ?? "",
-    lead.firstContactAt ?? "",
-    lead.firstContactBy ?? "",
-    lead.brand,
-    lead.category,
-    lead.tier,
-    lead.qty,
-    lead.usersSeats ?? "",
-    lead.endpoints ?? "",
-    lead.servers ?? "",
-    lead.ciscoUsers ?? "",
-    lead.ciscoSites ?? "",
-    lead.budgetRange ?? "",
-    lead.city,
-    lead.timeline ?? "",
-    lead.source ?? "",
-    lead.contactName,
-    lead.company,
-    lead.email,
-    lead.phone,
-    lead.sourcePage,
-    lead.utmSource ?? "",
-    lead.utmCampaign ?? "",
-    lead.utmMedium ?? "",
-    lead.utmContent ?? "",
-    lead.utmTerm ?? "",
-    lead.pagePath ?? "",
-    lead.referrer ?? "",
-    lead.notes,
-    lead.activityNotes.map((note) => `${note.createdAt} ${note.author}: ${note.text}`).join(" | ")
-  ]);
+  const rows = leads.map((lead) => {
+    const anyLead = lead as any;
+    return [
+      anyLead.leadId,
+      anyLead.createdAt,
+      anyLead.updatedAt,
+      anyLead.status ?? "",
+      anyLead.priority ?? "",
+      anyLead.score ?? "",
+      anyLead.assignedTo ?? "",
+      anyLead.nextFollowUpAt ?? "",
+      anyLead.lastContactedAt ?? "",
+      anyLead.firstContactAt ?? "",
+      anyLead.firstContactBy ?? "",
+      anyLead.brand ?? "",
+      anyLead.category ?? "",
+      anyLead.tier ?? "",
+      anyLead.qty ?? "",
+      anyLead.usersSeats ?? "",
+      anyLead.endpoints ?? "",
+      anyLead.servers ?? "",
+      anyLead.ciscoUsers ?? "",
+      anyLead.ciscoSites ?? "",
+      anyLead.budgetRange ?? "",
+      anyLead.city ?? "",
+      anyLead.timeline ?? "",
+      anyLead.source ?? "",
+      anyLead.contactName ?? "",
+      anyLead.company ?? "",
+      anyLead.email ?? "",
+      anyLead.phone ?? "",
+      anyLead.sourcePage ?? "",
+      anyLead.utmSource ?? "",
+      anyLead.utmCampaign ?? "",
+      anyLead.utmMedium ?? "",
+      anyLead.utmContent ?? "",
+      anyLead.utmTerm ?? "",
+      anyLead.pagePath ?? "",
+      anyLead.referrer ?? "",
+      anyLead.notes ?? "",
+      (anyLead.activityNotes ?? []).map((note: any) => `${note.createdAt} ${note.author}: ${note.text}`).join(" | ")
+    ];
+  });
 
   const csv = [headers.map(csvCell).join(","), ...rows.map((row) => row.map(csvCell).join(","))].join("\n");
   const filename = `conjoin-leads-${new Date().toISOString().slice(0, 10)}.csv`;

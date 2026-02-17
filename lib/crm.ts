@@ -90,6 +90,8 @@ export async function getCrmLead(id: string) {
 }
 
 export async function updateCrmLead(id: string, data: Partial<{ status: string; assignedTo: string; assignedAgent?: string; notes?: string; score?: number }>) {
-  const updated = await prisma.crmLead.update({ where: { id }, data });
+  const payload: any = { ...(data as any) };
+  if (payload.status) payload.status = String(payload.status).toUpperCase();
+  const updated = await prisma.crmLead.update({ where: { id }, data: payload });
   return normalize(updated);
 }

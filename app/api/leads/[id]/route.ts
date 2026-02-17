@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
 import { updateCrmLead, getCrmLead } from '@/lib/crm';
 import { getPortalSessionFromRequest } from '@/lib/admin-session';
@@ -13,7 +13,7 @@ const patchSchema = z.object({
   score: z.number().int().optional()
 });
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   // allow admin via session cookie OR x-admin-pass header
   const session = getPortalSessionFromRequest(request);
   const adminPass = request.headers.get('x-admin-pass') || '';
@@ -24,6 +24,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 
   try {
+    const params = await context.params;
     const id = params.id;
     const body = await request.json();
     const parsed = patchSchema.safeParse(body);

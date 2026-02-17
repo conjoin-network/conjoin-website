@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { isValidAgentName } from "@/lib/agents";
 import { getAdminActorLabel, getPortalSessionFromRequest } from "@/lib/admin-session";
-import { getLeadById, patchLead } from "@/lib/leads";
+import { getCrmLead, updateCrmLead } from "@/lib/crm";
 import { logAuditEvent } from "@/lib/event-log";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
 
@@ -15,7 +15,7 @@ type UpdatePayload = {
 };
 
 export async function PATCH(
-  request: Request,
+  request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
   const session = getPortalSessionFromRequest(request);
@@ -50,7 +50,7 @@ export async function PATCH(
     return NextResponse.json({ ok: false, message: "Invalid agent assignment." }, { status: 400 });
   }
 
-  const existingLead = await getLeadById(id);
+  const existingLead = await getCrmLead(id);
   if (!existingLead) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });
   }
@@ -74,15 +74,25 @@ export async function PATCH(
   }
 
   const actor = getAdminActorLabel(session);
-  const updated = await patchLead(id, {
-    status,
-    priority,
-    assignedTo: payload.assignedTo === undefined ? undefined : assignedTo,
-    nextFollowUpAt,
-    markContacted: Boolean(payload.markContacted),
-    note,
-    actor
-  });
+
+  // Map admin statuses back to CRM DB enum where necessary
+  function mapAdminStatusToDb(s?: LeadStatus | undefined) {
+    if (!s) return undefined;
+    const v = String(s).toUpperCase();
+    if (v === "NEW") return "NEW";
+    if (v === "IN_PROGRESS") return "CONTACTED";
+    if (v === "QUOTED") return "QUALIFIED";
+    if (v === "WON") return "CLOSED";
+    if (v === "LOST") return "LOST";
+    return v;
+  }
+
+  const updatePayload: any = {};
+  if (status) updatePayload.status = mapAdminStatusToDb(status as any);
+  if (payload.assignedTo !== undefined) updatePayload.assignedTo = payload.assignedTo === null ? null : assignedTo;
+  if (note) updatePayload.notes = (existingLead.notes ? existingLead.notes + "\n" : "") + `${actor}: ${note}`;
+
+  const updated = await updateCrmLead(id, updatePayload as any);
 
   if (!updated) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });

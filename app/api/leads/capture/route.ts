@@ -81,7 +81,7 @@ export async function POST(request: Request) {
       console.error('CAPTURE_ALERT_FAILED', e);
     }
 
-    return NextResponse.json({ ok: true, id: lead.id });
+    return NextResponse.json({ ok: true, id: lead.leadId });
   } catch (error) {
     console.error('LEAD_CAPTURE_ERROR', error);
     return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
