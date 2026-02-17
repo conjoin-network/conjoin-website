@@ -98,10 +98,8 @@ export async function POST(request: Request) {
       requirement: parsed.data.requirement,
       usersDevices: parsed.data.usersDevices,
       city: parsed.data.city,
-      timeline: parsed.data.timeline,
       notes: parsed.data.notes,
       pageUrl: parsed.data.pageUrl,
-      referrer: parsed.data.referrer,
       utm_source: parsed.data.utm_source,
       utm_medium: parsed.data.utm_medium,
       utm_campaign: parsed.data.utm_campaign,
@@ -131,11 +129,22 @@ export async function POST(request: Request) {
       console.info('LEAD_CAPTURE_STORED', JSON.stringify({ leadId: (lead as any).leadId ?? null, dbHost }));
     } catch {}
 
-    return NextResponse.json({ ok: true, leadId: (lead as any).leadId ?? null });
+    return NextResponse.json({ ok: true, leadId: (lead as any).leadId ?? null }, { status: 201 });
   } catch (error) {
     console.error('LEAD_POST_ERROR', error);
     return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST,OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, x-admin-pass'
+    }
+  });
 }
 
 export async function GET(request: Request) {
