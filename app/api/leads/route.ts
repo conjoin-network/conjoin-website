@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/prisma';
 import { createCrmLead } from '@/lib/crm';
@@ -59,7 +59,7 @@ function normalizeEmail(v?: string) {
   return String(v).trim().toLowerCase();
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.headers.get('x-client-ip') || 'local';
     if (!checkRate(String(ip))) {
@@ -147,7 +147,7 @@ export async function OPTIONS() {
   });
 }
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   // allow admin access via portal session cookie OR x-admin-pass header
   const session = getPortalSessionFromRequest(request);
   const adminPass = request.headers.get('x-admin-pass') || '';
