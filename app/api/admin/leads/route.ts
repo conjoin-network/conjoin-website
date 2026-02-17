@@ -19,49 +19,161 @@ function parseFilters(url: URL): LeadFilters {
   };
 }
 
+const SAFE_HEADER_KEYS = new Set(["host", "user-agent", "x-forwarded-for", "x-real-ip", "x-forwarded-proto", "referer"]);
+
+function safeHeaders(headers: Headers) {
+  const output: Record<string, string> = {};
+  for (const [key, value] of headers.entries()) {
+    const lower = key.toLowerCase();
+    if (SAFE_HEADER_KEYS.has(lower)) {
+      output[lower] = value;
+    }
+  }
+  return output;
+}
+
+function serializeError(error: unknown) {
+  if (error instanceof Error) {
+    const cause =
+      error.cause instanceof Error
+        ? {
+            name: error.cause.name,
+            message: error.cause.message,
+            stack: error.cause.stack
+          }
+        : error.cause ?? null;
+
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause
+    };
+  }
+
+  return {
+    name: "UnknownError",
+    message: typeof error === "string" ? error : "Unknown error",
+    stack: null,
+    cause: null
+  };
+}
+
+function isStorageNotConfigured(error: unknown) {
+  if (!process.env.LEAD_DB_PATH?.trim() && !process.env.DATABASE_URL?.trim()) {
+    return true;
+  }
+
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const detail = `${error.name} ${error.message}`.toLowerCase();
+  return (
+    detail.includes("lead_storage_unsafe") ||
+    detail.includes("database_url") ||
+    detail.includes("no such file or directory") ||
+    detail.includes("unable to open database file") ||
+    detail.includes("sqlite")
+  );
+}
+
 export async function GET(request: Request) {
+  const requestId = crypto.randomUUID();
   const session = getPortalSessionFromRequest(request);
   if (!session) {
-    return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, requestId, message: "Unauthorized" }, { status: 401 });
   }
 
   const url = new URL(request.url);
   const filters = parseFilters(url);
-  const storedLeads = await readLeads();
-  const visibleLeads = session.isManagement
-    ? storedLeads
-    : storedLeads.filter((lead) => lead.assignedTo === session.assignee);
   const scopedFilters = {
     ...filters,
     agent: session.isManagement ? filters.agent : "all"
   } satisfies LeadFilters;
-  const leads = listLeads(visibleLeads, scopedFilters);
 
-  const brands = [...new Set(visibleLeads.map((lead) => String(lead.brand)).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
-  const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) =>
-    a.localeCompare(b)
-  );
+  try {
+    const storedLeads = await readLeads();
+    const visibleLeads = session.isManagement
+      ? storedLeads
+      : storedLeads.filter((lead) => lead.assignedTo === session.assignee);
+    const leads = listLeads(visibleLeads, scopedFilters);
 
-  return NextResponse.json({
-    ok: true,
-    leads,
-    filters: scopedFilters,
-    meta: {
+    const brands = [...new Set(visibleLeads.map((lead) => String(lead.brand)).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+    const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    return NextResponse.json({
+      ok: true,
+      requestId,
+      leads,
+      items: leads,
       total: leads.length,
-      statuses: LEAD_STATUSES,
-      brands,
-      cities,
-      agents: AGENT_OPTIONS,
-      permissions: {
-        role: session.role,
-        displayName: session.displayName,
-        assignee: session.assignee,
-        canExport: session.canExport,
-        canAssign: session.canAssign,
-        isManagement: session.isManagement
+      filters: scopedFilters,
+      meta: {
+        total: leads.length,
+        statuses: LEAD_STATUSES,
+        brands,
+        cities,
+        agents: AGENT_OPTIONS,
+        permissions: {
+          role: session.role,
+          displayName: session.displayName,
+          assignee: session.assignee,
+          canExport: session.canExport,
+          canAssign: session.canAssign,
+          isManagement: session.isManagement
+        }
       }
+    });
+  } catch (error) {
+    const errorPayload = serializeError(error);
+    console.error(
+      "ADMIN_LEADS_LOAD_FAILED",
+      JSON.stringify({
+        requestId,
+        context: {
+          method: request.method,
+          url: request.url,
+          queryKeys: [...url.searchParams.keys()],
+          headers: safeHeaders(request.headers),
+          role: session.role
+        },
+        error: errorPayload
+      })
+    );
+
+    if (isStorageNotConfigured(error)) {
+      return NextResponse.json({
+        ok: true,
+        requestId,
+        storage_not_configured: true,
+        message: "Lead storage is not configured.",
+        leads: [],
+        items: [],
+        total: 0,
+        filters: scopedFilters,
+        meta: {
+          total: 0,
+          statuses: LEAD_STATUSES,
+          brands: [],
+          cities: [],
+          agents: AGENT_OPTIONS,
+          permissions: {
+            role: session.role,
+            displayName: session.displayName,
+            assignee: session.assignee,
+            canExport: session.canExport,
+            canAssign: session.canAssign,
+            isManagement: session.isManagement
+          }
+        }
+      });
     }
-  });
+
+    return NextResponse.json({ ok: false, requestId, message: "Unable to load leads." }, { status: 500 });
+  }
 }

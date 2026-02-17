@@ -36,6 +36,10 @@ export default function AdminLoginClient({ defaultRedirect = "/admin/leads" }: A
         setMessage(payload.message ?? "Unable to sign in.");
         return;
       }
+      // persist admin password for header-based API calls during this session
+      try {
+        sessionStorage.setItem("crm_admin_pass", password);
+      } catch {}
 
       const nextPath = searchParams.get("next");
       const redirectTo =

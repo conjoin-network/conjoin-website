@@ -14,6 +14,9 @@ export default function AdminLogoutButton({ redirectTo = "/admin/login" }: { red
         method: "POST",
         credentials: "same-origin"
       });
+      try {
+        sessionStorage.removeItem("crm_admin_pass");
+      } catch {}
     } finally {
       router.replace(redirectTo);
       router.refresh();

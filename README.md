@@ -95,15 +95,33 @@ WHATSAPP_PHONE_NUMBER_ID=""
 
 ## Run Locally (Port 4310)
 
+Run locally (single command):
+
 ```bash
-npm ci
-npm run lint
-npm run typecheck
-npm run build
-npm run dev:4310
+cd ~/Documents/conjoin/web && pnpm install && pnpm approve-builds -g && pnpm approve-builds --all || true && npx prisma db push && pnpm dev:4310
 ```
 
 Open [http://localhost:4310](http://localhost:4310).
+
+## Local Postgres & Prisma
+
+This project uses Prisma with Postgres in production. For local development you can use a local Postgres and set `DATABASE_URL` in your `.env`.
+
+Required env vars for lead capture/email:
+- `DATABASE_URL` (eg: `postgresql://postgres:postgres@localhost:5432/conjoin?schema=public`)
+- `ADMIN_PASSWORD` (simple admin password for `/admin/leads`)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `MAIL_FROM` (for email alerts)
+
+Prisma setup (run once after updating `prisma/schema.prisma`):
+```bash
+npx prisma db push
+npx prisma generate
+```
+
+Then start dev server on port 4310:
+```bash
+pnpm dev:4310
+```
 
 ### QA Note
 Run go-live checks while local server is running:

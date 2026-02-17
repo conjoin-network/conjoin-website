@@ -3,7 +3,8 @@ export const SUPPORT_EMAIL = "support@conjoinnetwork.com";
 export const LEADS_EMAIL = "leads@conjoinnetwork.com";
 export const OPTIONAL_PERSONAL_EMAIL = "manod@conjoinnetwork.com";
 
-export const PHONE_1 = "0172-4043839";
+// Primary phone: use mobile number consistently (replace old landline)
+export const PHONE_1 = "9466663015";
 export const PHONE_2 = "9466663015";
 export const ADDRESS_LINES = ["2nd Floor, SCO 156-157", "Sector 34A, Chandigarh – 160022", "India"] as const;
 export const COVERAGE = ["Chandigarh", "Punjab", "Haryana", "North India"] as const;

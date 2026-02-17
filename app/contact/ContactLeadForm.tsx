@@ -15,6 +15,12 @@ type FormState = {
   timeline: string;
   message: string;
   website: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  gclid?: string;
 };
 
 const initialState: FormState = {
@@ -24,7 +30,7 @@ const initialState: FormState = {
   phone: "",
   requirement: "",
   users: "",
-  city: "Chandigarh",
+  city: "",
   timeline: "This Week",
   message: "",
   website: ""
@@ -33,6 +39,17 @@ const initialState: FormState = {
 export default function ContactLeadForm() {
   const pathname = usePathname() ?? "/contact";
   const [state, setState] = useState<FormState>(initialState);
+  // capture utm/gclid from query string on mount
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const updates: Partial<FormState> = {};
+    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"].forEach((k) => {
+      const v = params.get(k);
+      if (v) (updates as any)[k] = v;
+    });
+    if (Object.keys(updates).length) setState((s) => ({ ...s, ...updates }));
+  }, []);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
   const fieldClass =
@@ -52,13 +69,29 @@ export default function ContactLeadForm() {
     setNotice("");
 
     try {
-      const response = await fetch("/api/lead", {
+      // Submit to canonical /api/leads endpoint
+      const response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...state,
+          name: state.name,
+          company: state.company,
+          email: state.email,
+          phone: state.phone,
+          requirement: state.requirement,
+          usersDevices: state.users ? Number(state.users) : undefined,
+          city: state.city,
+          timeline: state.timeline,
+          notes: state.message,
+          website: state.website,
+          utm_source: (state as any).utm_source,
+          utm_medium: (state as any).utm_medium,
+          utm_campaign: (state as any).utm_campaign,
+          utm_term: (state as any).utm_term,
+          utm_content: (state as any).utm_content,
+          gclid: (state as any).gclid,
           source: "/contact",
-          pagePath: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/contact",
+          pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/contact",
           referrer: typeof document !== "undefined" ? document.referrer : ""
         })
       });
@@ -117,7 +150,6 @@ export default function ContactLeadForm() {
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Email
           <input
-            required
             type="email"
             value={state.email}
             onChange={(event) => patch({ email: event.target.value })}
@@ -127,7 +159,6 @@ export default function ContactLeadForm() {
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Phone
           <input
-            required
             type="tel"
             value={state.phone}
             onChange={(event) => patch({ phone: event.target.value })}
@@ -147,7 +178,6 @@ export default function ContactLeadForm() {
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Users / Devices
           <input
-            required
             type="number"
             min={1}
             value={state.users}
@@ -158,7 +188,6 @@ export default function ContactLeadForm() {
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           City
           <input
-            required
             value={state.city}
             onChange={(event) => patch({ city: event.target.value })}
             className={fieldClass}

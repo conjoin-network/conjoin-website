@@ -129,7 +129,7 @@ const defaultFilters: FilterState = {
 const STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "New",
   IN_PROGRESS: "Contacted",
-  QUOTED: "Quoted",
+  QUOTED: "Qualified",
   WON: "Won",
   LOST: "Lost"
 };
@@ -155,18 +155,18 @@ function formatDate(value: string | null | undefined) {
 
 function statusClass(status: LeadStatus) {
   if (status === "WON") {
-    return "bg-emerald-400/15 text-emerald-200";
+    return "bg-emerald-400/15 text-emerald-200"; // green
   }
   if (status === "LOST") {
-    return "bg-rose-400/15 text-rose-200";
+    return "bg-rose-400/15 text-rose-200"; // red
   }
   if (status === "QUOTED") {
-    return "bg-indigo-400/15 text-indigo-200";
+    return "bg-violet-400/15 text-violet-200"; // purple (Qualified)
   }
   if (status === "IN_PROGRESS") {
-    return "bg-amber-400/15 text-amber-200";
+    return "bg-amber-400/15 text-amber-200"; // orange (Contacted)
   }
-  return "bg-slate-200/15 text-slate-200";
+  return "bg-sky-400/15 text-sky-200"; // blue (New)
 }
 
 function priorityClass(priority: LeadPriority) {
@@ -221,6 +221,19 @@ export default function AdminLeadsClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [addForm, setAddForm] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    company: "",
+    city: "",
+    source: "website",
+    campaign: "",
+    requirement: "",
+    notes: "",
+    assignedAgent: ""
+  });
   const [busyLeadId, setBusyLeadId] = useState<string | null>(null);
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
   const [emailDrafts, setEmailDrafts] = useState<Record<string, LeadAiEmailDraft>>({});
@@ -244,21 +257,34 @@ export default function AdminLeadsClient() {
   const activeLeadEmailDraft = activeLead ? emailDrafts[activeLead.leadId] ?? null : null;
   const activeLeadObjectionReply = activeLead ? objectionReplies[activeLead.leadId] ?? null : null;
 
-  async function loadLeads() {
-    setLoading(true);
-    setError("");
+  function getAdminPass() {
     try {
-      const response = await fetch(`/api/admin/leads?${query}`, { credentials: "same-origin" });
+      return sessionStorage.getItem("crm_admin_pass") || "";
+    } catch {
+      return "";
+    }
+  }
+
+  async function loadLeads(silent = false) {
+    if (!silent) setLoading(true);
+    if (!silent) setError("");
+    try {
+      const headers: Record<string, string> = {};
+      const adminPass = getAdminPass();
+      if (adminPass) headers["x-admin-pass"] = adminPass;
+
+      const response = await fetch(`/api/leads?${query}`, { credentials: "same-origin", headers });
       if (!response.ok) {
         throw new Error(`Unable to load leads (${response.status})`);
       }
 
-      const payload = (await response.json()) as ApiResponse;
-      setLeads(payload.leads);
-      setMeta(payload.meta);
+      const payload = (await response.json()) as ApiResponse | { ok?: boolean; leads?: any[] };
+      const leadsData = (payload as any).leads ?? (payload as any);
+      setLeads(leadsData);
+      if ((payload as any).meta) setMeta((payload as any).meta);
       setDrafts((current) => {
         const next: DraftMap = {};
-        payload.leads.forEach((lead) => {
+        (payload.leads || []).forEach((lead) => {
           next[lead.leadId] = {
             status: (current[lead.leadId]?.status ?? lead.status) as LeadStatus,
             priority: (current[lead.leadId]?.priority ?? lead.priority ?? "WARM") as LeadPriority,
@@ -270,15 +296,65 @@ export default function AdminLeadsClient() {
         return next;
       });
     } catch (loadError) {
-      setError(loadError instanceof Error ? loadError.message : "Unable to load leads.");
+      if (!silent) setError(loadError instanceof Error ? loadError.message : "Unable to load leads.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+    }
+  }
+
+  async function handleAddLead() {
+    setError("");
+    setNotice("");
+    try {
+      const body = {
+        name: addForm.name,
+        phone: addForm.phone,
+        email: addForm.email,
+        company: addForm.company,
+        city: addForm.city,
+        source: addForm.source,
+        campaign: addForm.campaign,
+        requirement: addForm.requirement,
+        notes: addForm.notes,
+        assignedAgent: addForm.assignedAgent
+      } as any;
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const ap = getAdminPass();
+      if (ap) headers['x-admin-pass'] = ap;
+
+      const res = await fetch('/api/leads', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        credentials: 'same-origin'
+      });
+
+      const payload = await res.json().catch(() => ({}));
+      if (!res.ok || !payload?.ok) {
+        throw new Error(payload?.error || payload?.message || `Create failed (${res.status})`);
+      }
+
+      setNotice('Lead created. Refreshing list...');
+      setShowAdd(false);
+      setAddForm({ name: '', phone: '', email: '', company: '', city: '', source: 'website', campaign: '', requirement: '', notes: '', assignedAgent: '' });
+      await loadLeads();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to create lead');
     }
   }
 
   useEffect(() => {
     loadLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  // lightweight polling every 15s without resetting filters or causing UI flicker
+  useEffect(() => {
+    const id = setInterval(() => {
+      loadLeads(true).catch(() => {});
+    }, 15000);
+    return () => clearInterval(id);
   }, [query]);
 
   function updateDraft(leadId: string, key: keyof DraftMap[string], value: string) {
@@ -296,10 +372,14 @@ export default function AdminLeadsClient() {
   }
 
   async function patchLead(leadId: string, body: Record<string, unknown>) {
-    const response = await fetch(`/api/admin/leads/${leadId}`, {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const ap = getAdminPass();
+    if (ap) headers["x-admin-pass"] = ap;
+
+    const response = await fetch(`/api/leads/${leadId}`, {
       method: "PATCH",
       credentials: "same-origin",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify(body)
     });
 
@@ -384,10 +464,14 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const ap = getAdminPass();
+      if (ap) headers["x-admin-pass"] = ap;
+
       const response = await fetch("/api/ai/lead-summary", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ leadId })
       });
       const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
@@ -409,10 +493,14 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const ap = getAdminPass();
+      if (ap) headers["x-admin-pass"] = ap;
+
       const response = await fetch("/api/ai/email-draft", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ leadId })
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -439,10 +527,14 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const ap = getAdminPass();
+      if (ap) headers["x-admin-pass"] = ap;
+
       const response = await fetch("/api/ai/objection-reply", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ leadId, objection })
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -483,13 +575,57 @@ export default function AdminLeadsClient() {
         <p className="rounded-lg border border-amber-300/45 bg-amber-200/10 px-3 py-2 text-xs text-amber-100">
           Data is confidential. Access is logged. Do not share externally.
         </p>
-        <p className="text-xs text-[var(--color-text-secondary)]">
-          Signed in as {permissions.displayName} ({permissions.role})
-          {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
-        </p>
+        <p className="text-xs text-[var(--color-text-secondary)]">Primary contact: 9466663015</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-[var(--color-text-secondary)]">
+            Signed in as {permissions.displayName} ({permissions.role})
+            {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
+          </p>
+          <div>
+            <button
+              type="button"
+              onClick={() => setFilters((f) => ({ ...f }))}
+              className="mr-2 inline-flex items-center rounded-md bg-slate-100 px-3 py-1 text-sm"
+            >
+              Refresh
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAdd((s) => !s)}
+              className="inline-flex items-center rounded-md bg-[var(--color-primary)] px-3 py-1 text-sm text-white"
+            >
+              + Add Lead
+            </button>
+          </div>
+        </div>
       </header>
 
       <section className="admin-card rounded-2xl p-4">
+        {showAdd ? (
+          <div className="mb-4 rounded-lg border p-4">
+            <h3 className="text-sm font-semibold">Add Lead</h3>
+            <div className="grid gap-2 md:grid-cols-2">
+              <input placeholder="Name" value={addForm.name} onChange={(e) => setAddForm((c) => ({ ...c, name: e.target.value }))} className="mt-2" />
+              <input placeholder="Phone" value={addForm.phone} onChange={(e) => setAddForm((c) => ({ ...c, phone: e.target.value }))} className="mt-2" />
+              <input placeholder="Email" value={addForm.email} onChange={(e) => setAddForm((c) => ({ ...c, email: e.target.value }))} className="mt-2" />
+              <input placeholder="Company" value={addForm.company} onChange={(e) => setAddForm((c) => ({ ...c, company: e.target.value }))} className="mt-2" />
+              <input placeholder="City" value={addForm.city} onChange={(e) => setAddForm((c) => ({ ...c, city: e.target.value }))} className="mt-2" />
+              <select value={addForm.source} onChange={(e) => setAddForm((c) => ({ ...c, source: e.target.value }))} className="mt-2">
+                <option value="website">website</option>
+                <option value="google_ads">google_ads</option>
+                <option value="direct_call">direct_call</option>
+                <option value="reference">reference</option>
+                <option value="walk_in">walk_in</option>
+              </select>
+              <input placeholder="Campaign" value={addForm.campaign} onChange={(e) => setAddForm((c) => ({ ...c, campaign: e.target.value }))} className="mt-2" />
+              <input placeholder="Requirement" value={addForm.requirement} onChange={(e) => setAddForm((c) => ({ ...c, requirement: e.target.value }))} className="mt-2" />
+            </div>
+            <div className="mt-3 flex items-center gap-2">
+              <button type="button" onClick={handleAddLead} className="rounded-md bg-emerald-600 px-3 py-1 text-white">Create</button>
+              <button type="button" onClick={() => setShowAdd(false)} className="rounded-md bg-slate-100 px-3 py-1">Cancel</button>
+            </div>
+          </div>
+        ) : null}
         <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-8" : "md:grid-cols-7"}`}>
           <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
             Search
