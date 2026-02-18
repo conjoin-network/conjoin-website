@@ -5,6 +5,7 @@ import Script from "next/script";
 import { Geist, Geist_Mono } from "next/font/google";
 import Container from "@/app/components/Container";
 import AdsTrackedLink from "@/app/components/AdsTrackedLink";
+import AnalyticsRouteTracker from "@/app/components/AnalyticsRouteTracker";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
@@ -14,6 +15,7 @@ import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
 import { ADS_ID } from "@/lib/ads";
+import { GA_ID, isGAEnabled } from "@/lib/ga";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -94,6 +96,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const adsId = ADS_ID;
+  const gaId = GA_ID;
+  const primaryTagId = gaId || adsId;
   const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? "";
   const year = new Date().getFullYear();
   const orgJsonLd = {
@@ -357,23 +361,33 @@ export default function RootLayout({
           </footer>
         </div>
         <FloatingWhatsApp />
-        {adsId ? (
+        {primaryTagId ? (
           <>
             <Script
-              id="google-ads-gtag-loader"
+              id="google-tag-loader"
               async
-              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(adsId)}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(primaryTagId)}`}
               strategy="afterInteractive"
             />
             <Script
-              id="google-ads-gtag"
+              id="google-tag-init"
               strategy="afterInteractive"
               dangerouslySetInnerHTML={{
-                __html: `window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} window.gtag = gtag; gtag('js', new Date()); gtag('config', '${adsId}');`
+                __html: [
+                  "window.dataLayer = window.dataLayer || [];",
+                  "function gtag(){dataLayer.push(arguments);}",
+                  "window.gtag = gtag;",
+                  "gtag('js', new Date());",
+                  gaId ? `gtag('config', '${gaId}', { send_page_view: false, cookie_domain: 'conjoinnetwork.com' });` : "",
+                  adsId ? `gtag('config', '${adsId}');` : ""
+                ]
+                  .filter(Boolean)
+                  .join(" ")
               }}
             />
           </>
         ) : null}
+        {isGAEnabled ? <AnalyticsRouteTracker /> : null}
         {clarityProjectId ? (
           <Script
             id="clarity-init"

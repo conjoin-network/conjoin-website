@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
+import { event as trackGaEvent } from "@/lib/ga";
 
 type FormState = {
   name: string;
@@ -108,6 +109,15 @@ export default function ContactLeadForm() {
       setStatus("success");
       setNotice("");
       setNotice(payload.message || "Request received. We will contact you shortly.");
+      trackGaEvent("generate_lead", {
+        form_name: "contact_lead_form",
+        lead_type: "contact",
+        city: state.city || undefined,
+        value: 1,
+        currency: "INR",
+        method: "form",
+        page_path: pathname
+      });
       trackAdsConversion("lead_submit", {
         value: 1,
         method: "form",

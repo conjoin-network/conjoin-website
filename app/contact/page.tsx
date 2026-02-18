@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import Card from "@/app/components/Card";
 import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
@@ -83,13 +84,21 @@ export default function ContactPage() {
             </p>
             <p>
               Phone:{" "}
-              <a href={tel(SALES_PHONE_LANDLINE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+              <AdsTrackedLink
+                href={tel(SALES_PHONE_LANDLINE)}
+                eventName="phone_click"
+                className="font-semibold text-[var(--color-primary)] hover:underline"
+              >
                 {SALES_PHONE_LANDLINE}
-              </a>
+              </AdsTrackedLink>
               {" • "}
-              <a href={tel(SALES_PHONE_MOBILE)} className="font-semibold text-[var(--color-primary)] hover:underline">
+              <AdsTrackedLink
+                href={tel(SALES_PHONE_MOBILE)}
+                eventName="phone_click"
+                className="font-semibold text-[var(--color-primary)] hover:underline"
+              >
                 {SALES_PHONE_MOBILE}
-              </a>
+              </AdsTrackedLink>
             </p>
             <div className="flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
               <Link href="/brands" className="hover:underline">

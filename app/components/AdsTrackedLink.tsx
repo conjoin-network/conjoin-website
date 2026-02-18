@@ -25,9 +25,15 @@ export default function AdsTrackedLink({
           return;
         }
 
+        const pagePath =
+          typeof window !== "undefined"
+            ? `${window.location.pathname}${window.location.search}`
+            : undefined;
+
         trackAdsConversion(eventName, {
           value: eventValue,
-          link_url: href
+          link_url: href,
+          page_path: pagePath
         });
       }}
     />
