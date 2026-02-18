@@ -74,6 +74,13 @@ function isStorageNotConfigured(error: unknown) {
 
   const detail = `${error.name} ${error.message}`.toLowerCase();
   return (
+    detail.includes("prisma") ||
+    detail.includes("can't reach database server") ||
+    detail.includes("database server") ||
+    detail.includes("authentication failed") ||
+    detail.includes("timed out") ||
+    detail.includes("relation") ||
+    detail.includes("does not exist") ||
     detail.includes("lead_storage_unsafe") ||
     detail.includes("database_url") ||
     detail.includes("no such file or directory") ||
