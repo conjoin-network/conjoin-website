@@ -8,6 +8,7 @@ import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
 import { suggestAgentForLead } from "@/lib/agents";
 import { logAuditEvent } from "@/lib/event-log";
 import { captureServerError } from "@/lib/error-logger";
+import { isPrismaInitializationError } from "@/lib/prisma-errors";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -40,7 +41,6 @@ const SAFE_HEADER_KEYS = new Set([
 ]);
 
 const DELIVERY_ENV_KEYS = ["SMTP_HOST", "SMTP_USER", "SMTP_PASS"] as const;
-const QUEUED_MESSAGE = "Request received. Delivery is queued and our team will contact you shortly.";
 
 const normalizedLeadSchema = z
   .object({
@@ -195,6 +195,10 @@ function getDbRuntimeInfo() {
   };
 }
 
+function isStorageNotConfigured(error: unknown) {
+  return isPrismaInitializationError(error);
+}
+
 async function safeCapture(error: unknown, context: Record<string, unknown>) {
   try {
     await captureServerError(error, context);
@@ -344,12 +348,10 @@ export async function POST(request: Request) {
         "LEAD_API_CREATE_FAILED",
         JSON.stringify({ requestId, leadId: provisionalLeadId, context: requestContext(request, parsedBodyKeys), error: errorInfo })
       );
-      return jsonSuccess(202, requestId, {
-        queued: true,
-        leadId: provisionalLeadId,
-        warning: "storage_not_configured",
-        message: QUEUED_MESSAGE
-      });
+      if (isStorageNotConfigured(error)) {
+        return jsonError(503, requestId, "Lead storage is not configured.");
+      }
+      return jsonError(500, requestId, "Unable to save lead.");
     }
 
     await safeAudit(
@@ -384,13 +386,12 @@ export async function POST(request: Request) {
       logDeliveryDisabledWarning(missingDeliveryEnvKeys, requestId, lead.leadId);
       await safeEmailAudit(lead.leadId, "contact_api", requestId, {
         ok: false,
-        queued: true,
+        queued: false,
         reason: `missing env: ${missingDeliveryEnvKeys.join(", ")}`
       });
-      return jsonSuccess(202, requestId, {
-        queued: true,
+      return jsonSuccess(200, requestId, {
         leadId: lead.leadId,
-        message: QUEUED_MESSAGE
+        message: "Request received. Delivery is disabled; our team will follow up."
       });
     }
 
@@ -404,13 +405,12 @@ export async function POST(request: Request) {
       );
       await safeEmailAudit(lead.leadId, "contact_api", requestId, {
         ok: false,
-        queued: true,
+        queued: false,
         reason: "email send threw"
       });
-      return jsonSuccess(202, requestId, {
-        queued: true,
+      return jsonSuccess(200, requestId, {
         leadId: lead.leadId,
-        message: QUEUED_MESSAGE
+        message: "Request received. Email delivery issue detected; our team will follow up."
       });
     }
 
@@ -424,10 +424,9 @@ export async function POST(request: Request) {
         "CONTACT_LEAD_EMAIL_NOT_SENT",
         JSON.stringify({ requestId, leadId: lead.leadId, reason: emailResult.reason ?? "unknown" })
       );
-      return jsonSuccess(202, requestId, {
-        queued: true,
+      return jsonSuccess(200, requestId, {
         leadId: lead.leadId,
-        message: QUEUED_MESSAGE
+        message: "Request received. Email delivery issue detected; our team will follow up."
       });
     }
 
@@ -448,9 +447,6 @@ export async function POST(request: Request) {
       JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: serializeError(error) })
     );
 
-    return jsonSuccess(202, requestId, {
-      queued: true,
-      message: QUEUED_MESSAGE
-    });
+    return jsonError(500, requestId, "Internal Server Error");
   }
 }

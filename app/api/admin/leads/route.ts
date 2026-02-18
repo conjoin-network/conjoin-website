@@ -4,6 +4,7 @@ import { AGENT_OPTIONS } from "@/lib/agents";
 import { listCrmLeads } from "@/lib/crm";
 import type { LeadFilters } from "@/lib/leads";
 import { LEAD_STATUSES } from "@/lib/quote-catalog";
+import { isPrismaInitializationError } from "@/lib/prisma-errors";
 
 function parseFilters(url: URL): LeadFilters {
   const dateRangeParam = url.searchParams.get("dateRange");
@@ -68,25 +69,7 @@ function getDbRuntimeInfo() {
 }
 
 function isStorageNotConfigured(error: unknown) {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const detail = `${error.name} ${error.message}`.toLowerCase();
-  return (
-    detail.includes("prisma") ||
-    detail.includes("can't reach database server") ||
-    detail.includes("database server") ||
-    detail.includes("authentication failed") ||
-    detail.includes("timed out") ||
-    detail.includes("relation") ||
-    detail.includes("does not exist") ||
-    detail.includes("lead_storage_unsafe") ||
-    detail.includes("database_url") ||
-    detail.includes("no such file or directory") ||
-    detail.includes("unable to open database file") ||
-    detail.includes("sqlite")
-  );
+  return isPrismaInitializationError(error);
 }
 
 export async function GET(request: Request) {

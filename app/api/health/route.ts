@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { readLeads } from "@/lib/leads";
+import { isPrismaInitializationError } from "@/lib/prisma-errors";
 
 export const runtime = "nodejs";
 
@@ -17,27 +18,19 @@ async function resolveStorageStatus() {
   try {
     await readLeads();
     return {
-      storage: "ok" as const,
+      storage: "postgres" as const,
       warning: null as string | null
     };
   } catch (error) {
-    const message = error instanceof Error ? `${error.name} ${error.message}`.toLowerCase() : "";
-    if (
-      message.includes("lead_storage_unsafe") ||
-      message.includes("database_url") ||
-      message.includes("sqlite") ||
-      message.includes("prisma") ||
-      message.includes("database server") ||
-      message.includes("connect")
-    ) {
+    if (isPrismaInitializationError(error)) {
       return {
         storage: "missing" as const,
         warning: "storage_not_configured"
       };
     }
     return {
-      storage: "missing" as const,
-      warning: "storage_not_configured"
+      storage: "error" as const,
+      warning: "storage_error"
     };
   }
 }
@@ -65,7 +58,7 @@ export async function GET() {
       ok: true,
       storage: storageResult.storage,
       warning: storageResult.warning,
-      backendReachable: storageResult.storage === "ok",
+      backendReachable: storageResult.storage === "postgres",
       hasDatabaseUrl,
       dbHost: getDbHost(),
       version,

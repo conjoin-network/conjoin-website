@@ -6,6 +6,7 @@ import { sendCaptureAlert } from "@/lib/captureEmail";
 import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { AGENT_OPTIONS } from "@/lib/agents";
 import { LEAD_STATUSES } from "@/lib/quote-catalog";
+import { isPrismaInitializationError } from "@/lib/prisma-errors";
 
 export const runtime = "nodejs";
 
@@ -93,18 +94,7 @@ function getDbRuntimeInfo() {
 }
 
 function isStorageNotConfigured(error: unknown) {
-  if (!(error instanceof Error)) {
-    return false;
-  }
-
-  const detail = `${error.name} ${error.message}`.toLowerCase();
-  return (
-    detail.includes("database_url") ||
-    detail.includes("prisma") ||
-    detail.includes("connect") ||
-    detail.includes("lead_storage_unsafe") ||
-    detail.includes("sqlite")
-  );
+  return isPrismaInitializationError(error);
 }
 
 function parseDateInput(value: string | null) {
@@ -184,6 +174,7 @@ export async function POST(request: NextRequest) {
     const ua = request.headers.get("user-agent") || undefined;
     let leadId = `RFQ-${Date.now()}`;
     let saved = false;
+    let saveError: unknown = null;
 
     try {
       const lead = await createCrmLead({
@@ -209,6 +200,7 @@ export async function POST(request: NextRequest) {
       saved = true;
       console.info("LEAD_SAVED_OK", JSON.stringify({ requestId, leadId }));
     } catch (error) {
+      saveError = error;
       const errorInfo = serializeError(error);
       const dbRuntime = getDbRuntimeInfo();
       console.error(
@@ -243,18 +235,20 @@ export async function POST(request: NextRequest) {
     }
 
     if (!saved) {
-      return NextResponse.json(
-        {
-          ok: true,
-          queued: true,
-          warning: "storage_not_configured",
-          storage_not_configured: true,
-          requestId,
-          leadId,
-          message: "Lead received. Storage is temporarily unavailable; our team has been notified by email."
-        },
-        { status: 202 }
-      );
+      if (isStorageNotConfigured(saveError)) {
+        return NextResponse.json(
+          {
+            ok: false,
+            requestId,
+            leadId,
+            warning: "storage_not_configured",
+            storage_not_configured: true,
+            error: "Lead storage is not configured."
+          },
+          { status: 503 }
+        );
+      }
+      return NextResponse.json({ ok: false, requestId, leadId, error: "Unable to save lead." }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, requestId, leadId }, { status: 201 });
@@ -384,6 +378,7 @@ export async function GET(request: NextRequest) {
         requestId,
         backendReachable: false,
         warning: "storage_not_configured",
+        storage_not_configured: true,
         leads: [],
         items: [],
         total: 0,
