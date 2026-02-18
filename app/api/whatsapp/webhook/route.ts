@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const match = leads.find((lead) => normalizePhoneForMatch(lead.phone) === incomingPhone);
+    const match = leads.find((lead) => normalizePhoneForMatch(String(lead.phone ?? "")) === incomingPhone);
     if (!match) {
       continue;
     }

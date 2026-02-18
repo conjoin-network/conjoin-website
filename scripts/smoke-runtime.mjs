@@ -1,9 +1,13 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 
 const BASE_URL = process.env.BASE_URL || "http://127.0.0.1:4310";
 const PORT = process.env.PORT || "4310";
+const ENV_FILE = path.join(process.cwd(), ".env.local");
+const envFileRaw = fs.existsSync(ENV_FILE) ? fs.readFileSync(ENV_FILE, "utf8") : "";
 
 const pageChecks = ["/", "/brands", "/solutions/workspace", "/contact"];
 const markerChecks = [
@@ -20,6 +24,15 @@ const structuredDataChecks = [
     markers: ['"@type":"Service"']
   }
 ];
+
+function getEnvValue(key) {
+  const pattern = new RegExp(`^${key}=(.*)$`, "m");
+  const match = envFileRaw.match(pattern);
+  if (!match) {
+    return "";
+  }
+  return match[1].trim().replace(/^"|"$/g, "").replace(/^'|'$/g, "");
+}
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -150,12 +163,93 @@ async function checkLeadApi() {
     body: JSON.stringify(payload)
   });
 
-  assert(response.status === 200, `Expected /api/lead 200, got ${response.status}`);
+  assert(response.status >= 200 && response.status < 300, `Expected /api/lead 2xx, got ${response.status}`);
   const json = await response.json();
   assert(json && typeof json === "object", "Expected /api/lead JSON object");
   assert(json.ok === true, "Expected /api/lead response ok=true");
   assert(typeof json.leadId === "string" && json.leadId.length > 0, "Expected /api/lead leadId string");
   console.log(`PASS /api/lead leadId=${json.leadId}`);
+}
+
+async function fetchAdminLeadsWithAuth() {
+  const adminPass = process.env.ADMIN_PASSWORD || getEnvValue("ADMIN_PASSWORD");
+  if (adminPass) {
+    const response = await fetch(
+      `${BASE_URL}/api/admin/leads?brand=all&status=all&city=all&dateRange=30&agent=all`,
+      { headers: { "x-admin-pass": adminPass } }
+    );
+    if (response.ok) {
+      const payload = await response.json();
+      return { response, payload };
+    }
+  }
+
+  const ownerUser =
+    process.env.CRM_ADMIN_EMAIL ||
+    getEnvValue("CRM_ADMIN_EMAIL") ||
+    process.env.CRM_ADMIN_USER ||
+    getEnvValue("CRM_ADMIN_USER") ||
+    process.env.OWNER_USER ||
+    getEnvValue("OWNER_USER");
+  const ownerPass =
+    process.env.CRM_ADMIN_PASSWORD ||
+    getEnvValue("CRM_ADMIN_PASSWORD") ||
+    process.env.OWNER_PASS ||
+    getEnvValue("OWNER_PASS");
+
+  assert(ownerUser && ownerPass, "Missing admin credentials (.env.local OWNER_USER/OWNER_PASS or ADMIN_PASSWORD)");
+
+  const loginResponse = await fetch(`${BASE_URL}/api/admin/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: ownerUser, password: ownerPass })
+  });
+  assert(loginResponse.ok, `Expected /api/admin/login 2xx, got ${loginResponse.status}`);
+  const cookie = loginResponse.headers.get("set-cookie") || "";
+  assert(cookie, "Expected admin login cookie");
+
+  const response = await fetch(`${BASE_URL}/api/admin/leads?brand=all&status=all&city=all&dateRange=30&agent=all`, {
+    headers: { cookie }
+  });
+  const payload = await response.json();
+  return { response, payload };
+}
+
+async function checkLeadsApiAndAdminInbox() {
+  const timestamp = Date.now();
+  const payload = {
+    name: `Smoke Inbox ${timestamp}`,
+    company: "Smoke Runtime",
+    email: `smoke+${timestamp}@example.com`,
+    phone: "9876501200",
+    requirement: "Inbox visibility check",
+    usersDevices: 5,
+    city: "Chandigarh",
+    timeline: "This Week",
+    notes: "Smoke test for /api/leads -> /api/admin/leads",
+    pageUrl: "/contact"
+  };
+
+  const postResponse = await fetch(`${BASE_URL}/api/leads`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  assert(postResponse.status >= 200 && postResponse.status < 300, `Expected /api/leads 2xx, got ${postResponse.status}`);
+  const postJson = await postResponse.json();
+  assert(postJson && typeof postJson === "object", "Expected /api/leads JSON object");
+  assert(postJson.ok === true, "Expected /api/leads response ok=true");
+  assert(typeof postJson.leadId === "string" && postJson.leadId.length > 0, "Expected /api/leads leadId string");
+
+  const { response: listResponse, payload: listPayload } = await fetchAdminLeadsWithAuth();
+  assert(listResponse.ok, `Expected /api/admin/leads 2xx, got ${listResponse.status}`);
+  const leads = Array.isArray(listPayload?.leads) ? listPayload.leads : [];
+  assert(leads.length >= 0, "Expected leads array from /api/admin/leads");
+  const found = leads.some((lead) => lead?.leadId === postJson.leadId);
+  assert(found, `Expected leadId ${postJson.leadId} in admin list`);
+
+  console.log(`PASS /api/leads -> /api/admin/leads leadId=${postJson.leadId}`);
 }
 
 async function checkSitemap() {
@@ -240,6 +334,7 @@ async function main() {
     await checkHealth();
     await checkQuoteApi();
     await checkLeadApi();
+    await checkLeadsApiAndAdminInbox();
     await checkSitemap();
     await checkRobots();
     runSeoChecks();

@@ -11,6 +11,7 @@ import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
+import OutboundClickTracker from "@/app/components/OutboundClickTracker";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
@@ -23,8 +24,8 @@ import {
   ORG_NAME,
   ORG_POSTAL_ADDRESS,
   SALES_EMAIL,
-  SALES_PHONE_LANDLINE,
-  SALES_PHONE_MOBILE,
+  SALES_PHONE_DISPLAY,
+  SALES_PHONE_NUMBER,
   SUPPORT_EMAIL,
   getOrgContactPoints,
   getOrgEmails,
@@ -138,6 +139,11 @@ export default function RootLayout({
   const footerWhatsApp = getWhatsAppLink(
     buildQuoteMessage({ brand: "Microsoft or Seqrite", city: "Chandigarh", requirement: "Licensing and security quote" })
   );
+  const googleReviewUrl = "https://g.page/r/CZFtT-ntygMnEBI/review";
+  const googleDirectionsUrl = "https://share.google/48FxHaCAMeAvbAvDC";
+  const linkedInUrl = "https://www.linkedin.com/company/conjoinnetwork";
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim() || "https://www.instagram.com/conjoinnetwork";
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL?.trim() || "https://www.facebook.com/conjoinnetwork";
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark" style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}>
@@ -266,19 +272,11 @@ export default function RootLayout({
                   <p>
                     Phone:{" "}
                     <AdsTrackedLink
-                      href={tel(SALES_PHONE_LANDLINE)}
+                      href={tel(SALES_PHONE_NUMBER)}
                       eventName="phone_click"
                       className="font-semibold text-[var(--color-primary)] hover:underline"
                     >
-                      {SALES_PHONE_LANDLINE}
-                    </AdsTrackedLink>
-                    {" • "}
-                    <AdsTrackedLink
-                      href={tel(SALES_PHONE_MOBILE)}
-                      eventName="phone_click"
-                      className="font-semibold text-[var(--color-primary)] hover:underline"
-                    >
-                      {SALES_PHONE_MOBILE}
+                      {SALES_PHONE_DISPLAY}
                     </AdsTrackedLink>
                   </p>
                 </div>
@@ -350,6 +348,43 @@ export default function RootLayout({
                   >
                     WhatsApp Sales
                   </AdsTrackedLink>
+                  <div className="rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_90%,transparent)] p-3">
+                    <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--color-text-primary)]">
+                      Google Business Profile
+                    </p>
+                    <p className="mt-1 text-xs">
+                      Since 2014 • Chandigarh • Panchkula • Mohali • Enterprise IT & Cybersecurity
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <a
+                        href={googleReviewUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text-primary)] hover:border-[var(--color-primary)]/40"
+                      >
+                        Google Reviews
+                      </a>
+                      <a
+                        href={googleDirectionsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[var(--color-border)] px-3 text-xs font-semibold text-[var(--color-text-primary)] hover:border-[var(--color-primary)]/40"
+                      >
+                        Get Directions
+                      </a>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-3 text-xs font-semibold">
+                      <a href={linkedInUrl} target="_blank" rel="noreferrer" className="hover:text-[var(--color-text-primary)] hover:underline">
+                        LinkedIn
+                      </a>
+                      <a href={instagramUrl} target="_blank" rel="noreferrer" className="hover:text-[var(--color-text-primary)] hover:underline">
+                        Instagram
+                      </a>
+                      <a href={facebookUrl} target="_blank" rel="noreferrer" className="hover:text-[var(--color-text-primary)] hover:underline">
+                        Facebook
+                      </a>
+                    </div>
+                  </div>
                 </div>
               </div>
               <p className="text-xs">
@@ -388,6 +423,7 @@ export default function RootLayout({
           </>
         ) : null}
         {isGAEnabled ? <AnalyticsRouteTracker /> : null}
+        <OutboundClickTracker />
         {clarityProjectId ? (
           <Script
             id="clarity-init"

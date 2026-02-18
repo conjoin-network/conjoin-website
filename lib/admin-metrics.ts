@@ -40,7 +40,7 @@ export function buildAgentSummary(leads: LeadRecord[]) {
       if (lead.firstContactBy === agent.name && isToday(lead.firstContactAt)) {
         touchedTodaySet.add(lead.leadId);
       }
-      lead.activityNotes.forEach((note) => {
+      (lead.activityNotes ?? []).forEach((note) => {
         if (note.author === agent.name && isToday(note.createdAt)) {
           touchedTodaySet.add(lead.leadId);
         }

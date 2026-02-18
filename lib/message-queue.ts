@@ -4,10 +4,7 @@ import path from "node:path";
 const dataDir = path.join(process.cwd(), "data");
 const queueFilePath = path.join(dataDir, "message-queue.json");
 const isServerlessRuntime = Boolean(
-  process.env.VERCEL ||
-    process.env.NETLIFY ||
-    process.env.AWS_LAMBDA_FUNCTION_NAME ||
-    process.env.NOW_REGION
+  process.env.VERCEL || process.env.NETLIFY || process.env.NOW_REGION
 );
 const requestedStorageMode = (process.env.LEAD_STORAGE_MODE ?? "").trim().toLowerCase();
 let queueStorageMode: "file" | "memory" =

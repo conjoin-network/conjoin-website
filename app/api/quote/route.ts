@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createLead, type LeadRecord } from "@/lib/leads";
+import { createCrmLead } from "@/lib/crm";
+import type { LeadRecord } from "@/lib/leads";
 import { enqueueMessageIntent, updateMessageIntentStatus } from "@/lib/message-queue";
 import { sendEmail, sendWhatsApp } from "@/lib/messaging";
 import { LEADS_EMAIL } from "@/lib/contact";
@@ -110,6 +111,15 @@ function validationError(message: string) {
 
 function serviceUnavailable(message = "Service temporarily unavailable. Please try again shortly.") {
   return NextResponse.json({ ok: false, message }, { status: 503 });
+}
+
+async function safeLogAuditEvent(input: Parameters<typeof logAuditEvent>[0]) {
+  try {
+    await logAuditEvent(input);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("QUOTE_AUDIT_EVENT_FAILED", JSON.stringify({ type: input.type, leadId: input.leadId ?? null, message }));
+  }
 }
 
 function isSmtpConfigured() {
@@ -314,90 +324,109 @@ export async function POST(request: Request) {
       sourcePage
     };
 
-    const lead = await createLead({
-      brand,
-      category,
-      tier: plan,
-      qty,
-      score: leadScore,
-      priority: leadPriority,
-      assignedTo: suggestedAgent,
-      delivery: brand === "Seqrite" ? deployment || category : undefined,
-      plan,
-      usersSeats: brand === "Microsoft" ? usersSeats : null,
-      endpoints: brand === "Seqrite" ? endpoints : null,
-      servers: brand === "Seqrite" ? servers : null,
-      ciscoUsers: brand === "Cisco" || brand === "Other" ? ciscoUsers : null,
-      ciscoSites: brand === "Cisco" || brand === "Other" ? ciscoSites : null,
-      budgetRange: brand === "Cisco" || brand === "Other" ? budgetRange : undefined,
-      addons,
-      otherBrand: brand === "Other" ? otherBrand : undefined,
-      city,
-      sourcePage,
-      source,
-      utmSource: utmSource || undefined,
-      utmCampaign: utmCampaign || undefined,
-      utmMedium: utmMedium || undefined,
-      utmContent: utmContent || undefined,
-      utmTerm: utmTerm || undefined,
-      pagePath: pagePath || undefined,
-      referrer: referrer || undefined,
-      timeline,
-      notes: mergedNotes,
-      contactName,
-      company,
+    const crmLead = await createCrmLead({
+      name: contactName,
+      phone,
       email,
-      phone
-    });
-    await logAuditEvent({
+      company,
+      city,
+      source,
+      campaign: brand,
+      requirement: plan || category,
+      usersDevices: brand === 'Microsoft' ? usersSeats : qty,
+      notes: mergedNotes,
+      pageUrl: pagePath || sourcePage,
+      utm_source: utmSource || undefined,
+      utm_campaign: utmCampaign || undefined,
+      utm_medium: utmMedium || undefined,
+      utm_content: utmContent || undefined,
+      utm_term: utmTerm || undefined,
+      gclid: utmTerm || undefined,
+      ip: request.headers.get('x-forwarded-for') || undefined,
+      userAgent: request.headers.get('user-agent') || undefined,
+      score: leadScore,
+      assignedTo: suggestedAgent
+    } as any);
+
+    // Normalize a lightweight legacy-shaped lead object for downstream messaging and email templates
+    const leadForMessaging: LeadRecord = {
+      leadId: crmLead.leadId,
+      status: crmLead.status as any,
+      priority: crmLead.priority as any,
+      score: crmLead.score ?? 0,
+      assignedTo: crmLead.assignedTo ?? null,
+      lastContactedAt: null,
+      firstContactAt: null,
+      firstContactBy: null,
+      nextFollowUpAt: null,
+      brand: crmLead.campaign ?? undefined,
+      category: undefined,
+      tier: plan,
+      qty: crmLead.usersDevices ?? 0,
+      plan: crmLead.requirement ?? undefined,
+      city: crmLead.city ?? undefined,
+      sourcePage: crmLead.pagePath ?? crmLead.sourcePage ?? undefined,
+      source: crmLead.source ?? undefined,
+      timeline: undefined,
+      notes: crmLead.notes ?? undefined,
+      activityNotes: [],
+      contactName: crmLead.contactName,
+      company: crmLead.company ?? undefined,
+      email: crmLead.email ?? undefined,
+      phone: crmLead.phone ?? undefined,
+      createdAt: crmLead.createdAt,
+      updatedAt: crmLead.updatedAt
+    } as LeadRecord;
+
+    await safeLogAuditEvent({
       type: "lead_created",
-      leadId: lead.leadId,
+      leadId: crmLead.leadId,
       actor: "quote_api",
       details: {
-        brand: lead.brand,
-        category: lead.category,
-        tier: lead.tier,
-        qty: lead.qty,
-        city: lead.city,
-        source: lead.source
+        brand,
+        category,
+        tier: plan,
+        qty,
+        city,
+        source
       }
     });
     console.info("[quote] lead_saved", {
-      leadId: lead.leadId,
-      brand: lead.brand,
-      city: lead.city,
-      sourcePage: lead.sourcePage
+      leadId: crmLead.leadId,
+      brand,
+      city,
+      sourcePage
     });
 
     const messageText = buildQuoteMessage({
-      brand: String(lead.brand),
-      city: lead.city,
-      requirement: lead.plan ?? lead.category ?? "General requirement",
-      qty: lead.qty,
-      timeline: lead.timeline ?? "This Week"
+      brand: String(leadForMessaging.brand),
+      city: String(leadForMessaging.city ?? ""),
+      requirement: String(leadForMessaging.plan ?? leadForMessaging.category ?? "General requirement"),
+      qty: Number(leadForMessaging.qty ?? 0),
+      timeline: leadForMessaging.timeline ?? "This Week"
     });
     const whatsappTo = getPrimaryWhatsAppNumber();
 
     const whatsappIntent = await enqueueMessageIntent({
-      leadId: lead.leadId,
+      leadId: leadForMessaging.leadId,
       channel: "whatsapp",
       to: whatsappTo,
       payload: messageText
     });
     const emailIntent = await enqueueMessageIntent({
-      leadId: lead.leadId,
+      leadId: leadForMessaging.leadId,
       channel: "email",
       to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
-      payload: `Lead ${lead.leadId} notification`
+      payload: `Lead ${leadForMessaging.leadId} notification`
     });
 
     const whatsappResult = await sendWhatsApp({ to: whatsappTo, message: messageText });
     if (whatsappResult.ok) {
       await updateMessageIntentStatus(whatsappIntent.id, "SENT");
     }
-    await logAuditEvent({
+    await safeLogAuditEvent({
       type: "whatsapp_sent",
-      leadId: lead.leadId,
+      leadId: leadForMessaging.leadId,
       actor: "quote_api",
       details: {
         to: whatsappTo,
@@ -408,9 +437,9 @@ export async function POST(request: Request) {
 
     if (!smtpConfigured) {
       await updateMessageIntentStatus(emailIntent.id, "FAILED", "SMTP not configured");
-      await logAuditEvent({
+      await safeLogAuditEvent({
         type: "email_sent",
-        leadId: lead.leadId,
+        leadId: leadForMessaging.leadId,
         actor: "quote_api",
         details: {
           to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
@@ -419,16 +448,16 @@ export async function POST(request: Request) {
         }
       });
     } else {
-      const emailResult = await sendEmail({ lead });
+      const emailResult = await sendEmail({ lead: leadForMessaging });
       if (emailResult.ok) {
         await updateMessageIntentStatus(emailIntent.id, "SENT");
       } else {
         await updateMessageIntentStatus(emailIntent.id, "FAILED", emailResult.reason ?? "Email send failed");
         console.error("Lead notification failed", emailResult.reason);
       }
-      await logAuditEvent({
+      await safeLogAuditEvent({
         type: "email_sent",
-        leadId: lead.leadId,
+        leadId: leadForMessaging.leadId,
         actor: "quote_api",
         details: {
           to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
@@ -441,10 +470,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ok: true,
       success: true,
-      leadId: lead.leadId,
-      rfqId: lead.leadId,
-      status: lead.status,
-      createdAt: lead.createdAt
+      leadId: leadForMessaging.leadId,
+      rfqId: leadForMessaging.leadId,
+      status: leadForMessaging.status,
+      createdAt: leadForMessaging.createdAt
     });
   } catch (error) {
     await captureServerError(error, {
@@ -492,7 +521,7 @@ export async function POST(request: Request) {
           updatedAt: now
         };
         await sendEmail({ lead: fallbackLead });
-        await logAuditEvent({
+        await safeLogAuditEvent({
           type: "lead_created",
           leadId: fallbackLead.leadId,
           actor: "quote_api_fallback",
@@ -503,7 +532,7 @@ export async function POST(request: Request) {
             city: fallbackLead.city
           }
         });
-        await logAuditEvent({
+        await safeLogAuditEvent({
           type: "email_sent",
           leadId: fallbackLead.leadId,
           actor: "quote_api_fallback",

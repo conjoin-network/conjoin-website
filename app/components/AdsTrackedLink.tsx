@@ -19,6 +19,7 @@ export default function AdsTrackedLink({
     <a
       {...props}
       href={href}
+      data-ads-tracked="1"
       onClick={(event) => {
         onClick?.(event);
         if (event.defaultPrevented || !eventName) {

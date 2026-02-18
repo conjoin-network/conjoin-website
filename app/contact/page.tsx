@@ -12,8 +12,8 @@ import {
   ORG_OFFICE_BLOCK,
   ORG_POSTAL_ADDRESS,
   SALES_EMAIL,
-  SALES_PHONE_LANDLINE,
-  SALES_PHONE_MOBILE,
+  SALES_PHONE_DISPLAY,
+  SALES_PHONE_NUMBER,
   SUPPORT_EMAIL,
   getOrgContactPoints,
   getOrgEmails,
@@ -85,19 +85,11 @@ export default function ContactPage() {
             <p>
               Phone:{" "}
               <AdsTrackedLink
-                href={tel(SALES_PHONE_LANDLINE)}
+                href={tel(SALES_PHONE_NUMBER)}
                 eventName="phone_click"
                 className="font-semibold text-[var(--color-primary)] hover:underline"
               >
-                {SALES_PHONE_LANDLINE}
-              </AdsTrackedLink>
-              {" • "}
-              <AdsTrackedLink
-                href={tel(SALES_PHONE_MOBILE)}
-                eventName="phone_click"
-                className="font-semibold text-[var(--color-primary)] hover:underline"
-              >
-                {SALES_PHONE_MOBILE}
+                {SALES_PHONE_DISPLAY}
               </AdsTrackedLink>
             </p>
             <div className="flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">

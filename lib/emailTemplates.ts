@@ -147,8 +147,8 @@ export function buildInternalLeadTemplate(lead: LeadRecord): EmailTemplate {
     { label: "City", value: lead.city || "-" },
     { label: "Timeline", value: lead.timeline || "-" },
     { label: "Contact", value: `${lead.contactName} (${lead.company})` },
-    { label: "Email", value: lead.email },
-    { label: "Phone", value: lead.phone },
+    { label: "Email", value: lead.email ?? "-" },
+    { label: "Phone", value: lead.phone ?? "-" },
     { label: "Source", value: lead.sourcePage || "-" },
     { label: "UTM", value: [lead.utmSource, lead.utmMedium, lead.utmCampaign].filter(Boolean).join(" / ") || "-" }
   ];
@@ -176,8 +176,8 @@ export function buildCustomerLeadTemplate(lead: LeadRecord): EmailTemplate {
     assignedTo: lead.assignedTo,
     message: buildQuoteMessage({
       brand: String(lead.brand),
-      city: lead.city,
-      requirement: lead.plan ?? lead.tier ?? lead.category,
+      city: lead.city ?? "",
+      requirement: lead.plan ?? lead.tier ?? lead.category ?? "",
       qty: lead.qty,
       timeline: lead.timeline ?? "This Week"
     })

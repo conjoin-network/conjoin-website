@@ -78,6 +78,7 @@ export type LeadPatchInput = Partial<{
 
 export type LeadFilters = {
   brand?: string;
+  source?: string;
   status?: string;
   scoreBand?: string;
   city?: string;

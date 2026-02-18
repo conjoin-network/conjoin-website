@@ -10,25 +10,29 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("Global error boundary caught:", error);
+    console.error("GlobalError:", error);
   }, [error]);
 
   return (
     <html lang="en">
-      <body className="bg-white px-6 py-16 text-[#1d1d1f]">
-        <main className="mx-auto max-w-xl space-y-4 rounded-2xl border border-[#d2d2d7] bg-[#fbfbfd] p-8">
-          <h1 className="text-2xl font-semibold tracking-tight">Something went wrong</h1>
-          <p className="text-sm text-[#6e6e73]">
-            The page failed to render. Please retry, or refresh the page.
-          </p>
-          <button
-            type="button"
-            onClick={reset}
-            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#0071e3] px-4 text-sm font-semibold text-white"
-          >
-            Try again
-          </button>
-        </main>
+      <body style={{ margin: 0, fontFamily: "ui-sans-serif, system-ui" }}>
+        <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", padding: 24 }}>
+          <div style={{ maxWidth: 720, width: "100%", border: "1px solid #3333", borderRadius: 16, padding: 20 }}>
+            <h1 style={{ margin: 0, fontSize: 22 }}>Something went wrong</h1>
+            <p style={{ opacity: 0.8, marginTop: 10 }}>
+              The app hit an unexpected error. Click retry, or refresh the page.
+            </p>
+            <pre style={{ whiteSpace: "pre-wrap", opacity: 0.8 }}>
+{String(error?.message || error)}
+            </pre>
+            <button
+              onClick={() => reset?.()}
+              style={{ marginTop: 14, padding: "10px 14px", borderRadius: 10, border: "1px solid #3333", cursor: "pointer" }}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
       </body>
     </html>
   );

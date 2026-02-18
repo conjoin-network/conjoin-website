@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
-import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
+import { pushDataLayerEvent, trackAdsConversion } from "@/lib/ads";
 import {
   BRAND_ACCENTS,
   CITY_OPTIONS,
@@ -518,7 +518,7 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      const isSuccessStatus = response.status === 200 || response.status === 202;
+      const isSuccessStatus = response.ok;
       const isSuccess = isSuccessStatus && (data?.ok === true || data?.success === true);
 
       if (!isSuccess) {
@@ -536,10 +536,18 @@ export default function RequestQuoteWizard() {
         category: state.category || "",
         plan: state.product || ""
       });
-      const sendTo = getAdsSendTo();
-      if (sendTo) {
-        trackAdsConversion("conversion", { send_to: sendTo, value: 1 });
-      }
+      pushDataLayerEvent("lead_submit_success", {
+        form_name: "request_quote_wizard",
+        lead_type: "quote",
+        page_path: pathname,
+        lead_id: resolvedRfqId || undefined,
+        brand: state.brand || undefined,
+        category: state.category || undefined,
+        plan: state.product || undefined,
+        city: state.city || undefined,
+        value: 1,
+        currency: "INR"
+      });
       setStatus("success");
       setNotice("");
       const queuedOrSuccessMessage = data?.message?.trim();
@@ -958,18 +966,21 @@ export default function RequestQuoteWizard() {
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                     City
-                    <select
+                    <input
+                      type="text"
+                      list="city-options"
                       value={state.city}
                       onChange={(event) => patch({ city: event.target.value })}
                       className={formFieldClass}
-                    >
-                      <option value="">Select city</option>
+                      placeholder="Chandigarh"
+                    />
+                    <datalist id="city-options">
                       {CITY_OPTIONS.map((city) => (
                         <option key={city} value={city}>
                           {city}
                         </option>
                       ))}
-                    </select>
+                    </datalist>
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                     Timeline

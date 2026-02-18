@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AGENT_OPTIONS } from "@/lib/agents";
+import { SALES_PHONE_DISPLAY } from "@/lib/contact";
 import { buildQuoteMessage, getLeadWhatsAppLink } from "@/lib/whatsapp";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
 import { Modal } from "@/src/components/ui/Modal";
@@ -77,12 +78,17 @@ type LeadItem = {
 
 type ApiResponse = {
   ok: boolean;
+  requestId?: string;
+  warning?: string | null;
+  backendReachable?: boolean;
+  storage_not_configured?: boolean;
   leads: LeadItem[];
   meta: {
     total: number;
     statuses: string[];
     brands: string[];
     cities: string[];
+    sources: string[];
     agents: typeof AGENT_OPTIONS;
     permissions: {
       role: "OWNER" | "MANAGER" | "AGENT" | "SUPPORT";
@@ -97,6 +103,7 @@ type ApiResponse = {
 
 type FilterState = {
   brand: string;
+  source: string;
   status: string;
   scoreBand: "all" | "hot" | "warm" | "cold";
   city: string;
@@ -118,6 +125,7 @@ type DraftMap = Record<
 
 const defaultFilters: FilterState = {
   brand: "all",
+  source: "all",
   status: "all",
   scoreBand: "all",
   city: "all",
@@ -207,6 +215,7 @@ export default function AdminLeadsClient() {
     statuses: LEAD_STATUSES,
     brands: [],
     cities: [],
+    sources: [],
     agents: AGENT_OPTIONS,
     permissions: {
       role: "OWNER",
@@ -221,6 +230,8 @@ export default function AdminLeadsClient() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [backendWarning, setBackendWarning] = useState("");
+  const [backendHealth, setBackendHealth] = useState<"checking" | "ok" | "missing">("checking");
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({
     name: "",
@@ -242,6 +253,7 @@ export default function AdminLeadsClient() {
   const query = useMemo(() => {
     const params = new URLSearchParams();
     params.set("brand", filters.brand);
+    params.set("source", filters.source);
     params.set("status", filters.status);
     params.set("scoreBand", filters.scoreBand);
     params.set("city", filters.city);
@@ -265,6 +277,21 @@ export default function AdminLeadsClient() {
     }
   }
 
+  async function checkBackendHealth() {
+    try {
+      const response = await fetch("/api/health", { credentials: "same-origin" });
+      if (!response.ok) {
+        setBackendHealth("missing");
+        return;
+      }
+
+      const payload = (await response.json()) as { storage?: string };
+      setBackendHealth(payload.storage === "ok" ? "ok" : "missing");
+    } catch {
+      setBackendHealth("missing");
+    }
+  }
+
   async function loadLeads(silent = false) {
     if (!silent) setLoading(true);
     if (!silent) setError("");
@@ -273,15 +300,24 @@ export default function AdminLeadsClient() {
       const adminPass = getAdminPass();
       if (adminPass) headers["x-admin-pass"] = adminPass;
 
-      const response = await fetch(`/api/leads?${query}`, { credentials: "same-origin", headers });
+      const response = await fetch(`/api/admin/leads?${query}`, { credentials: "same-origin", headers });
+      const payload = (await response.json().catch(() => ({}))) as ApiResponse;
       if (!response.ok) {
-        throw new Error(`Unable to load leads (${response.status})`);
+        throw new Error((payload as { message?: string }).message ?? `Unable to load leads (${response.status})`);
       }
 
-      const payload = (await response.json()) as ApiResponse | { ok?: boolean; leads?: any[] };
       const leadsData = (payload as any).leads ?? (payload as any);
       setLeads(leadsData);
       if ((payload as any).meta) setMeta((payload as any).meta);
+      const storageWarning =
+        payload.warning === "storage_not_configured" || payload.storage_not_configured || payload.backendReachable === false;
+      if (storageWarning) {
+        setBackendWarning("Backend not configured. Showing an empty list until storage is available.");
+        setBackendHealth("missing");
+      } else {
+        setBackendWarning("");
+        setBackendHealth("ok");
+      }
       setDrafts((current) => {
         const next: DraftMap = {};
         (payload.leads || []).forEach((lead) => {
@@ -330,9 +366,13 @@ export default function AdminLeadsClient() {
         credentials: 'same-origin'
       });
 
-      const payload = await res.json().catch(() => ({}));
-      if (!res.ok || !payload?.ok) {
-        throw new Error(payload?.error || payload?.message || `Create failed (${res.status})`);
+      const payload = await res.json().catch(() => ({} as any));
+
+      if (!res.ok) {
+        throw new Error(payload?.error || payload?.message || `Create failed ()`);
+      }
+      if (payload?.ok === false) {
+        throw new Error(payload?.error || payload?.message || "Create failed");
       }
 
       setNotice('Lead created. Refreshing list...');
@@ -345,6 +385,7 @@ export default function AdminLeadsClient() {
   }
 
   useEffect(() => {
+    checkBackendHealth();
     loadLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
@@ -575,16 +616,24 @@ export default function AdminLeadsClient() {
         <p className="rounded-lg border border-amber-300/45 bg-amber-200/10 px-3 py-2 text-xs text-amber-100">
           Data is confidential. Access is logged. Do not share externally.
         </p>
-        <p className="text-xs text-[var(--color-text-secondary)]">Primary contact: 9466663015</p>
+        <p className="text-xs text-[var(--color-text-secondary)]">Primary contact: {SALES_PHONE_DISPLAY}</p>
         <div className="flex items-center justify-between">
-          <p className="text-xs text-[var(--color-text-secondary)]">
-            Signed in as {permissions.displayName} ({permissions.role})
-            {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Signed in as {permissions.displayName} ({permissions.role})
+              {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
+            </p>
+            <p className={`text-xs ${backendHealth === "ok" ? "text-emerald-300" : "text-amber-200"}`}>
+              Leads backend: {backendHealth === "ok" ? "Reachable" : backendHealth === "checking" ? "Checking..." : "Not configured"}
+            </p>
+          </div>
           <div>
             <button
               type="button"
-              onClick={() => setFilters((f) => ({ ...f }))}
+              onClick={() => {
+                checkBackendHealth();
+                setFilters((f) => ({ ...f }));
+              }}
               className="mr-2 inline-flex items-center rounded-md bg-slate-100 px-3 py-1 text-sm"
             >
               Refresh
@@ -626,7 +675,7 @@ export default function AdminLeadsClient() {
             </div>
           </div>
         ) : null}
-        <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-8" : "md:grid-cols-7"}`}>
+        <div className={`grid gap-3 ${permissions.isManagement ? "md:grid-cols-9" : "md:grid-cols-8"}`}>
           <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
             Search
             <input
@@ -651,6 +700,28 @@ export default function AdminLeadsClient() {
                   {brand}
                 </option>
               ))}
+            </select>
+          </label>
+
+          <label className="space-y-1 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+            Source
+            <select
+              value={filters.source}
+              onChange={(event) => setFilters((current) => ({ ...current, source: event.target.value }))}
+              className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-page-bg)] px-3 py-2 text-sm"
+            >
+              <option value="all">All</option>
+              <option value="google_ads">Google Ads</option>
+              <option value="organic">Organic</option>
+              <option value="whatsapp">WhatsApp</option>
+              <option value="call">Call</option>
+              {meta.sources
+                .filter((source) => !["google_ads", "organic", "whatsapp", "call"].includes(source))
+                .map((source) => (
+                  <option key={source} value={source}>
+                    {source.replaceAll("_", " ")}
+                  </option>
+                ))}
             </select>
           </label>
 
@@ -750,6 +821,9 @@ export default function AdminLeadsClient() {
       </section>
 
       {error ? <p className="rounded-lg border border-rose-300/45 bg-rose-300/10 px-3 py-2 text-sm text-rose-100">{error}</p> : null}
+      {backendWarning ? (
+        <p className="rounded-lg border border-amber-300/45 bg-amber-300/10 px-3 py-2 text-sm text-amber-100">{backendWarning}</p>
+      ) : null}
       {notice ? (
         <p className="rounded-lg border border-emerald-300/45 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100">{notice}</p>
       ) : null}

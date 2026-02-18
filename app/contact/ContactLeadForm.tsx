@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
-import { getAdsSendTo, trackAdsConversion } from "@/lib/ads";
+import { pushDataLayerEvent, trackAdsConversion } from "@/lib/ads";
 import { event as trackGaEvent } from "@/lib/ga";
 
 type FormState = {
@@ -123,10 +123,14 @@ export default function ContactLeadForm() {
         method: "form",
         page_path: pathname
       });
-      const sendTo = getAdsSendTo();
-      if (sendTo) {
-        trackAdsConversion("conversion", { send_to: sendTo, value: 1 });
-      }
+      pushDataLayerEvent("lead_submit_success", {
+        form_name: "contact_lead_form",
+        lead_type: "contact",
+        page_path: pathname,
+        city: state.city || undefined,
+        value: 1,
+        currency: "INR"
+      });
       setState(initialState);
     } catch {
       setStatus("error");

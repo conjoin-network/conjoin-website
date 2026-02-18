@@ -12,6 +12,7 @@ function parseFilters(url: URL): LeadFilters {
 
   return {
     brand: url.searchParams.get("brand") ?? "all",
+    source: url.searchParams.get("source") ?? "all",
     status: url.searchParams.get("status") ?? "all",
     scoreBand: url.searchParams.get("scoreBand") ?? "all",
     city: url.searchParams.get("city") ?? "all",
@@ -72,6 +73,25 @@ function isStorageNotConfigured(error: unknown) {
   return isPrismaInitializationError(error);
 }
 
+function classifyLeadSource(lead: {
+  source?: string | null;
+  utmSource?: string | null;
+  utmCampaign?: string | null;
+  referrer?: string | null;
+}) {
+  const raw = `${lead.source ?? ""} ${lead.utmSource ?? ""} ${lead.utmCampaign ?? ""} ${lead.referrer ?? ""}`.toLowerCase();
+  if (raw.includes("google") || raw.includes("ads") || raw.includes("gclid")) {
+    return "google_ads";
+  }
+  if (raw.includes("whatsapp") || raw.includes("wa.me")) {
+    return "whatsapp";
+  }
+  if (raw.includes("call") || raw.includes("phone") || raw.includes("tel:")) {
+    return "call";
+  }
+  return "organic";
+}
+
 export async function GET(request: Request) {
   const requestId = crypto.randomUUID();
   const session = getPortalSessionFromRequest(request);
@@ -101,8 +121,41 @@ export async function GET(request: Request) {
       const statusFilter = String(scopedFilters.status).toUpperCase();
       leads = leads.filter((l) => String(l.status).toUpperCase() === statusFilter);
     }
+    if (scopedFilters.brand && scopedFilters.brand !== "all") {
+      const brandFilter = String(scopedFilters.brand).toLowerCase();
+      leads = leads.filter((l) => {
+        const brandText = String(l.campaign || l.requirement || l.source || "").toLowerCase();
+        return brandText.includes(brandFilter);
+      });
+    }
+    if (scopedFilters.source && scopedFilters.source !== "all") {
+      const sourceFilter = String(scopedFilters.source).toLowerCase();
+      leads = leads.filter((l) => classifyLeadSource(l) === sourceFilter);
+    }
+    if (scopedFilters.scoreBand && scopedFilters.scoreBand !== "all") {
+      leads = leads.filter((l) => {
+        const score = Number(l.score ?? 0);
+        if (scopedFilters.scoreBand === "hot") return score >= 80;
+        if (scopedFilters.scoreBand === "warm") return score >= 45 && score < 80;
+        if (scopedFilters.scoreBand === "cold") return score < 45;
+        return true;
+      });
+    }
     if (scopedFilters.city && scopedFilters.city !== "all") {
       leads = leads.filter((l) => (l.city || "").toLowerCase().includes(String(scopedFilters.city).toLowerCase()));
+    }
+    if (scopedFilters.agent && scopedFilters.agent !== "all") {
+      leads = leads.filter((l) =>
+        scopedFilters.agent === "Unassigned" ? !(l.assignedTo || "").trim() : (l.assignedTo || "") === scopedFilters.agent
+      );
+    }
+    if (scopedFilters.dateRange && scopedFilters.dateRange !== "all") {
+      const now = Date.now();
+      const windowMs = scopedFilters.dateRange === "7" ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+      leads = leads.filter((l) => {
+        const createdMs = new Date(l.createdAt).getTime();
+        return Number.isFinite(createdMs) && now - createdMs <= windowMs;
+      });
     }
     if (scopedFilters.q && scopedFilters.q.trim()) {
       const q = scopedFilters.q.trim().toLowerCase();
@@ -115,6 +168,7 @@ export async function GET(request: Request) {
       a.localeCompare(b)
     );
     const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const sources = [...new Set(visibleLeads.map((lead) => classifyLeadSource(lead)))];
 
     return NextResponse.json({
       ok: true,
@@ -130,6 +184,7 @@ export async function GET(request: Request) {
         statuses: LEAD_STATUSES,
         brands,
         cities,
+        sources,
         agents: AGENT_OPTIONS,
         permissions: {
           role: session.role,
@@ -178,6 +233,7 @@ export async function GET(request: Request) {
           statuses: LEAD_STATUSES,
           brands: [],
           cities: [],
+          sources: [],
           agents: AGENT_OPTIONS,
           permissions: {
             role: session.role,

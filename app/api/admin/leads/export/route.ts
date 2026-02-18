@@ -35,7 +35,17 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const filters = parseFilters(url);
-  const allLeads = await listCrmLeads();
+  let allLeads: Awaited<ReturnType<typeof listCrmLeads>> = [];
+  try {
+    allLeads = (await listCrmLeads()) || [];
+  } catch (error) {
+    const serialized =
+      error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : { name: "UnknownError", message: String(error) };
+    console.error("ADMIN_LEADS_EXPORT_FAILED", JSON.stringify({ error: serialized }));
+    allLeads = [];
+  }
   const visibleLeads = session.isManagement ? allLeads : allLeads.filter((lead) => lead.assignedTo === session.assignee);
   const leads = visibleLeads; // minimal export from CRM-normalized shape
 

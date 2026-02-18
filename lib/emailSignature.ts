@@ -1,8 +1,7 @@
 import {
   COVERAGE,
   ORG_NAME,
-  PHONE_1,
-  PHONE_2,
+  SALES_PHONE_DISPLAY,
   SALES_EMAIL,
   SUPPORT_EMAIL,
   ADDRESS_LINES
@@ -12,8 +11,7 @@ export const EMAIL_SIGNATURE = {
   companyName: ORG_NAME,
   salesEmail: SALES_EMAIL,
   supportEmail: SUPPORT_EMAIL,
-  phonePrimary: PHONE_1,
-  phoneSecondary: PHONE_2,
+  phone: SALES_PHONE_DISPLAY,
   address: ADDRESS_LINES,
   coverageLine: `${COVERAGE.join(" • ")} • Canada remote support`
 } as const;
@@ -25,7 +23,7 @@ export function getEmailSignatureHtml() {
       <p style="margin:0;">${EMAIL_SIGNATURE.address.join(", ")}</p>
       <p style="margin:6px 0 0 0;">Sales: <a href="mailto:${EMAIL_SIGNATURE.salesEmail}" style="color:#2563eb;text-decoration:none;">${EMAIL_SIGNATURE.salesEmail}</a></p>
       <p style="margin:2px 0 0 0;">Support: <a href="mailto:${EMAIL_SIGNATURE.supportEmail}" style="color:#2563eb;text-decoration:none;">${EMAIL_SIGNATURE.supportEmail}</a></p>
-      <p style="margin:2px 0 0 0;">Phone: ${EMAIL_SIGNATURE.phonePrimary}, ${EMAIL_SIGNATURE.phoneSecondary}</p>
+      <p style="margin:2px 0 0 0;">Phone: ${EMAIL_SIGNATURE.phone}</p>
       <p style="margin:8px 0 0 0;color:#64748b;">Coverage: ${EMAIL_SIGNATURE.coverageLine}</p>
     </div>
   `.trim();
@@ -37,7 +35,7 @@ export function getEmailSignatureText() {
     EMAIL_SIGNATURE.address.join(", "),
     `Sales: ${EMAIL_SIGNATURE.salesEmail}`,
     `Support: ${EMAIL_SIGNATURE.supportEmail}`,
-    `Phone: ${EMAIL_SIGNATURE.phonePrimary}, ${EMAIL_SIGNATURE.phoneSecondary}`,
+    `Phone: ${EMAIL_SIGNATURE.phone}`,
     `Coverage: ${EMAIL_SIGNATURE.coverageLine}`
   ].join("\n");
 }

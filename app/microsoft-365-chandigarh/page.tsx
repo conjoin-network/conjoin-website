@@ -10,8 +10,8 @@ import {
   ORG_NAME,
   ORG_POSTAL_ADDRESS,
   SALES_EMAIL,
-  SALES_PHONE_LANDLINE,
-  SALES_PHONE_MOBILE,
+  SALES_PHONE_DISPLAY,
+  SALES_PHONE_NUMBER,
   SUPPORT_EMAIL,
   mailto,
   tel
@@ -101,7 +101,7 @@ const testimonials = [
 ];
 
 export default function Microsoft365ChandigarhPage() {
-  const callHref = tel(`+91${SALES_PHONE_MOBILE}`);
+  const callHref = tel(`+91${SALES_PHONE_NUMBER}`);
   const whatsappHref = getWhatsAppLink(
     buildQuoteMessage({
       brand: "Microsoft 365",
@@ -115,7 +115,7 @@ export default function Microsoft365ChandigarhPage() {
     "@type": "LocalBusiness",
     name: ORG_NAME,
     url: absoluteUrl("/microsoft-365-chandigarh"),
-    telephone: [`+91-${SALES_PHONE_MOBILE}`, SALES_PHONE_LANDLINE],
+    telephone: [SALES_PHONE_DISPLAY],
     email: [SALES_EMAIL, SUPPORT_EMAIL],
     areaServed: serviceArea,
     address: ORG_POSTAL_ADDRESS
@@ -135,7 +135,7 @@ export default function Microsoft365ChandigarhPage() {
     availableChannel: {
       "@type": "ServiceChannel",
       serviceUrl: absoluteUrl("/microsoft-365-chandigarh"),
-      servicePhone: `+91-${SALES_PHONE_MOBILE}`
+      servicePhone: SALES_PHONE_DISPLAY
     }
   };
 
@@ -165,7 +165,7 @@ export default function Microsoft365ChandigarhPage() {
             </p>
             <div className="flex flex-wrap gap-3">
               <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white">
-                Call +91 9466663015
+                Call {SALES_PHONE_DISPLAY}
               </AdsTrackedLink>
               <AdsTrackedLink
                 href={whatsappHref}

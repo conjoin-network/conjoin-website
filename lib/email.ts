@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { LEADS_EMAIL, SALES_EMAIL } from "@/lib/contact";
 import { buildCustomerLeadTemplate, buildInternalLeadTemplate } from "@/lib/emailTemplates";
+import { isCustomerConfirmationEnabled, resolveLeadNotifyRecipients } from "@/lib/lead-notify";
 import type { LeadRecord } from "@/lib/leads";
 
 function getConfiguredTransport() {
@@ -31,22 +32,34 @@ export async function sendLeadNotification(lead: LeadRecord) {
   }
 
   const fromAddress = process.env.MAIL_FROM?.trim() || process.env.SMTP_USER?.trim() || SALES_EMAIL;
-  const primary = process.env.LEADS_EMAIL ?? LEADS_EMAIL;
-  const recipients = primary;
+  const primary = process.env.LEADS_EMAIL?.trim() || LEADS_EMAIL;
+  const recipients = resolveLeadNotifyRecipients();
+  if (!recipients.includes(primary)) {
+    recipients.unshift(primary);
+  }
 
   const internal = buildInternalLeadTemplate(lead);
   try {
     await transporter.sendMail({
       from: `"${internal.fromName}" <${fromAddress}>`,
       replyTo: internal.replyTo,
-      to: recipients,
+      to: recipients.join(", "),
       subject: internal.subject,
       text: internal.text,
       html: internal.html
     });
+    console.info(
+      "LEAD_EMAIL_SENT",
+      JSON.stringify({ leadId: lead.leadId, recipientsCount: recipients.length })
+    );
   } catch (error) {
     console.error("LEAD_EMAIL_SEND_FAILED", error instanceof Error ? error.message : "Unknown email error");
     return { sent: false, reason: "Email provider unavailable" };
+  }
+
+  const sendCustomerConfirmation = isCustomerConfirmationEnabled();
+  if (!sendCustomerConfirmation || !lead.email) {
+    return { sent: true };
   }
 
   const customer = buildCustomerLeadTemplate(lead);
