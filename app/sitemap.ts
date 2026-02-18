@@ -13,6 +13,14 @@ const STATIC_ROUTES = [
   "/products",
   "/microsoft-365-chandigarh",
   "/seqrite-chandigarh",
+  "/microsoft-365-reseller-chandigarh",
+  "/microsoft-365-business-basic-chandigarh",
+  "/microsoft-365-business-standard-chandigarh",
+  "/microsoft-365-business-premium-chandigarh",
+  "/endpoint-security-chandigarh",
+  "/endpoint-security-panchkula",
+  "/endpoint-security-mohali",
+  "/it-procurement-chandigarh",
   "/request-quote",
   "/search"
 ];

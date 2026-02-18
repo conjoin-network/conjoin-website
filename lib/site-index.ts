@@ -43,6 +43,62 @@ const baseEntries: SiteIndexEntry[] = [
     category: "Guides"
   },
   {
+    title: "Microsoft 365 Reseller Chandigarh",
+    description: "Procurement-led Microsoft 365 reseller page for Chandigarh buyers.",
+    url: "/microsoft-365-reseller-chandigarh",
+    tags: ["microsoft", "reseller", "chandigarh", "licensing", "renewal"],
+    category: "Guides"
+  },
+  {
+    title: "Microsoft 365 Business Basic Chandigarh",
+    description: "Business Basic commercial and deployment guide for Chandigarh teams.",
+    url: "/microsoft-365-business-basic-chandigarh",
+    tags: ["microsoft", "business basic", "chandigarh", "smb"],
+    category: "Guides"
+  },
+  {
+    title: "Microsoft 365 Business Standard Chandigarh",
+    description: "Business Standard procurement and adoption pathway for Chandigarh organizations.",
+    url: "/microsoft-365-business-standard-chandigarh",
+    tags: ["microsoft", "business standard", "chandigarh", "procurement"],
+    category: "Guides"
+  },
+  {
+    title: "Microsoft 365 Business Premium Chandigarh",
+    description: "Business Premium security-first licensing pathway for Chandigarh buyers.",
+    url: "/microsoft-365-business-premium-chandigarh",
+    tags: ["microsoft", "business premium", "chandigarh", "security"],
+    category: "Guides"
+  },
+  {
+    title: "Endpoint Security Chandigarh",
+    description: "Endpoint security deployment and renewal support for Chandigarh organizations.",
+    url: "/endpoint-security-chandigarh",
+    tags: ["endpoint security", "chandigarh", "renewal", "deployment"],
+    category: "Guides"
+  },
+  {
+    title: "Endpoint Security Panchkula",
+    description: "Panchkula-focused endpoint protection and policy rollout guidance.",
+    url: "/endpoint-security-panchkula",
+    tags: ["endpoint security", "panchkula", "policy", "support"],
+    category: "Guides"
+  },
+  {
+    title: "Endpoint Security Mohali",
+    description: "Mohali endpoint security procurement and lifecycle governance page.",
+    url: "/endpoint-security-mohali",
+    tags: ["endpoint security", "mohali", "procurement", "renewal"],
+    category: "Guides"
+  },
+  {
+    title: "IT Procurement Chandigarh",
+    description: "Procurement-led IT programs across workspace, security, networking and access.",
+    url: "/it-procurement-chandigarh",
+    tags: ["it procurement", "chandigarh", "commercial", "delivery"],
+    category: "Guides"
+  },
+  {
     title: "Privacy Policy",
     description: "Data handling, privacy commitments and customer contact rights.",
     url: "/privacy-policy",

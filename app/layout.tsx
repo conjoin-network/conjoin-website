@@ -101,6 +101,20 @@ export default function RootLayout({
   const primaryTagId = gaId || adsId;
   const clarityProjectId = process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() ?? "";
   const year = new Date().getFullYear();
+  const linkedInUrl = "https://www.linkedin.com/company/conjoinnetwork";
+  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim() || "https://www.instagram.com/conjoinnetwork";
+  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL?.trim() || "https://www.facebook.com/conjoinnetwork";
+  const googleReviewUrl = "https://g.page/r/CZFtT-ntygMnEBI/review";
+  const googleDirectionsUrl = "https://share.google/48FxHaCAMeAvbAvDC";
+  const openingHoursSpecification = [
+    {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      opens: "09:30",
+      closes: "18:30"
+    }
+  ];
+  const socialProfiles = [linkedInUrl, instagramUrl, facebookUrl, googleReviewUrl, googleDirectionsUrl];
   const orgJsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
@@ -111,7 +125,8 @@ export default function RootLayout({
     address: ORG_POSTAL_ADDRESS,
     telephone: getOrgPhones(),
     email: getOrgEmails(),
-    contactPoint: getOrgContactPoints()
+    contactPoint: getOrgContactPoints(),
+    sameAs: socialProfiles
   };
   const webSiteJsonLd = {
     "@context": "https://schema.org",
@@ -134,16 +149,13 @@ export default function RootLayout({
     email: getOrgEmails(),
     address: ORG_POSTAL_ADDRESS,
     areaServed: ORG_AREA_SERVED,
-    contactPoint: getOrgContactPoints()
+    contactPoint: getOrgContactPoints(),
+    sameAs: socialProfiles,
+    openingHoursSpecification
   };
   const footerWhatsApp = getWhatsAppLink(
     buildQuoteMessage({ brand: "Microsoft or Seqrite", city: "Chandigarh", requirement: "Licensing and security quote" })
   );
-  const googleReviewUrl = "https://g.page/r/CZFtT-ntygMnEBI/review";
-  const googleDirectionsUrl = "https://share.google/48FxHaCAMeAvbAvDC";
-  const linkedInUrl = "https://www.linkedin.com/company/conjoinnetwork";
-  const instagramUrl = process.env.NEXT_PUBLIC_INSTAGRAM_URL?.trim() || "https://www.instagram.com/conjoinnetwork";
-  const facebookUrl = process.env.NEXT_PUBLIC_FACEBOOK_URL?.trim() || "https://www.facebook.com/conjoinnetwork";
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark" style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}>

@@ -12,6 +12,21 @@ const nextConfig: NextConfig = {
     "127.0.0.1",
     "10.0.0.29"
   ],
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        has: [
+          {
+            type: "host",
+            value: "www.conjoinnetwork.com"
+          }
+        ],
+        destination: "https://conjoinnetwork.com/:path*",
+        permanent: true
+      }
+    ];
+  },
   async headers() {
     return [
       {

@@ -144,6 +144,54 @@ export const KNOWLEDGE_ARTICLES: KnowledgeArticle[] = [
     category: "Procurement / TCO",
     tags: ["rfq", "procurement", "tco", "it purchase", "compliance"],
     lastVerified: "2026-02-15"
+  },
+  {
+    slug: "microsoft-365-pricing-india-chandigarh-buyers-guide",
+    title: "Microsoft 365 Pricing in India (Chandigarh Buyers Guide)",
+    description: "Commercial planning guide for Chandigarh buyers comparing Microsoft 365 plan pathways and renewal controls.",
+    category: "Licensing Guides",
+    tags: ["microsoft", "pricing india", "chandigarh", "procurement", "renewal"],
+    lastVerified: "2026-02-18"
+  },
+  {
+    slug: "business-premium-vs-standard-chandigarh-smb",
+    title: "Business Premium vs Standard for SMBs in Chandigarh",
+    description: "Decision guide for SMB leaders evaluating Premium vs Standard by risk, control, and commercial fit.",
+    category: "Licensing Guides",
+    tags: ["microsoft", "business premium", "business standard", "chandigarh", "smb"],
+    lastVerified: "2026-02-18"
+  },
+  {
+    slug: "endpoint-security-50-to-500-users-guide",
+    title: "How to Choose Endpoint Security for 50–500 Users",
+    description: "Framework for selecting endpoint controls, rollout depth, and renewal model for 50 to 500 user environments.",
+    category: "Compliance & Security",
+    tags: ["endpoint security", "50-500 users", "deployment", "renewals", "procurement"],
+    lastVerified: "2026-02-18"
+  },
+  {
+    slug: "seqrite-endpoint-schools-hospitals-punjab-haryana",
+    title: "Seqrite Endpoint Protection for Schools and Hospitals (Punjab/Haryana)",
+    description: "Operational and commercial guidance for schools and hospitals adopting Seqrite endpoint controls.",
+    category: "Compliance & Security",
+    tags: ["seqrite", "schools", "hospitals", "punjab", "haryana", "endpoint"],
+    lastVerified: "2026-02-18"
+  },
+  {
+    slug: "m365-migration-checklist-for-smbs",
+    title: "M365 Migration Checklist for SMBs",
+    description: "Migration readiness checklist covering identity, mailbox cutover, communications, and support handover.",
+    category: "Deployment Playbooks",
+    tags: ["m365", "migration", "smb", "checklist", "deployment"],
+    lastVerified: "2026-02-18"
+  },
+  {
+    slug: "it-procurement-playbook-chandigarh-smb",
+    title: "IT Procurement Playbook for Chandigarh SMB Teams",
+    description: "Procurement playbook for SMB buyers covering scope freeze, vendor evaluation, and renewal governance.",
+    category: "Chandigarh Tricity IT",
+    tags: ["it procurement", "chandigarh", "smb", "tco", "renewals"],
+    lastVerified: "2026-02-18"
   }
 ];
 

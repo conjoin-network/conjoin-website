@@ -10,6 +10,31 @@ import { PLATFORM_ARTICLES } from "@/lib/platform-catalog";
 import { KNOWLEDGE_ARTICLES, getKnowledgeBySlug } from "@/lib/knowledge-data";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
+function getServiceLinks(slug: string, tags: string[]) {
+  const haystack = `${slug} ${tags.join(" ")}`.toLowerCase();
+  if (haystack.includes("seqrite") || haystack.includes("endpoint")) {
+    return [
+      { href: "/seqrite-chandigarh", label: "Seqrite Endpoint Security Chandigarh" },
+      { href: "/endpoint-security-chandigarh", label: "Endpoint Security Chandigarh" },
+      { href: "/endpoint-security-mohali", label: "Endpoint Security Mohali" }
+    ];
+  }
+
+  if (haystack.includes("procurement") || haystack.includes("rfq") || haystack.includes("tco")) {
+    return [
+      { href: "/it-procurement-chandigarh", label: "IT Procurement Chandigarh" },
+      { href: "/request-quote", label: "Request Quote" },
+      { href: "/contact", label: "Contact Sales" }
+    ];
+  }
+
+  return [
+    { href: "/microsoft-365-chandigarh", label: "Microsoft 365 Partner Chandigarh" },
+    { href: "/microsoft-365-reseller-chandigarh", label: "Microsoft 365 Reseller Chandigarh" },
+    { href: "/request-quote", label: "Request Quote" }
+  ];
+}
+
 export function generateStaticParams() {
   return KNOWLEDGE_ARTICLES.map((article) => ({ slug: article.slug }));
 }
@@ -39,7 +64,17 @@ export default async function KnowledgeArticlePage({
   if (!article) {
     notFound();
   }
+  const fallbackContent = [
+    `${article.title} is written for procurement and technology owners who need clear buying decisions, deployment guardrails, and renewal continuity.`,
+    "Use this guide to structure internal discussions around scope, commercial assumptions, and operational ownership before approval.",
+    "For live proposals or deployment-aligned commercials, use Request Quote so recommendations can be mapped to your exact user count, city, and timeline."
+  ].join("\n\n");
   const detailed = PLATFORM_ARTICLES.find((item) => item.slug === slug) ?? null;
+  const contentBlocks = (detailed?.content ?? fallbackContent)
+    .split(/\n{2,}/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const serviceLinks = getServiceLinks(article.slug, article.tags);
   const faqItems = [
     {
       question: "Is this article aligned to procurement decisions?",
@@ -113,10 +148,9 @@ export default async function KnowledgeArticlePage({
             <span>Last verified: {detailed?.lastVerified ?? "2026-02-14"}</span>
           </div>
           <div className="space-y-4 text-sm leading-7 text-[var(--color-text-secondary)]">
-            <p>
-              {detailed?.content ??
-                "This guide is being expanded for IT and procurement teams that need commercial clarity without vendor noise."}
-            </p>
+            {contentBlocks.map((paragraph) => (
+              <p key={paragraph.slice(0, 28)}>{paragraph}</p>
+            ))}
             <ul className="list-disc space-y-2 pl-5">
               <li>Procurement scope framing with TCO and compliance checkpoints.</li>
               <li>Commercial and renewal guardrails for predictable lifecycle costs.</li>
@@ -138,6 +172,13 @@ export default async function KnowledgeArticlePage({
             <Link href="/brands" className="hover:underline">
               Brands
             </Link>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-[var(--color-primary)]">
+            {serviceLinks.map((item) => (
+              <Link key={item.href} href={item.href} className="hover:underline">
+                {item.label}
+              </Link>
+            ))}
           </div>
         </article>
       </Section>

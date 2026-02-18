@@ -24,6 +24,21 @@
   - `phone_click`
   - `whatsapp_click`
 
+## Code pointers (owner verification)
+- `/app/contact/ContactLeadForm.tsx`
+  - Success condition: `response.ok` and payload `ok !== false`.
+  - Fires: `trackGaEvent("generate_lead", ...)`, `trackAdsConversion("lead_submit", ...)`, `pushDataLayerEvent("lead_submit_success", ...)`.
+- `/app/request-quote/RequestQuoteWizard.tsx`
+  - Success condition: `response.ok` for quote submit branch.
+  - Fires: quote submit conversion + `lead_submit_success` style event payload.
+- `/app/components/AdsTrackedLink.tsx` and `/app/components/OutboundClickTracker.tsx`
+  - Click tracking coverage for `tel:`, `mailto:`, and `wa.me` links.
+
+## Regression rule
+- Conversion events must never fire on page load.
+- Conversion events must never fire on failed API responses.
+- Any future form flow changes should preserve success-only trigger behavior.
+
 ## GA4 + Ads Linking (manual in account)
 1. GA4 Admin -> Product Links -> Google Ads links -> link account `507-627-9715`.
 2. Google Ads -> Tools -> Conversions -> Import from GA4 key events.
