@@ -29,11 +29,13 @@ async function resolveStorageStatus() {
 export async function GET() {
   const storage = await resolveStorageStatus();
   const version = process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) || process.env.npm_package_version || "unknown";
+  const hasDatabaseUrl = Boolean(process.env.DATABASE_URL?.trim());
 
   return NextResponse.json(
     {
       ok: true,
       storage,
+      hasDatabaseUrl,
       version,
       env: resolveEnvLabel()
     },

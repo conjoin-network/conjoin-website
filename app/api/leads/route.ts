@@ -1,35 +1,37 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { z } from 'zod';
-import prisma from '@/lib/prisma';
-import { createCrmLead } from '@/lib/crm';
-import { sendCaptureAlert } from '@/lib/captureEmail';
-import { getPortalSessionFromRequest } from '@/lib/admin-session';
-import { createLead } from '@/lib/leads';
+import { randomUUID } from "node:crypto";
+import { NextResponse, NextRequest } from "next/server";
+import { z } from "zod";
+import { createCrmLead, listCrmLeads } from "@/lib/crm";
+import { sendCaptureAlert } from "@/lib/captureEmail";
+import { getPortalSessionFromRequest } from "@/lib/admin-session";
+import { AGENT_OPTIONS } from "@/lib/agents";
+import { LEAD_STATUSES } from "@/lib/quote-catalog";
 
-export const runtime = 'nodejs';
+export const runtime = "nodejs";
 
 const schema = z.object({
-  name: z.string().min(1),
-  company: z.string().optional(),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  requirement: z.string().min(1),
+  name: z.string().trim().min(1),
+  company: z.string().trim().optional(),
+  email: z.string().trim().email().optional(),
+  phone: z.string().trim().optional(),
+  requirement: z.string().trim().min(1),
   usersDevices: z.number().int().positive().optional(),
-  city: z.string().optional(),
-  timeline: z.string().optional(),
-  notes: z.string().optional(),
-  website: z.string().optional(), // honeypot
-  pageUrl: z.string().optional(),
-  referrer: z.string().optional(),
-  utm_source: z.string().optional(),
-  utm_medium: z.string().optional(),
-  utm_campaign: z.string().optional(),
-  utm_term: z.string().optional(),
-  utm_content: z.string().optional(),
-  gclid: z.string().optional()
+  city: z.string().trim().optional(),
+  timeline: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
+  website: z.string().trim().optional(),
+  pageUrl: z.string().trim().optional(),
+  referrer: z.string().trim().optional(),
+  utm_source: z.string().trim().optional(),
+  utm_medium: z.string().trim().optional(),
+  utm_campaign: z.string().trim().optional(),
+  utm_term: z.string().trim().optional(),
+  utm_content: z.string().trim().optional(),
+  gclid: z.string().trim().optional()
 });
 
 const RATE_LIMIT = new Map<string, { ts: number; count: number }>();
+
 function checkRate(ip: string, limit = 20, windowMs = 60_000) {
   const now = Date.now();
   const cur = RATE_LIMIT.get(ip);
@@ -43,96 +45,222 @@ function checkRate(ip: string, limit = 20, windowMs = 60_000) {
 }
 
 function normalizePhone(v?: string) {
-  if (!v) return undefined;
+  if (!v) return "";
   let digits = String(v).replace(/[^\d]/g, "");
-  if (!digits) return undefined;
-  // If more than 10 digits (country code present), keep last 10 digits (Indian numbers)
   if (digits.length > 10) {
     digits = digits.slice(-10);
   }
-  if (digits.length === 0) return undefined;
   return digits;
 }
 
 function normalizeEmail(v?: string) {
-  if (!v) return undefined;
+  if (!v) return "";
   return String(v).trim().toLowerCase();
 }
 
+function serializeError(error: unknown) {
+  if (error instanceof Error) {
+    const cause =
+      error.cause instanceof Error
+        ? {
+            name: error.cause.name,
+            message: error.cause.message,
+            stack: error.cause.stack
+          }
+        : error.cause ?? null;
+
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      cause
+    };
+  }
+
+  return {
+    name: "UnknownError",
+    message: typeof error === "string" ? error : "Unknown error",
+    stack: null,
+    cause: null
+  };
+}
+
+function getDbRuntimeInfo() {
+  return {
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
+    vercelEnv: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown"
+  };
+}
+
+function isStorageNotConfigured(error: unknown) {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const detail = `${error.name} ${error.message}`.toLowerCase();
+  return (
+    detail.includes("database_url") ||
+    detail.includes("prisma") ||
+    detail.includes("connect") ||
+    detail.includes("lead_storage_unsafe") ||
+    detail.includes("sqlite")
+  );
+}
+
+function parseDateInput(value: string | null) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date;
+}
+
+function normalizeListStatusFilter(value: string | null) {
+  if (!value || value === "all") {
+    return "all";
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (normalized === "CONTACTED") return "IN_PROGRESS";
+  if (normalized === "QUALIFIED") return "QUOTED";
+  if (normalized === "CLOSED") return "WON";
+  return normalized;
+}
+
+function buildPermissions(session: ReturnType<typeof getPortalSessionFromRequest>) {
+  if (session) {
+    return {
+      role: session.role,
+      displayName: session.displayName,
+      assignee: session.assignee,
+      canExport: session.canExport,
+      canAssign: session.canAssign,
+      isManagement: session.isManagement
+    };
+  }
+
+  return {
+    role: "OWNER",
+    displayName: "Owner",
+    assignee: null,
+    canExport: true,
+    canAssign: true,
+    isManagement: true
+  };
+}
+
 export async function POST(request: NextRequest) {
+  const requestId = randomUUID();
+
   try {
-    const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || request.headers.get('x-client-ip') || 'local';
+    const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || request.headers.get("x-client-ip") || "local";
     if (!checkRate(String(ip))) {
-      return NextResponse.json({ ok: false, error: 'Too many requests' }, { status: 429 });
+      return NextResponse.json({ ok: false, requestId, error: "Too many requests" }, { status: 429 });
     }
 
-    const json = await request.json();
-    const parsed = schema.safeParse(json);
-    if (!parsed.success) return NextResponse.json({ ok: false, error: 'Invalid request payload. Please try again.' }, { status: 400 });
-
-    // honeypot
-    if (parsed.data.website && parsed.data.website.trim() !== '') {
-      return NextResponse.json({ ok: true, message: 'Accepted' });
-    }
-
-    // Log incoming payload (sanitized) for production verification
+    let rawBody: unknown;
     try {
-      const incoming = { name: parsed.data.name, email: parsed.data.email ?? null, phone: parsed.data.phone ?? null, city: parsed.data.city ?? null, requirement: parsed.data.requirement ?? null };
-      console.info('LEAD_CAPTURE_INCOMING', JSON.stringify(incoming));
-    } catch {}
+      rawBody = await request.json();
+    } catch {
+      return NextResponse.json({ ok: false, requestId, error: "Invalid JSON payload." }, { status: 400 });
+    }
 
-    // require email OR phone
+    const parsed = schema.safeParse(rawBody);
+    if (!parsed.success) {
+      return NextResponse.json({ ok: false, requestId, error: "Invalid request payload. Please try again." }, { status: 400 });
+    }
+
+    if (parsed.data.website && parsed.data.website.trim() !== "") {
+      return NextResponse.json({ ok: true, requestId, message: "Accepted" });
+    }
+
     const email = normalizeEmail(parsed.data.email);
     const phone = normalizePhone(parsed.data.phone);
     if (!email && !phone) {
-      return NextResponse.json({ ok: false, error: 'Please provide phone or email.' }, { status: 400 });
+      return NextResponse.json({ ok: false, requestId, error: "Please provide phone or email." }, { status: 400 });
     }
 
-    const ua = request.headers.get('user-agent') || undefined;
+    const ua = request.headers.get("user-agent") || undefined;
+    let leadId = `RFQ-${Date.now()}`;
+    let saved = false;
 
-    const lead = await createCrmLead({
-      name: parsed.data.name,
-      phone: phone as any,
-      email: email as any,
-      company: parsed.data.company,
-      requirement: parsed.data.requirement,
-      usersDevices: parsed.data.usersDevices,
-      city: parsed.data.city,
-      notes: parsed.data.notes,
-      pageUrl: parsed.data.pageUrl,
-      utm_source: parsed.data.utm_source,
-      utm_medium: parsed.data.utm_medium,
-      utm_campaign: parsed.data.utm_campaign,
-      utm_term: parsed.data.utm_term,
-      utm_content: parsed.data.utm_content,
-      gclid: parsed.data.gclid,
-      ip: String(ip),
-      userAgent: ua
-    });
-
-    // email notify (best-effort) — log payload for temporary verification
     try {
-      const alertPayload = { ...parsed.data, ip, userAgent: ua, email, phone };
-      console.info('LEAD_CAPTURE_EMAIL_PAYLOAD', JSON.stringify({ name: alertPayload.name, email: alertPayload.email ?? null, phone: alertPayload.phone ?? null, city: alertPayload.city ?? null }));
-      await sendCaptureAlert(alertPayload);
-    } catch (e) {
-      console.error('CAPTURE_ALERT_FAILED', e instanceof Error ? e.message : e);
+      const lead = await createCrmLead({
+        name: parsed.data.name,
+        phone,
+        email: email || undefined,
+        company: parsed.data.company,
+        requirement: parsed.data.requirement,
+        usersDevices: parsed.data.usersDevices,
+        city: parsed.data.city,
+        notes: parsed.data.notes,
+        pageUrl: parsed.data.pageUrl,
+        utm_source: parsed.data.utm_source,
+        utm_medium: parsed.data.utm_medium,
+        utm_campaign: parsed.data.utm_campaign,
+        utm_term: parsed.data.utm_term,
+        utm_content: parsed.data.utm_content,
+        gclid: parsed.data.gclid,
+        ip: String(ip),
+        userAgent: ua
+      });
+      leadId = String((lead as { leadId?: string }).leadId ?? leadId);
+      saved = true;
+      console.info("LEAD_SAVED_OK", JSON.stringify({ requestId, leadId }));
+    } catch (error) {
+      const errorInfo = serializeError(error);
+      const dbRuntime = getDbRuntimeInfo();
+      console.error(
+        "LEAD_SAVE_FAILED",
+        JSON.stringify({
+          requestId,
+          leadId,
+          errorName: errorInfo.name,
+          errorMessage: errorInfo.message,
+          hasDatabaseUrl: dbRuntime.hasDatabaseUrl,
+          vercelEnv: dbRuntime.vercelEnv
+        })
+      );
+      console.error("LEAD_SAVE_FAILED_DETAIL", JSON.stringify({ requestId, leadId, error: errorInfo }));
     }
 
+    const submitted = rawBody && typeof rawBody === "object" ? (rawBody as Record<string, unknown>) : {};
     try {
-      const dbUrl = process.env.DATABASE_URL || '';
-      let dbHost = 'unknown';
-      try {
-        const m = dbUrl.match(/@([^/]+)/);
-        if (m && m[1]) dbHost = m[1];
-      } catch {}
-      console.info('LEAD_CAPTURE_STORED', JSON.stringify({ leadId: (lead as any).leadId ?? null, dbHost }));
-    } catch {}
+      await sendCaptureAlert({
+        ...submitted,
+        rfqId: leadId,
+        requestId,
+        timestamp: new Date().toISOString(),
+        email: email || submitted.email || "",
+        phone: phone || submitted.phone || "",
+        ip: String(ip),
+        userAgent: ua ?? "",
+        saved
+      });
+    } catch (error) {
+      console.error("LEAD_ALERT_FAILED", JSON.stringify({ requestId, leadId, error: serializeError(error) }));
+    }
 
-    return NextResponse.json({ ok: true, leadId: (lead as any).leadId ?? null }, { status: 201 });
+    if (!saved) {
+      return NextResponse.json(
+        {
+          ok: true,
+          queued: true,
+          warning: "storage_not_configured",
+          storage_not_configured: true,
+          requestId,
+          leadId,
+          message: "Lead received. Storage is temporarily unavailable; our team has been notified by email."
+        },
+        { status: 202 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, requestId, leadId }, { status: 201 });
   } catch (error) {
-    console.error('LEAD_POST_ERROR', error);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+    console.error("LEAD_POST_ERROR", JSON.stringify({ requestId, error: serializeError(error) }));
+    return NextResponse.json({ ok: false, requestId, error: "Server error" }, { status: 500 });
   }
 }
 
@@ -140,66 +268,136 @@ export async function OPTIONS() {
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, x-admin-pass'
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST,OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, x-admin-pass"
     }
   });
 }
 
 export async function GET(request: NextRequest) {
-  // allow admin access via portal session cookie OR x-admin-pass header
+  const requestId = randomUUID();
   const session = getPortalSessionFromRequest(request);
-  const adminPass = request.headers.get('x-admin-pass') || '';
+  const adminPass = request.headers.get("x-admin-pass") || "";
   if (!session) {
     if (!process.env.ADMIN_PASSWORD || adminPass !== process.env.ADMIN_PASSWORD) {
-      return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ ok: false, requestId, error: "Unauthorized" }, { status: 401 });
     }
   }
 
+  const permissions = buildPermissions(session);
+
   try {
     const url = new URL(request.url);
-    const qStatus = url.searchParams.get('status') || undefined;
-    const qCity = url.searchParams.get('city') || undefined;
-    const qSource = url.searchParams.get('source') || undefined;
-    const qCampaign = url.searchParams.get('campaign') || undefined;
-    const qAssigned = url.searchParams.get('assignedAgent') || url.searchParams.get('assignedTo') || undefined;
-    const range = url.searchParams.get('range') || undefined; // today|7d|30d
-    const from = url.searchParams.get('from') || undefined;
-    const to = url.searchParams.get('to') || undefined;
+    const qStatus = normalizeListStatusFilter(url.searchParams.get("status"));
+    const qCity = (url.searchParams.get("city") || "").trim().toLowerCase();
+    const qSource = (url.searchParams.get("source") || "").trim().toLowerCase();
+    const qCampaign = (url.searchParams.get("campaign") || "").trim().toLowerCase();
+    const qAssigned = (url.searchParams.get("assignedAgent") || url.searchParams.get("assignedTo") || "").trim();
+    const q = (url.searchParams.get("q") || "").trim().toLowerCase();
+    const dateRange = (url.searchParams.get("range") || url.searchParams.get("dateRange") || "").trim().toLowerCase();
+    const fromDate = parseDateInput(url.searchParams.get("from"));
+    const toDate = parseDateInput(url.searchParams.get("to"));
 
-    const where: any = {};
-    if (qStatus && qStatus !== 'all') where.status = String(qStatus).toUpperCase();
-    if (qCity && qCity !== 'all') where.city = { contains: qCity, mode: 'insensitive' };
-    if (qSource && qSource !== 'all') where.source = qSource;
-    if (qCampaign) where.campaign = qCampaign;
-    if (qAssigned) where.assignedAgent = qAssigned;
+    const allLeads = (await listCrmLeads()) || [];
+    const scopedLeads = permissions.isManagement
+      ? allLeads
+      : allLeads.filter((lead) => (lead.assignedTo || "") === (permissions.assignee || ""));
 
-    if (range === 'today') {
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      where.createdAt = { gte: start.toISOString() };
-    } else if (range === '7d' || range === '30d') {
-      const days = range === '7d' ? 7 : 30;
-      const start = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      where.createdAt = { gte: start.toISOString() };
-    }
+    const leads = scopedLeads.filter((lead) => {
+      const leadStatus = String(lead.status || "").toUpperCase();
+      const leadCity = String(lead.city || "").toLowerCase();
+      const leadSource = String(lead.source || "").toLowerCase();
+      const leadCampaign = String(lead.campaign || lead.brand || "").toLowerCase();
+      const leadAssigned = String(lead.assignedAgent || lead.assignedTo || "");
+      const createdAt = new Date(lead.createdAt);
+      const createdAtMs = Number.isNaN(createdAt.getTime()) ? 0 : createdAt.getTime();
 
-    if (from) {
-      where.createdAt = { ...(where.createdAt || {}), gte: new Date(from).toISOString() };
-    }
-    if (to) {
-      where.createdAt = { ...(where.createdAt || {}), lte: new Date(to).toISOString() };
-    }
+      const statusOk = qStatus === "all" || leadStatus === qStatus;
+      const cityOk = !qCity || qCity === "all" || leadCity.includes(qCity);
+      const sourceOk = !qSource || qSource === "all" || leadSource === qSource;
+      const campaignOk = !qCampaign || leadCampaign.includes(qCampaign);
+      const assignedOk = !qAssigned || qAssigned === "all" || (qAssigned === "Unassigned" ? !leadAssigned : leadAssigned === qAssigned);
 
-    const { listCrmLeads } = await import('@/lib/crm');
-    const leads = await listCrmLeads();
-      try {
-        console.info('LEADS_GET', `returning ${leads.length} leads`);
-      } catch {}
-    return NextResponse.json({ ok: true, leads });
+      let rangeOk = true;
+      if (dateRange === "7" || dateRange === "7d") {
+        rangeOk = createdAtMs >= Date.now() - 7 * 24 * 60 * 60 * 1000;
+      } else if (dateRange === "30" || dateRange === "30d") {
+        rangeOk = createdAtMs >= Date.now() - 30 * 24 * 60 * 60 * 1000;
+      }
+
+      const fromOk = !fromDate || createdAtMs >= fromDate.getTime();
+      const toOk = !toDate || createdAtMs <= toDate.getTime();
+
+      const queryOk =
+        !q ||
+        [
+          lead.leadId,
+          lead.contactName,
+          lead.company,
+          lead.email,
+          lead.phone,
+          lead.city,
+          lead.source,
+          lead.requirement,
+          lead.notes,
+          lead.campaign,
+          lead.brand
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(q);
+
+      return statusOk && cityOk && sourceOk && campaignOk && assignedOk && rangeOk && fromOk && toOk && queryOk;
+    });
+
+    const brands = [...new Set(scopedLeads.map((lead) => String(lead.brand || lead.campaign || "").trim()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+    const cities = [...new Set(scopedLeads.map((lead) => String(lead.city || "").trim()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+    return NextResponse.json({
+      ok: true,
+      requestId,
+      backendReachable: true,
+      warning: null,
+      leads,
+      items: leads,
+      total: leads.length,
+      meta: {
+        total: leads.length,
+        statuses: LEAD_STATUSES,
+        brands,
+        cities,
+        agents: AGENT_OPTIONS,
+        permissions
+      }
+    });
   } catch (error) {
-    console.error('LEADS_GET_ERROR', error);
-    return NextResponse.json({ ok: false, error: 'Server error' }, { status: 500 });
+    console.error("LEADS_GET_ERROR", JSON.stringify({ requestId, error: serializeError(error) }));
+
+    if (isStorageNotConfigured(error)) {
+      return NextResponse.json({
+        ok: true,
+        requestId,
+        backendReachable: false,
+        warning: "storage_not_configured",
+        leads: [],
+        items: [],
+        total: 0,
+        meta: {
+          total: 0,
+          statuses: LEAD_STATUSES,
+          brands: [],
+          cities: [],
+          agents: AGENT_OPTIONS,
+          permissions
+        }
+      });
+    }
+
+    return NextResponse.json({ ok: false, requestId, error: "Server error" }, { status: 500 });
   }
 }

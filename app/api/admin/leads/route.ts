@@ -60,11 +60,14 @@ function serializeError(error: unknown) {
   };
 }
 
-function isStorageNotConfigured(error: unknown) {
-  if (!process.env.LEAD_DB_PATH?.trim() && !process.env.DATABASE_URL?.trim()) {
-    return true;
-  }
+function getDbRuntimeInfo() {
+  return {
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
+    vercelEnv: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown"
+  };
+}
 
+function isStorageNotConfigured(error: unknown) {
   if (!(error instanceof Error)) {
     return false;
   }
@@ -94,7 +97,12 @@ export async function GET(request: Request) {
   } satisfies LeadFilters;
 
   try {
-    const storedLeads = await listCrmLeads();
+    const storedLeads = (await listCrmLeads()) || [];
+    try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.info('ADMIN_LEADS_GET', `storedLeads=${Array.isArray(storedLeads) ? storedLeads.length : 0} for ${session.displayName}`);
+      }
+    } catch {}
     const visibleLeads = session.isManagement ? storedLeads : storedLeads.filter((lead) => lead.assignedTo === session.assignee);
 
     // Basic filtering similar to legacy listLeads
@@ -113,12 +121,16 @@ export async function GET(request: Request) {
       );
     }
 
-    const brands = [] as string[];
+    const brands = [...new Set(visibleLeads.map((lead) => String(lead.brand || lead.campaign || "").trim()).filter(Boolean))].sort((a, b) =>
+      a.localeCompare(b)
+    );
     const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
     return NextResponse.json({
       ok: true,
       requestId,
+      warning: null,
+      backendReachable: true,
       leads,
       items: leads,
       total: leads.length,
@@ -141,10 +153,13 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     const errorPayload = serializeError(error);
+    const dbRuntime = getDbRuntimeInfo();
     console.error(
       "ADMIN_LEADS_LOAD_FAILED",
       JSON.stringify({
         requestId,
+        hasDatabaseUrl: dbRuntime.hasDatabaseUrl,
+        vercelEnv: dbRuntime.vercelEnv,
         context: {
           method: request.method,
           url: request.url,
@@ -161,6 +176,8 @@ export async function GET(request: Request) {
         ok: true,
         requestId,
         storage_not_configured: true,
+        warning: "storage_not_configured",
+        backendReachable: false,
         message: "Lead storage is not configured.",
         leads: [],
         items: [],

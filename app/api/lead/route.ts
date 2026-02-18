@@ -188,6 +188,13 @@ function getMissingDeliveryEnvKeys() {
   return DELIVERY_ENV_KEYS.filter((key) => !process.env[key]?.trim());
 }
 
+function getDbRuntimeInfo() {
+  return {
+    hasDatabaseUrl: Boolean(process.env.DATABASE_URL?.trim()),
+    vercelEnv: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown"
+  };
+}
+
 async function safeCapture(error: unknown, context: Record<string, unknown>) {
   try {
     await captureServerError(error, context);
@@ -286,6 +293,7 @@ export async function POST(request: Request) {
       city: parsed.data.city
     });
 
+    const provisionalLeadId = `RFQ-${Date.now()}`;
     let lead;
     try {
       lead = await createLead({
@@ -311,17 +319,37 @@ export async function POST(request: Request) {
         phone: parsed.data.phone
       });
     } catch (error) {
+      const errorInfo = serializeError(error);
+      const dbRuntime = getDbRuntimeInfo();
+      console.error(
+        "LEAD_SAVE_FAILED",
+        JSON.stringify({
+          requestId,
+          leadId: provisionalLeadId,
+          errorName: errorInfo.name,
+          errorMessage: errorInfo.message,
+          hasDatabaseUrl: dbRuntime.hasDatabaseUrl,
+          vercelEnv: dbRuntime.vercelEnv
+        })
+      );
       await safeCapture(error, {
         requestId,
         route: "/api/lead",
         phase: "create_lead",
+        hasDatabaseUrl: dbRuntime.hasDatabaseUrl,
+        vercelEnv: dbRuntime.vercelEnv,
         context: requestContext(request, parsedBodyKeys)
       });
       console.error(
         "LEAD_API_CREATE_FAILED",
-        JSON.stringify({ requestId, context: requestContext(request, parsedBodyKeys), error: serializeError(error) })
+        JSON.stringify({ requestId, leadId: provisionalLeadId, context: requestContext(request, parsedBodyKeys), error: errorInfo })
       );
-      return jsonSuccess(202, requestId, { queued: true, message: QUEUED_MESSAGE });
+      return jsonSuccess(202, requestId, {
+        queued: true,
+        leadId: provisionalLeadId,
+        warning: "storage_not_configured",
+        message: QUEUED_MESSAGE
+      });
     }
 
     await safeAudit(
