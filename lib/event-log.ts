@@ -2,10 +2,16 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
-const dataDir = path.join(process.cwd(), "data");
+const isServerlessRuntime = Boolean(process.env.VERCEL || process.env.NETLIFY || process.env.NOW_REGION);
+const dataDir =
+  isServerlessRuntime || process.env.NODE_ENV === "production"
+    ? "/tmp/conjoinnetwork"
+    : path.join(process.cwd(), "data");
 const dbPath = process.env.LEAD_DB_PATH?.trim() || path.join(dataDir, "crm-leads.sqlite");
 
 let dbInstance: DatabaseSync | null = null;
+let dbInitFailed = false;
+let memoryEvents: AuditEventRecord[] = [];
 
 type StatementRunner = {
   run: (...params: unknown[]) => unknown;
@@ -37,32 +43,43 @@ export type AuditEventFilters = {
 };
 
 function getDb() {
+  if (dbInitFailed) {
+    return null;
+  }
+
   if (dbInstance) {
     return dbInstance;
   }
 
-  fs.mkdirSync(dataDir, { recursive: true });
-  const db = new DatabaseSync(dbPath);
-  db.exec(`
-    PRAGMA journal_mode = WAL;
-    PRAGMA synchronous = NORMAL;
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+    const db = new DatabaseSync(dbPath);
+    db.exec(`
+      PRAGMA journal_mode = WAL;
+      PRAGMA synchronous = NORMAL;
 
-    CREATE TABLE IF NOT EXISTS audit_events (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      event_type TEXT NOT NULL,
-      lead_id TEXT,
-      actor TEXT NOT NULL,
-      details_json TEXT NOT NULL DEFAULT '{}',
-      created_at TEXT NOT NULL
-    );
+      CREATE TABLE IF NOT EXISTS audit_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL,
+        lead_id TEXT,
+        actor TEXT NOT NULL,
+        details_json TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL
+      );
 
-    CREATE INDEX IF NOT EXISTS idx_audit_events_created_at ON audit_events(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_audit_events_type ON audit_events(event_type);
-    CREATE INDEX IF NOT EXISTS idx_audit_events_lead_id ON audit_events(lead_id);
-  `);
+      CREATE INDEX IF NOT EXISTS idx_audit_events_created_at ON audit_events(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_audit_events_type ON audit_events(event_type);
+      CREATE INDEX IF NOT EXISTS idx_audit_events_lead_id ON audit_events(lead_id);
+    `);
 
-  dbInstance = db;
-  return db;
+    dbInstance = db;
+    return db;
+  } catch (error) {
+    dbInitFailed = true;
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("AUDIT_EVENT_DB_DISABLED", message);
+    return null;
+  }
 }
 
 function toJson(value: Record<string, unknown>) {
@@ -93,22 +110,67 @@ export async function logAuditEvent(input: {
 }) {
   const db = getDb();
   const now = new Date().toISOString();
+  if (!db) {
+    const nextEvent: AuditEventRecord = {
+      id: Date.now(),
+      type: input.type,
+      leadId: input.leadId ?? null,
+      actor: (input.actor?.trim() || "system").slice(0, 80),
+      details: input.details ?? {},
+      createdAt: now
+    };
+    memoryEvents.unshift(nextEvent);
+    if (memoryEvents.length > 500) {
+      memoryEvents = memoryEvents.slice(0, 500);
+    }
+    return;
+  }
+
   (db.prepare(
     `
-      INSERT INTO audit_events (event_type, lead_id, actor, details_json, created_at)
-      VALUES (?, ?, ?, ?, ?)
-    `
+        INSERT INTO audit_events (event_type, lead_id, actor, details_json, created_at)
+        VALUES (?, ?, ?, ?, ?)
+      `
   ) as unknown as StatementRunner).run(
-    input.type,
-    input.leadId ?? null,
-    (input.actor?.trim() || "system").slice(0, 80),
-    toJson(input.details ?? {}),
-    now
-  );
+      input.type,
+      input.leadId ?? null,
+      (input.actor?.trim() || "system").slice(0, 80),
+      toJson(input.details ?? {}),
+      now
+    );
 }
 
 export async function listAuditEvents(filters: AuditEventFilters = {}): Promise<AuditEventRecord[]> {
   const db = getDb();
+  if (!db) {
+    let items = [...memoryEvents];
+    if (filters.type && filters.type !== "all") {
+      items = items.filter((event) => event.type === filters.type);
+    }
+    if (filters.leadId && filters.leadId.trim()) {
+      const targetLeadId = filters.leadId.trim();
+      items = items.filter((event) => event.leadId === targetLeadId);
+    }
+    if (filters.q && filters.q.trim()) {
+      const q = filters.q.trim().toLowerCase();
+      items = items.filter((event) => {
+        const detailsString = JSON.stringify(event.details).toLowerCase();
+        return (
+          event.actor.toLowerCase().includes(q) ||
+          (event.leadId ?? "").toLowerCase().includes(q) ||
+          event.type.toLowerCase().includes(q) ||
+          detailsString.includes(q)
+        );
+      });
+    }
+    if (filters.dateRange === "7" || filters.dateRange === "30") {
+      const since = Date.now() - Number(filters.dateRange) * 24 * 60 * 60 * 1000;
+      items = items.filter((event) => new Date(event.createdAt).getTime() >= since);
+    }
+    const limit = Math.max(10, Math.min(500, filters.limit ?? 200));
+    return items.slice(0, limit);
+  }
+
   const params: unknown[] = [];
   const conditions: string[] = [];
 
