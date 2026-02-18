@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
       const leadStatus = String(lead.status || "").toUpperCase();
       const leadCity = String(lead.city || "").toLowerCase();
       const leadSource = String(lead.source || "").toLowerCase();
-      const leadCampaign = String(lead.campaign || lead.brand || "").toLowerCase();
+      const leadCampaign = String(lead.campaign || lead.source || lead.requirement || "").toLowerCase();
       const leadAssigned = String(lead.assignedAgent || lead.assignedTo || "");
       const createdAt = new Date(lead.createdAt);
       const createdAtMs = Number.isNaN(createdAt.getTime()) ? 0 : createdAt.getTime();
@@ -342,7 +342,7 @@ export async function GET(request: NextRequest) {
           lead.requirement,
           lead.notes,
           lead.campaign,
-          lead.brand
+          lead.campaign
         ]
           .join(" ")
           .toLowerCase()
@@ -351,7 +351,7 @@ export async function GET(request: NextRequest) {
       return statusOk && cityOk && sourceOk && campaignOk && assignedOk && rangeOk && fromOk && toOk && queryOk;
     });
 
-    const brands = [...new Set(scopedLeads.map((lead) => String(lead.brand || lead.campaign || "").trim()).filter(Boolean))].sort((a, b) =>
+    const brands = [...new Set(scopedLeads.map((lead) => String((lead.campaign || lead.source || lead.requirement || "")).trim()).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
     );
     const cities = [...new Set(scopedLeads.map((lead) => String(lead.city || "").trim()).filter(Boolean))].sort((a, b) =>
