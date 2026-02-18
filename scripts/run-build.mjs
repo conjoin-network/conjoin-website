@@ -32,5 +32,10 @@ if (auditExitCode !== 0) {
   process.exit(auditExitCode);
 }
 
+const prismaGenerateExitCode = run("prisma", ["generate"]);
+if (prismaGenerateExitCode !== 0) {
+  process.exit(prismaGenerateExitCode);
+}
+
 const buildExitCode = run("next", ["build"]);
 process.exit(buildExitCode);
