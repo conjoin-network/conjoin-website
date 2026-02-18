@@ -142,7 +142,7 @@ export async function listCrmLeads(opts?: { where?: any; orderBy?: any; take?: n
         "source",
         "campaign",
         "city",
-        "status",
+        "status"::text AS "status",
         "assignedTo",
         "assignedAgent",
         "notes",
