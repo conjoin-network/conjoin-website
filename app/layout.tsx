@@ -171,13 +171,13 @@ export default function RootLayout({
         <div className="flex min-h-screen flex-col bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">
           <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
             <Container className="min-h-[80px] py-3 md:min-h-[96px] md:py-4">
-              <div className="hidden grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 md:grid">
+              <div className="hidden items-center justify-between gap-3 md:flex">
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex items-center gap-3 rounded-xl px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
+                  className="brand-link group inline-flex min-w-0 shrink items-center gap-2.5 rounded-xl px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)] md:max-w-[240px]"
                 >
-                  <span className="brand-mark" aria-hidden>
+                  <span className="brand-mark shrink-0" aria-hidden>
                     <Image
                       src="/brand/conjoin-logo.png"
                       alt=""
@@ -187,14 +187,14 @@ export default function RootLayout({
                       priority
                     />
                   </span>
-                  <span className="hidden max-w-[15rem] text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)] lg:inline xl:max-w-[21rem]">
+                  <span className="hidden truncate text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)] min-[1100px]:inline">
                     Procurement-led IT. Delivered with clarity.
                   </span>
                 </Link>
-                <div className="flex min-w-0 justify-center">
-                  <MainNav className="flex-nowrap text-xs lg:text-sm" />
+                <div className="flex min-w-0 flex-1 justify-center px-2">
+                  <MainNav className="justify-center flex-nowrap text-xs lg:text-sm" />
                 </div>
-                <div className="flex items-center justify-end gap-1.5 lg:gap-3">
+                <div className="flex shrink-0 items-center justify-end gap-1.5 lg:gap-3">
                   <Link
                     href="/search"
                     aria-label="Search"
