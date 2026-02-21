@@ -1,5 +1,91 @@
 import prisma from "./prisma";
 
+type SortDirection = "asc" | "desc";
+
+type CrmLeadDbRow = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  company?: string | null;
+  source?: string | null;
+  campaign?: string | null;
+  city?: string | null;
+  status?: string | null;
+  assignedTo?: string | null;
+  assignedAgent?: string | null;
+  notes?: string | null;
+  requirement?: string | null;
+  usersDevices?: number | null;
+  pageUrl?: string | null;
+  referrer?: string | null;
+  score?: number | string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
+  utm_term?: string | null;
+  utm_content?: string | null;
+  gclid?: string | null;
+  ip?: string | null;
+  userAgent?: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
+export type CrmLeadNote = {
+  id: string;
+  text: string;
+  createdAt: string;
+  author: string;
+};
+
+export type CrmLeadView = {
+  leadId: string;
+  contactName: string;
+  phone: string;
+  email: string | null;
+  company: string | null;
+  source: string | null;
+  campaign: string | null;
+  city: string | null;
+  status: string;
+  assignedTo: string | null;
+  assignedAgent: string | null;
+  notes: string | null;
+  requirement: string | null;
+  usersDevices: number | null;
+  qty: number;
+  usersSeats: number | null;
+  endpoints: number | null;
+  servers: number | null;
+  brand: string | null;
+  category: string | null;
+  tier: string | null;
+  timeline: string | null;
+  pagePath: string | null;
+  sourcePage: string | null;
+  referrer: string | null;
+  score: number;
+  priority: "HOT" | "WARM" | "COLD";
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  utmTerm: string | null;
+  utmContent: string | null;
+  gclid: string | null;
+  ip: string | null;
+  userAgent: string | null;
+  lastContactedAt: string | null;
+  firstContactAt: string | null;
+  firstContactBy: string | null;
+  nextFollowUpAt: string | null;
+  activityNotes: CrmLeadNote[];
+  aiSummary: null;
+  aiEmailDraft: null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type NewCrmLead = {
   name: string;
   phone: string;
@@ -12,6 +98,7 @@ export type NewCrmLead = {
   requirement?: string;
   usersDevices?: number;
   pageUrl?: string;
+  referrer?: string;
   utm_source?: string;
   utm_medium?: string;
   utm_campaign?: string;
@@ -20,12 +107,27 @@ export type NewCrmLead = {
   gclid?: string;
   ip?: string;
   userAgent?: string;
+  score?: number;
+  assignedTo?: string | null;
+  assignedAgent?: string | null;
 };
 
+export type ListCrmLeadsOptions = {
+  where?: Record<string, unknown>;
+  orderBy?: Record<string, SortDirection> | Array<Record<string, SortDirection>>;
+  take?: number;
+  skip?: number;
+};
+
+export type UpdateCrmLeadInput = Partial<{
+  status: string;
+  assignedTo: string | null;
+  assignedAgent: string | null;
+  notes: string;
+  score: number;
+}>;
+
 function mapStatus(dbStatus: string | null | undefined) {
-  // Map Prisma/DB statuses to legacy admin statuses
-  // DB: NEW, CONTACTED, QUALIFIED, CLOSED, LOST
-  // Admin UI expects: NEW, IN_PROGRESS, QUOTED, WON, LOST
   if (!dbStatus) return "NEW";
   const s = String(dbStatus).toUpperCase();
   if (s === "NEW") return "NEW";
@@ -36,13 +138,20 @@ function mapStatus(dbStatus: string | null | undefined) {
   return s;
 }
 
-function normalize(lead: any) {
+function mapPriorityFromScore(score: number): "HOT" | "WARM" | "COLD" {
+  if (score >= 80) return "HOT";
+  if (score >= 45) return "WARM";
+  return "COLD";
+}
+
+function toIsoString(value: Date | string) {
+  if (value instanceof Date) return value.toISOString();
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? String(value) : date.toISOString();
+}
+
+function normalize(lead: CrmLeadDbRow): CrmLeadView {
   const score = typeof lead.score === "number" ? lead.score : Number(lead.score ?? 0);
-  function mapPriorityFromScore(s: number) {
-    if (s >= 80) return "HOT";
-    if (s >= 45) return "WARM";
-    return "COLD";
-  }
 
   return {
     leadId: lead.id,
@@ -59,22 +168,18 @@ function normalize(lead: any) {
     notes: lead.notes ?? null,
     requirement: lead.requirement ?? null,
     usersDevices: lead.usersDevices ?? null,
-    // UI expects qty/usersSeats/endpoints/servers
     qty: lead.usersDevices ?? 0,
     usersSeats: lead.usersDevices ?? null,
     endpoints: null,
     servers: null,
-    // branding/product fields - not present in CrmLead; keep null
     brand: null,
     category: null,
     tier: null,
-    // timeline info
     timeline: null,
-    // page/referrer
     pagePath: lead.pageUrl ?? null,
     sourcePage: lead.pageUrl ?? null,
     referrer: lead.referrer ?? null,
-    score: score,
+    score,
     priority: mapPriorityFromScore(score),
     utmSource: lead.utm_source ?? null,
     utmMedium: lead.utm_medium ?? null,
@@ -84,7 +189,6 @@ function normalize(lead: any) {
     gclid: lead.gclid ?? null,
     ip: lead.ip ?? null,
     userAgent: lead.userAgent ?? null,
-    // contact timeline fields that the admin UI may reference
     lastContactedAt: null,
     firstContactAt: null,
     firstContactBy: null,
@@ -92,32 +196,59 @@ function normalize(lead: any) {
     activityNotes: [],
     aiSummary: null,
     aiEmailDraft: null,
-    createdAt: lead.createdAt,
-    updatedAt: lead.updatedAt
+    createdAt: toIsoString(lead.createdAt),
+    updatedAt: toIsoString(lead.updatedAt)
   };
 }
 
-export async function createCrmLead(input: NewCrmLead) {
+export async function createCrmLead(input: NewCrmLead): Promise<CrmLeadView> {
   try {
-    console.info("CRM_CREATE_ATTEMPT", JSON.stringify({ name: input.name ?? null, email: input.email ?? null, phone: input.phone ?? null, city: input.city ?? null }));
-  } catch {}
-  const lead = await prisma.crmLead.create({ data: input as any });
-  const normalized = normalize(lead);
+    console.info(
+      "CRM_CREATE_ATTEMPT",
+      JSON.stringify({
+        name: input.name ?? null,
+        email: input.email ?? null,
+        phone: input.phone ?? null,
+        city: input.city ?? null
+      })
+    );
+  } catch {
+    // noop
+  }
+
+  const lead = await prisma.crmLead.create({
+    data: input as unknown as Parameters<typeof prisma.crmLead.create>[0]["data"]
+  });
+  const normalized = normalize(lead as unknown as CrmLeadDbRow);
+
   try {
-    console.info("CRM_CREATED", JSON.stringify({ leadId: normalized.leadId, name: normalized.contactName, city: normalized.city }));
-  } catch {}
+    console.info(
+      "CRM_CREATED",
+      JSON.stringify({
+        leadId: normalized.leadId,
+        name: normalized.contactName,
+        city: normalized.city
+      })
+    );
+  } catch {
+    // noop
+  }
+
   return normalized;
 }
 
-export async function listCrmLeads(opts?: { where?: any; orderBy?: any; take?: number; skip?: number }) {
-  const q: any = { orderBy: { createdAt: 'desc' } };
-  if (opts?.where) q.where = opts.where;
-  if (opts?.orderBy) q.orderBy = opts.orderBy;
-  if (opts?.take) q.take = opts.take;
-  if (opts?.skip) q.skip = opts.skip;
+export async function listCrmLeads(opts?: ListCrmLeadsOptions): Promise<CrmLeadView[]> {
+  const query: ListCrmLeadsOptions = { orderBy: { createdAt: "desc" } };
+  if (opts?.where) query.where = opts.where;
+  if (opts?.orderBy) query.orderBy = opts.orderBy;
+  if (opts?.take) query.take = opts.take;
+  if (opts?.skip) query.skip = opts.skip;
+
   try {
-    const rows = await prisma.crmLead.findMany(q);
-    return rows.map(normalize);
+    const rows = await prisma.crmLead.findMany(
+      query as unknown as Parameters<typeof prisma.crmLead.findMany>[0]
+    );
+    return rows.map((row) => normalize(row as unknown as CrmLeadDbRow));
   } catch (error) {
     const fallbackTake = Math.min(Math.max(Number(opts?.take ?? 500), 1), 2000);
     const fallbackSkip = Math.max(Number(opts?.skip ?? 0), 0);
@@ -167,7 +298,8 @@ export async function listCrmLeads(opts?: { where?: any; orderBy?: any; take?: n
       `
     );
 
-    return ((rows as any[]) || []).map((row) =>
+    const fallbackRows = (Array.isArray(rows) ? rows : []) as CrmLeadDbRow[];
+    return fallbackRows.map((row) =>
       normalize({
         ...row,
         status: mapStatus(row.status)
@@ -176,14 +308,19 @@ export async function listCrmLeads(opts?: { where?: any; orderBy?: any; take?: n
   }
 }
 
-export async function getCrmLead(id: string) {
+export async function getCrmLead(id: string): Promise<CrmLeadView | null> {
   const lead = await prisma.crmLead.findUnique({ where: { id } });
-  return lead ? normalize(lead) : null;
+  return lead ? normalize(lead as unknown as CrmLeadDbRow) : null;
 }
 
-export async function updateCrmLead(id: string, data: Partial<{ status: string; assignedTo: string; assignedAgent?: string; notes?: string; score?: number }>) {
-  const payload: any = { ...(data as any) };
+export async function updateCrmLead(id: string, data: UpdateCrmLeadInput): Promise<CrmLeadView> {
+  const payload: UpdateCrmLeadInput = { ...data };
   if (payload.status) payload.status = String(payload.status).toUpperCase();
-  const updated = await prisma.crmLead.update({ where: { id }, data: payload });
-  return normalize(updated);
+
+  const updated = await prisma.crmLead.update({
+    where: { id },
+    data: payload as unknown as Parameters<typeof prisma.crmLead.update>[0]["data"]
+  });
+
+  return normalize(updated as unknown as CrmLeadDbRow);
 }

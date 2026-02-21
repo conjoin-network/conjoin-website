@@ -33,7 +33,7 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const lead = await getCrmLead(id);
     if (!lead) return NextResponse.json({ ok: false, error: 'Not found' }, { status: 404 });
 
-    const updated = await updateCrmLead(id, parsed.data as any);
+    const updated = await updateCrmLead(id, parsed.data);
     return NextResponse.json({ ok: true, lead: updated });
   } catch (err) {
     console.error('LEAD_PATCH_ERROR', err);

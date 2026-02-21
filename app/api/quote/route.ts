@@ -346,13 +346,13 @@ export async function POST(request: Request) {
       userAgent: request.headers.get('user-agent') || undefined,
       score: leadScore,
       assignedTo: suggestedAgent
-    } as any);
+    });
 
     // Normalize a lightweight legacy-shaped lead object for downstream messaging and email templates
     const leadForMessaging: LeadRecord = {
       leadId: crmLead.leadId,
-      status: crmLead.status as any,
-      priority: crmLead.priority as any,
+      status: crmLead.status,
+      priority: crmLead.priority,
       score: crmLead.score ?? 0,
       assignedTo: crmLead.assignedTo ?? null,
       lastContactedAt: null,

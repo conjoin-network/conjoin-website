@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const filters = parseFilters(url);
+  parseFilters(url);
   let allLeads: Awaited<ReturnType<typeof listCrmLeads>> = [];
   try {
     allLeads = (await listCrmLeads()) || [];
@@ -90,47 +90,53 @@ export async function GET(request: Request) {
     "activityNotes"
   ];
 
+  type ExportLead = Awaited<ReturnType<typeof listCrmLeads>>[number] & {
+    ciscoUsers?: number | null;
+    ciscoSites?: number | null;
+    budgetRange?: string | null;
+  };
+
   const rows = leads.map((lead) => {
-    const anyLead = lead as any;
+    const exportLead = lead as ExportLead;
     return [
-      anyLead.leadId,
-      anyLead.createdAt,
-      anyLead.updatedAt,
-      anyLead.status ?? "",
-      anyLead.priority ?? "",
-      anyLead.score ?? "",
-      anyLead.assignedTo ?? "",
-      anyLead.nextFollowUpAt ?? "",
-      anyLead.lastContactedAt ?? "",
-      anyLead.firstContactAt ?? "",
-      anyLead.firstContactBy ?? "",
-      anyLead.brand ?? "",
-      anyLead.category ?? "",
-      anyLead.tier ?? "",
-      anyLead.qty ?? "",
-      anyLead.usersSeats ?? "",
-      anyLead.endpoints ?? "",
-      anyLead.servers ?? "",
-      anyLead.ciscoUsers ?? "",
-      anyLead.ciscoSites ?? "",
-      anyLead.budgetRange ?? "",
-      anyLead.city ?? "",
-      anyLead.timeline ?? "",
-      anyLead.source ?? "",
-      anyLead.contactName ?? "",
-      anyLead.company ?? "",
-      anyLead.email ?? "",
-      anyLead.phone ?? "",
-      anyLead.sourcePage ?? "",
-      anyLead.utmSource ?? "",
-      anyLead.utmCampaign ?? "",
-      anyLead.utmMedium ?? "",
-      anyLead.utmContent ?? "",
-      anyLead.utmTerm ?? "",
-      anyLead.pagePath ?? "",
-      anyLead.referrer ?? "",
-      anyLead.notes ?? "",
-      (anyLead.activityNotes ?? []).map((note: any) => `${note.createdAt} ${note.author}: ${note.text}`).join(" | ")
+      exportLead.leadId,
+      exportLead.createdAt,
+      exportLead.updatedAt,
+      exportLead.status ?? "",
+      exportLead.priority ?? "",
+      exportLead.score ?? "",
+      exportLead.assignedTo ?? "",
+      exportLead.nextFollowUpAt ?? "",
+      exportLead.lastContactedAt ?? "",
+      exportLead.firstContactAt ?? "",
+      exportLead.firstContactBy ?? "",
+      exportLead.brand ?? "",
+      exportLead.category ?? "",
+      exportLead.tier ?? "",
+      exportLead.qty ?? "",
+      exportLead.usersSeats ?? "",
+      exportLead.endpoints ?? "",
+      exportLead.servers ?? "",
+      exportLead.ciscoUsers ?? "",
+      exportLead.ciscoSites ?? "",
+      exportLead.budgetRange ?? "",
+      exportLead.city ?? "",
+      exportLead.timeline ?? "",
+      exportLead.source ?? "",
+      exportLead.contactName ?? "",
+      exportLead.company ?? "",
+      exportLead.email ?? "",
+      exportLead.phone ?? "",
+      exportLead.sourcePage ?? "",
+      exportLead.utmSource ?? "",
+      exportLead.utmCampaign ?? "",
+      exportLead.utmMedium ?? "",
+      exportLead.utmContent ?? "",
+      exportLead.utmTerm ?? "",
+      exportLead.pagePath ?? "",
+      exportLead.referrer ?? "",
+      exportLead.notes ?? "",
+      (exportLead.activityNotes ?? []).map((note) => `${note.createdAt} ${note.author}: ${note.text}`).join(" | ")
     ];
   });
 

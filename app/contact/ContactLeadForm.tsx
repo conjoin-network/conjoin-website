@@ -37,6 +37,9 @@ const initialState: FormState = {
   website: ""
 };
 
+const trackingKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"] as const;
+type TrackingKey = (typeof trackingKeys)[number];
+
 export default function ContactLeadForm() {
   const pathname = usePathname() ?? "/contact";
   const [state, setState] = useState<FormState>(initialState);
@@ -44,10 +47,10 @@ export default function ContactLeadForm() {
   React.useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const updates: Partial<FormState> = {};
-    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"].forEach((k) => {
+    const updates: Partial<Pick<FormState, TrackingKey>> = {};
+    trackingKeys.forEach((k) => {
       const v = params.get(k);
-      if (v) (updates as any)[k] = v;
+      if (v) updates[k] = v;
     });
     if (Object.keys(updates).length) setState((s) => ({ ...s, ...updates }));
   }, []);
@@ -85,12 +88,12 @@ export default function ContactLeadForm() {
           timeline: state.timeline,
           notes: state.message,
           website: state.website,
-          utm_source: (state as any).utm_source,
-          utm_medium: (state as any).utm_medium,
-          utm_campaign: (state as any).utm_campaign,
-          utm_term: (state as any).utm_term,
-          utm_content: (state as any).utm_content,
-          gclid: (state as any).gclid,
+          utm_source: state.utm_source,
+          utm_medium: state.utm_medium,
+          utm_campaign: state.utm_campaign,
+          utm_term: state.utm_term,
+          utm_content: state.utm_content,
+          gclid: state.gclid,
           source: "/contact",
           pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/contact",
           referrer: typeof document !== "undefined" ? document.referrer : ""

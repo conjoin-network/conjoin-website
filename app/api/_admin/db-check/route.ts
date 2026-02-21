@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { listCrmLeads } from '@/lib/crm';
 import { getPortalSessionFromRequest } from '@/lib/admin-session';
 
@@ -33,7 +32,7 @@ export async function GET(request: Request) {
     const maskedHost = dbHost;
 
     // attempt to read latest lead
-    let latest: any = null;
+    let latest: { leadId: string | null; contactName: string | null; createdAt: string | null } | null = null;
     try {
       const leads = await listCrmLeads();
       if (Array.isArray(leads) && leads.length) {

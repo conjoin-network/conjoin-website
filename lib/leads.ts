@@ -61,7 +61,7 @@ export type LeadRecord = {
   phone: string | null;
   createdAt: string;
   updatedAt: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export type LeadPatchInput = Partial<{
@@ -101,7 +101,7 @@ export type NewLeadInput = Partial<NewCrmLead> & {
   pagePath?: string;
   referrer?: string;
   timeline?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 export async function readLeads(): Promise<LeadRecord[]> {
@@ -151,7 +151,7 @@ export async function patchLead(leadId: string, input: LeadPatchInput): Promise<
   if (input.nextFollowUpAt !== undefined) payload.nextFollowUpAt = input.nextFollowUpAt;
   if (input.lastContactedAt !== undefined) payload.lastContactedAt = input.lastContactedAt;
 
-  const updated = await updateCrmLead(leadId, payload as any);
+  const updated = await updateCrmLead(leadId, payload);
   return (updated as LeadRecord) ?? null;
 }
 
@@ -182,7 +182,7 @@ export function filterLeads(
   }
 ) {
   return leads.filter((lead) => {
-    const brandOk = !filters.brand || (lead.brand as string) === filters.brand;
+    const brandOk = !filters.brand || String(lead.brand ?? "") === filters.brand;
     const cityOk = !filters.city || String(lead.city ?? "").toLowerCase().includes(filters.city.toLowerCase());
     const dateOk = !filters.date || String(lead.createdAt ?? "").startsWith(filters.date);
     return brandOk && cityOk && dateOk;

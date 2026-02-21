@@ -87,12 +87,12 @@ export async function PATCH(
     return v;
   }
 
-  const updatePayload: any = {};
-  if (status) updatePayload.status = mapAdminStatusToDb(status as any);
+  const updatePayload: { status?: string; assignedTo?: string | null; notes?: string } = {};
+  if (status) updatePayload.status = mapAdminStatusToDb(status);
   if (payload.assignedTo !== undefined) updatePayload.assignedTo = payload.assignedTo === null ? null : assignedTo;
   if (note) updatePayload.notes = (existingLead.notes ? existingLead.notes + "\n" : "") + `${actor}: ${note}`;
 
-  const updated = await updateCrmLead(id, updatePayload as any);
+  const updated = await updateCrmLead(id, updatePayload);
 
   if (!updated) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });

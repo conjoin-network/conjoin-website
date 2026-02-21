@@ -24,7 +24,7 @@ export async function PATCH(
     const parsed = patchSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ ok: false, error: parsed.error.errors[0].message }, { status: 400 });
     const { id } = await context.params;
-    const lead = await updateCrmLead(id, parsed.data as any);
+    const lead = await updateCrmLead(id, parsed.data);
     return NextResponse.json({ ok: true, lead });
   } catch (error) {
     console.error("CRM_LEAD_PATCH_ERROR", error);

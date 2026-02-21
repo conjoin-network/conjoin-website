@@ -167,7 +167,9 @@ export async function GET(request: Request) {
     const brands = [...new Set(visibleLeads.map((lead) => String((lead.campaign || lead.source || lead.requirement || "")).trim()).filter(Boolean))].sort((a, b) =>
       a.localeCompare(b)
     );
-    const cities = [...new Set(visibleLeads.map((lead) => lead.city).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    const cities = [
+      ...new Set(visibleLeads.map((lead) => String(lead.city ?? "").trim()).filter(Boolean))
+    ].sort((a, b) => a.localeCompare(b));
     const sources = [...new Set(visibleLeads.map((lead) => classifyLeadSource(lead)))];
 
     return NextResponse.json({

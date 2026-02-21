@@ -306,9 +306,9 @@ export default function AdminLeadsClient() {
         throw new Error((payload as { message?: string }).message ?? `Unable to load leads (${response.status})`);
       }
 
-      const leadsData = (payload as any).leads ?? (payload as any);
+      const leadsData = Array.isArray(payload.leads) ? payload.leads : [];
       setLeads(leadsData);
-      if ((payload as any).meta) setMeta((payload as any).meta);
+      if (payload.meta) setMeta(payload.meta);
       const storageWarning =
         payload.warning === "storage_not_configured" || payload.storage_not_configured || payload.backendReachable === false;
       if (storageWarning) {
@@ -320,7 +320,7 @@ export default function AdminLeadsClient() {
       }
       setDrafts((current) => {
         const next: DraftMap = {};
-        (payload.leads || []).forEach((lead) => {
+        leadsData.forEach((lead) => {
           next[lead.leadId] = {
             status: (current[lead.leadId]?.status ?? lead.status) as LeadStatus,
             priority: (current[lead.leadId]?.priority ?? lead.priority ?? "WARM") as LeadPriority,
@@ -353,7 +353,7 @@ export default function AdminLeadsClient() {
         requirement: addForm.requirement,
         notes: addForm.notes,
         assignedAgent: addForm.assignedAgent
-      } as any;
+      };
 
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       const ap = getAdminPass();
@@ -366,7 +366,11 @@ export default function AdminLeadsClient() {
         credentials: 'same-origin'
       });
 
-      const payload = await res.json().catch(() => ({} as any));
+      const payload = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        message?: string;
+      };
 
       if (!res.ok) {
         throw new Error(payload?.error || payload?.message || `Create failed ()`);
