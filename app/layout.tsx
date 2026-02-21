@@ -187,14 +187,14 @@ export default function RootLayout({
                       priority
                     />
                   </span>
-                  <span className="max-w-[21rem] text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)]">
+                  <span className="hidden max-w-[15rem] text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)] lg:inline xl:max-w-[21rem]">
                     Procurement-led IT. Delivered with clarity.
                   </span>
                 </Link>
                 <div className="flex min-w-0 justify-center">
-                  <MainNav />
+                  <MainNav className="flex-nowrap text-xs lg:text-sm" />
                 </div>
-                <div className="flex items-center justify-end gap-2 lg:gap-3">
+                <div className="flex items-center justify-end gap-1.5 lg:gap-3">
                   <Link
                     href="/search"
                     aria-label="Search"
@@ -210,7 +210,7 @@ export default function RootLayout({
                       />
                     </svg>
                   </Link>
-                  <ButtonLink href="/request-quote" variant="primary" className="min-h-11 whitespace-nowrap">
+                  <ButtonLink href="/request-quote" variant="primary" className="min-h-11 whitespace-nowrap px-4 text-xs lg:px-5 lg:text-sm">
                     Request Quote
                   </ButtonLink>
                 </div>
