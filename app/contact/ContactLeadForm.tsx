@@ -91,9 +91,9 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
     setStatus("submitting");
     setNotice("");
 
+    let response: Response;
     try {
-      // Submit to canonical /api/leads endpoint
-      const response = await fetch("/api/leads", {
+      response = await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -121,27 +121,26 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
           referrer: typeof document !== "undefined" ? document.referrer : ""
         })
       });
-      const payload = (await response.json().catch(() => ({}))) as {
-        ok?: boolean;
-        message?: string;
-        error?: string;
-        leadId?: string;
-        rfqId?: string;
-      };
-      const isSuccess = response.ok;
+    } catch {
+      setStatus("error");
+      setNotice("Service temporarily unavailable. Please try again shortly.");
+      return;
+    }
 
-      if (!isSuccess) {
-        setStatus("error");
-        setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
-        return;
-      }
+    const payload = (await response.json().catch(() => ({}))) as {
+      ok?: boolean;
+      message?: string;
+      error?: string;
+      leadId?: string;
+      rfqId?: string;
+    };
 
+    if (response.ok) {
       setStatus("success");
-      setNotice("");
-      setNotice(payload.message || "Request received. We will contact you shortly.");
-      const formSource = resolveFormSource(pathname);
+      setNotice("Thank you. Our team will contact you shortly.");
       setState(initialState);
 
+      const formSource = resolveFormSource(pathname);
       const leadId = payload.leadId || payload.rfqId;
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
@@ -152,10 +151,11 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
       window.setTimeout(() => {
         router.push(`/thank-you${query}`);
       }, 350);
-    } catch {
-      setStatus("error");
-      setNotice("Service temporarily unavailable. Please try again shortly.");
+      return;
     }
+
+    setStatus("error");
+    setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
   }
 
   return (
