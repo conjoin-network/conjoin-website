@@ -39,14 +39,16 @@ function normalizeEventName(eventName: string) {
 }
 
 export function trackAdsConversion(eventName: string, params?: Record<string, unknown>) {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") {
+  if (typeof window === "undefined") {
     return;
   }
 
   const normalizedEventName = normalizeEventName(eventName);
   const payload = params ?? {};
   pushDataLayerEvent(normalizedEventName, payload);
-  window.gtag("event", normalizedEventName, payload);
+  if (typeof window.gtag === "function") {
+    window.gtag("event", normalizedEventName, payload);
+  }
   debugTracking(normalizedEventName, payload);
 }
 
