@@ -4,7 +4,7 @@ import type { LeadRecord } from "@/lib/leads";
 import { enqueueMessageIntent, updateMessageIntentStatus } from "@/lib/message-queue";
 import { sendEmail, sendWhatsApp } from "@/lib/messaging";
 import { LEADS_EMAIL } from "@/lib/contact";
-import { calculateLeadScore, scoreToPriority } from "@/lib/scoring";
+import { calculateLeadScore } from "@/lib/scoring";
 import { suggestAgentForLead } from "@/lib/agents";
 import { logAuditEvent } from "@/lib/event-log";
 import { captureServerError } from "@/lib/error-logger";
@@ -17,6 +17,7 @@ import {
 import { applyRateLimit, getClientIp, isHoneypotTriggered } from "@/lib/request-guards";
 import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
 import { z } from "zod";
+import { appendAttributionToNotes } from "@/lib/lead-attribution";
 
 type QuotePayload = {
   brand?: string;
@@ -40,6 +41,10 @@ type QuotePayload = {
   utmMedium?: string;
   utmContent?: string;
   utmTerm?: string;
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
+  landingPage?: string;
   pagePath?: string;
   referrer?: string;
   timeline?: string;
@@ -74,6 +79,10 @@ const quotePayloadSchema = z.object({
   utmMedium: z.string().optional(),
   utmContent: z.string().optional(),
   utmTerm: z.string().optional(),
+  gclid: z.string().optional(),
+  gbraid: z.string().optional(),
+  wbraid: z.string().optional(),
+  landingPage: z.string().optional(),
   pagePath: z.string().optional(),
   referrer: z.string().optional(),
   timeline: z.string().optional(),
@@ -211,6 +220,10 @@ export async function POST(request: Request) {
     const utmMedium = payload.utmMedium?.trim() ?? "";
     const utmContent = payload.utmContent?.trim() ?? "";
     const utmTerm = payload.utmTerm?.trim() ?? "";
+    const gclid = payload.gclid?.trim() ?? "";
+    const gbraid = payload.gbraid?.trim() ?? "";
+    const wbraid = payload.wbraid?.trim() ?? "";
+    const landingPage = payload.landingPage?.trim() ?? "";
     const pagePath = payload.pagePath?.trim() || sourcePage;
     const referrer = payload.referrer?.trim() || request.headers.get("referer") || "";
     const timeline = payload.timeline?.trim() || "This Week";
@@ -261,12 +274,19 @@ export async function POST(request: Request) {
     }
 
     const qty = brand === "Microsoft" ? usersSeats : brand === "Seqrite" ? endpoints : ciscoUsers;
-    const mergedNotes =
+    const mergedNotesRaw =
       brand === "Cisco" || brand === "Other"
         ? [notes, ciscoSites > 0 ? `Sites/Locations: ${ciscoSites}` : "", budgetRange ? `Budget: ${budgetRange}` : ""]
             .filter(Boolean)
             .join(" | ")
         : notes;
+    const mergedNotes = appendAttributionToNotes(mergedNotesRaw, {
+      landing_page: landingPage || pagePath || sourcePage,
+      referrer,
+      gclid,
+      gbraid,
+      wbraid
+    });
     const leadScore = calculateLeadScore({
       brand,
       qty,
@@ -275,7 +295,6 @@ export async function POST(request: Request) {
       category,
       city
     });
-    const leadPriority = scoreToPriority(leadScore);
     const suggestedAgent = suggestAgentForLead(brand, category);
 
     const normalizedPayload = {
@@ -319,7 +338,7 @@ export async function POST(request: Request) {
       company,
       email,
       phone,
-      notes: mergedNotes,
+      notes: mergedNotes ?? "",
       source,
       sourcePage
     };
@@ -335,13 +354,13 @@ export async function POST(request: Request) {
       requirement: plan || category,
       usersDevices: brand === 'Microsoft' ? usersSeats : qty,
       notes: mergedNotes,
-      pageUrl: pagePath || sourcePage,
+      pageUrl: landingPage || pagePath || sourcePage,
       utm_source: utmSource || undefined,
       utm_campaign: utmCampaign || undefined,
       utm_medium: utmMedium || undefined,
       utm_content: utmContent || undefined,
       utm_term: utmTerm || undefined,
-      gclid: utmTerm || undefined,
+      gclid: gclid || undefined,
       ip: request.headers.get('x-forwarded-for') || undefined,
       userAgent: request.headers.get('user-agent') || undefined,
       score: leadScore,
@@ -395,7 +414,11 @@ export async function POST(request: Request) {
       leadId: crmLead.leadId,
       brand,
       city,
-      sourcePage
+      sourcePage,
+      createdAt: crmLead.createdAt,
+      pagePath: pagePath || sourcePage,
+      hasGclid: Boolean(gclid),
+      hasUtmSource: Boolean(utmSource)
     });
 
     const messageText = buildQuoteMessage({

@@ -1,4 +1,5 @@
 import prisma from "./prisma";
+import { parseAttributionFromNotes } from "./lead-attribution";
 
 type SortDirection = "asc" | "desc";
 
@@ -26,6 +27,8 @@ type CrmLeadDbRow = {
   utm_term?: string | null;
   utm_content?: string | null;
   gclid?: string | null;
+  gbraid?: string | null;
+  wbraid?: string | null;
   ip?: string | null;
   userAgent?: string | null;
   createdAt: Date | string;
@@ -73,6 +76,8 @@ export type CrmLeadView = {
   utmTerm: string | null;
   utmContent: string | null;
   gclid: string | null;
+  gbraid: string | null;
+  wbraid: string | null;
   ip: string | null;
   userAgent: string | null;
   lastContactedAt: string | null;
@@ -152,6 +157,11 @@ function toIsoString(value: Date | string) {
 
 function normalize(lead: CrmLeadDbRow): CrmLeadView {
   const score = typeof lead.score === "number" ? lead.score : Number(lead.score ?? 0);
+  const attribution = parseAttributionFromNotes(lead.notes ?? null);
+  const normalizedNotes = attribution.notes;
+  const normalizedReferrer = lead.referrer ?? attribution.meta.referrer ?? null;
+  const normalizedPagePath = lead.pageUrl ?? attribution.meta.landing_page ?? null;
+  const normalizedGclid = lead.gclid ?? attribution.meta.gclid ?? null;
 
   return {
     leadId: lead.id,
@@ -165,7 +175,7 @@ function normalize(lead: CrmLeadDbRow): CrmLeadView {
     status: mapStatus(lead.status),
     assignedTo: lead.assignedTo ?? null,
     assignedAgent: lead.assignedAgent ?? null,
-    notes: lead.notes ?? null,
+    notes: normalizedNotes,
     requirement: lead.requirement ?? null,
     usersDevices: lead.usersDevices ?? null,
     qty: lead.usersDevices ?? 0,
@@ -176,9 +186,9 @@ function normalize(lead: CrmLeadDbRow): CrmLeadView {
     category: null,
     tier: null,
     timeline: null,
-    pagePath: lead.pageUrl ?? null,
-    sourcePage: lead.pageUrl ?? null,
-    referrer: lead.referrer ?? null,
+    pagePath: normalizedPagePath,
+    sourcePage: normalizedPagePath,
+    referrer: normalizedReferrer,
     score,
     priority: mapPriorityFromScore(score),
     utmSource: lead.utm_source ?? null,
@@ -186,7 +196,9 @@ function normalize(lead: CrmLeadDbRow): CrmLeadView {
     utmCampaign: lead.utm_campaign ?? null,
     utmTerm: lead.utm_term ?? null,
     utmContent: lead.utm_content ?? null,
-    gclid: lead.gclid ?? null,
+    gclid: normalizedGclid,
+    gbraid: lead.gbraid ?? attribution.meta.gbraid ?? null,
+    wbraid: lead.wbraid ?? attribution.meta.wbraid ?? null,
     ip: lead.ip ?? null,
     userAgent: lead.userAgent ?? null,
     lastContactedAt: null,
@@ -206,10 +218,11 @@ export async function createCrmLead(input: NewCrmLead): Promise<CrmLeadView> {
     console.info(
       "CRM_CREATE_ATTEMPT",
       JSON.stringify({
-        name: input.name ?? null,
-        email: input.email ?? null,
-        phone: input.phone ?? null,
-        city: input.city ?? null
+        hasName: Boolean(input.name?.trim()),
+        hasEmail: Boolean(input.email?.trim()),
+        hasPhone: Boolean(input.phone?.trim()),
+        city: input.city ?? null,
+        source: input.source ?? null
       })
     );
   } catch {
@@ -226,8 +239,9 @@ export async function createCrmLead(input: NewCrmLead): Promise<CrmLeadView> {
       "CRM_CREATED",
       JSON.stringify({
         leadId: normalized.leadId,
-        name: normalized.contactName,
-        city: normalized.city
+        createdAt: normalized.createdAt,
+        city: normalized.city,
+        source: normalized.source
       })
     );
   } catch {

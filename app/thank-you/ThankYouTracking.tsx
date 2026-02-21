@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { trackAdsConversion } from "@/lib/ads";
+import { trackLeadConversion } from "@/lib/ads";
 
 type ThankYouTrackingProps = {
   leadId?: string;
@@ -28,12 +28,10 @@ export default function ThankYouTracking({ leadId, formSource }: ThankYouTrackin
     }
 
     firedRef.current = true;
-    trackAdsConversion("generate_lead", {
-      lead_id: leadId || undefined,
-      page_path: pathname,
-      form_source: formSource,
-      value: 1,
-      currency: "INR"
+    trackLeadConversion({
+      leadId,
+      pagePath: pathname,
+      formSource
     });
   }, [formSource, leadId, pathname]);
 

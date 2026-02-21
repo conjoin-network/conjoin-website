@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
-import { trackAdsConversion } from "@/lib/ads";
 import {
   BRAND_ACCENTS,
   CITY_OPTIONS,
@@ -42,6 +41,9 @@ type WizardState = {
   utmCampaign: string;
   utmContent: string;
   utmTerm: string;
+  gclid: string;
+  gbraid: string;
+  wbraid: string;
   pagePath: string;
   referrer: string;
 };
@@ -169,7 +171,6 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
 
 export default function RequestQuoteWizard() {
   const router = useRouter();
-  const pathname = usePathname() ?? "/request-quote";
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
@@ -228,6 +229,9 @@ export default function RequestQuoteWizard() {
       utmCampaign: (params.get("utm_campaign") ?? "").trim(),
       utmContent: (params.get("utm_content") ?? "").trim(),
       utmTerm: (params.get("utm_term") ?? "").trim(),
+      gclid: (params.get("gclid") ?? "").trim(),
+      gbraid: (params.get("gbraid") ?? "").trim(),
+      wbraid: (params.get("wbraid") ?? "").trim(),
       pagePath: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/request-quote",
       referrer: typeof window !== "undefined" ? document.referrer : ""
     };
@@ -471,6 +475,10 @@ export default function RequestQuoteWizard() {
       utmCampaign: state.utmCampaign,
       utmContent: state.utmContent,
       utmTerm: state.utmTerm,
+      gclid: state.gclid,
+      gbraid: state.gbraid,
+      wbraid: state.wbraid,
+      landingPage: state.pagePath,
       pagePath: state.pagePath,
       referrer: state.referrer,
       timeline: state.timeline,
@@ -527,16 +535,6 @@ export default function RequestQuoteWizard() {
       }
 
       const resolvedRfqId = data?.rfqId ?? data?.leadId ?? "";
-      trackAdsConversion("quote_submit", {
-        value: 1,
-        method: "form",
-        page_path: pathname,
-        form_source: "request-quote",
-        lead_id: resolvedRfqId || undefined,
-        brand: state.brand || "",
-        category: state.category || "",
-        plan: state.product || ""
-      });
       setStatus("success");
       setNotice("");
       const queuedOrSuccessMessage = data?.message?.trim();

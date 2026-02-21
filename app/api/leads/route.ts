@@ -7,6 +7,7 @@ import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { AGENT_OPTIONS } from "@/lib/agents";
 import { LEAD_STATUSES } from "@/lib/quote-catalog";
 import { isPrismaInitializationError } from "@/lib/prisma-errors";
+import { appendAttributionToNotes } from "@/lib/lead-attribution";
 
 export const runtime = "nodejs";
 
@@ -16,19 +17,23 @@ const schema = z.object({
   email: z.string().trim().email().optional(),
   phone: z.string().trim().optional(),
   requirement: z.string().trim().min(1),
+  source: z.string().trim().optional(),
   usersDevices: z.number().int().positive().optional(),
   city: z.string().trim().optional(),
   timeline: z.string().trim().optional(),
   notes: z.string().trim().optional(),
   website: z.string().trim().optional(),
   pageUrl: z.string().trim().optional(),
+  landing_page: z.string().trim().optional(),
   referrer: z.string().trim().optional(),
   utm_source: z.string().trim().optional(),
   utm_medium: z.string().trim().optional(),
   utm_campaign: z.string().trim().optional(),
   utm_term: z.string().trim().optional(),
   utm_content: z.string().trim().optional(),
-  gclid: z.string().trim().optional()
+  gclid: z.string().trim().optional(),
+  gbraid: z.string().trim().optional(),
+  wbraid: z.string().trim().optional()
 });
 
 const RATE_LIMIT = new Map<string, { ts: number; count: number }>();
@@ -175,6 +180,18 @@ export async function POST(request: NextRequest) {
     let leadId = `RFQ-${Date.now()}`;
     let saved = false;
     let saveError: unknown = null;
+    const landingPage = parsed.data.landing_page?.trim() || parsed.data.pageUrl?.trim() || request.nextUrl.pathname;
+    const referrer = parsed.data.referrer?.trim() || request.headers.get("referer") || "";
+    const source = parsed.data.source?.trim() || landingPage || "website";
+    const notes = appendAttributionToNotes(parsed.data.notes, {
+      landing_page: landingPage,
+      referrer,
+      gclid: parsed.data.gclid,
+      gbraid: parsed.data.gbraid,
+      wbraid: parsed.data.wbraid
+    });
+    const hasGclid = Boolean(parsed.data.gclid?.trim());
+    const hasUtmSource = Boolean(parsed.data.utm_source?.trim());
 
     try {
       const lead = await createCrmLead({
@@ -182,11 +199,12 @@ export async function POST(request: NextRequest) {
         phone,
         email: email || undefined,
         company: parsed.data.company,
+        source,
         requirement: parsed.data.requirement,
         usersDevices: parsed.data.usersDevices,
         city: parsed.data.city,
-        notes: parsed.data.notes,
-        pageUrl: parsed.data.pageUrl,
+        notes,
+        pageUrl: landingPage || undefined,
         utm_source: parsed.data.utm_source,
         utm_medium: parsed.data.utm_medium,
         utm_campaign: parsed.data.utm_campaign,
@@ -198,7 +216,17 @@ export async function POST(request: NextRequest) {
       });
       leadId = String((lead as { leadId?: string }).leadId ?? leadId);
       saved = true;
-      console.info("LEAD_SAVED_OK", JSON.stringify({ requestId, leadId }));
+      console.info(
+        "LEAD_SAVED_OK",
+        JSON.stringify({
+          requestId,
+          leadId,
+          createdAt: (lead as { createdAt?: string }).createdAt ?? null,
+          pagePath: landingPage || null,
+          hasGclid,
+          hasUtmSource
+        })
+      );
     } catch (error) {
       saveError = error;
       const errorInfo = serializeError(error);

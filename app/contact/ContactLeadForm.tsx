@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { trackAdsConversion } from "@/lib/ads";
 
 type FormState = {
   name: string;
@@ -21,6 +20,8 @@ type FormState = {
   utm_term?: string;
   utm_content?: string;
   gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
 };
 
 const initialState: FormState = {
@@ -36,7 +37,7 @@ const initialState: FormState = {
   website: ""
 };
 
-const trackingKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"] as const;
+const trackingKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"] as const;
 type TrackingKey = (typeof trackingKeys)[number];
 
 type ContactLeadFormProps = {
@@ -112,8 +113,11 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
           utm_term: state.utm_term,
           utm_content: state.utm_content,
           gclid: state.gclid,
-          source: "/contact",
-          pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : "/contact",
+          gbraid: state.gbraid,
+          wbraid: state.wbraid,
+          source: pathname || "/contact",
+          pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
+          landing_page: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
           referrer: typeof document !== "undefined" ? document.referrer : ""
         })
       });
@@ -136,13 +140,6 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
       setNotice("");
       setNotice(payload.message || "Request received. We will contact you shortly.");
       const formSource = resolveFormSource(pathname);
-      trackAdsConversion("lead_submit_success", {
-        value: 1,
-        method: "form",
-        page_path: pathname,
-        form_source: formSource,
-        city: state.city || undefined
-      });
       setState(initialState);
 
       const leadId = payload.leadId || payload.rfqId;
