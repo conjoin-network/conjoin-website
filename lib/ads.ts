@@ -1,7 +1,6 @@
-import { event as trackGaEvent } from "@/lib/ga";
-
 export const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "AW-17956533755";
 export const ADS_CONVERSION_LABEL = "gN4jCKrqhPsbEPvq_JC";
+const TRACKING_DEBUG_FLAG = process.env.NEXT_PUBLIC_TRACKING_DEBUG === "1";
 
 declare global {
   interface Window {
@@ -17,28 +16,38 @@ export function getAdsSendTo(label = ADS_CONVERSION_LABEL) {
   return `${ADS_ID}/${label}`;
 }
 
+function shouldDebugTracking() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+  return TRACKING_DEBUG_FLAG || process.env.NODE_ENV !== "production";
+}
+
+function debugTracking(eventName: string, params?: Record<string, unknown>) {
+  if (!shouldDebugTracking()) {
+    return;
+  }
+
+  console.info("[tracking:event]", eventName, params ?? {});
+}
+
+function normalizeEventName(eventName: string) {
+  if (eventName === "phone_click") {
+    return "call_click";
+  }
+  return eventName;
+}
+
 export function trackAdsConversion(eventName: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined" || typeof window.gtag !== "function") {
     return;
   }
 
+  const normalizedEventName = normalizeEventName(eventName);
   const payload = params ?? {};
-  pushDataLayerEvent(eventName, payload);
-  window.gtag("event", eventName, payload);
-
-  if (eventName === "quote_submit") {
-    trackGaEvent("generate_lead", {
-      form_name: "request_quote_wizard",
-      lead_type: "quote",
-      page_path: typeof payload.page_path === "string" ? payload.page_path : window.location.pathname,
-      method: payload.method ?? "form",
-      brand: payload.brand ?? undefined,
-      category: payload.category ?? undefined,
-      plan: payload.plan ?? undefined,
-      value: payload.value ?? 1,
-      currency: "INR"
-    });
-  }
+  pushDataLayerEvent(normalizedEventName, payload);
+  window.gtag("event", normalizedEventName, payload);
+  debugTracking(normalizedEventName, payload);
 }
 
 export function pushDataLayerEvent(eventName: string, params?: Record<string, unknown>) {

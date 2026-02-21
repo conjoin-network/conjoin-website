@@ -2,8 +2,7 @@
 
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { pushDataLayerEvent, trackAdsConversion } from "@/lib/ads";
-import { event as trackGaEvent } from "@/lib/ga";
+import { trackAdsConversion } from "@/lib/ads";
 
 type FormState = {
   name: string;
@@ -73,6 +72,19 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
     setState((current) => ({ ...current, ...values }));
   }
 
+  function resolveFormSource(path: string) {
+    if (path.includes("microsoft-365-chandigarh")) {
+      return "m365";
+    }
+    if (path.includes("seqrite-chandigarh")) {
+      return "seqrite";
+    }
+    if (path.startsWith("/request-quote")) {
+      return "request-quote";
+    }
+    return "contact";
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("submitting");
@@ -112,8 +124,7 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
         leadId?: string;
         rfqId?: string;
       };
-      const isSuccessStatus = response.ok; // accepts 200–299 (incl 201)
-      const isSuccess = isSuccessStatus && payload.ok !== false;
+      const isSuccess = response.ok;
 
       if (!isSuccess) {
         setStatus("error");
@@ -124,32 +135,23 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
       setStatus("success");
       setNotice("");
       setNotice(payload.message || "Request received. We will contact you shortly.");
-      trackGaEvent("generate_lead", {
-        form_name: "contact_lead_form",
-        lead_type: "contact",
-        city: state.city || undefined,
-        value: 1,
-        currency: "INR",
-        method: "form",
-        page_path: pathname
-      });
-      trackAdsConversion("lead_submit", {
+      const formSource = resolveFormSource(pathname);
+      trackAdsConversion("lead_submit_success", {
         value: 1,
         method: "form",
-        page_path: pathname
-      });
-      pushDataLayerEvent("lead_submit_success", {
-        form_name: "contact_lead_form",
-        lead_type: "contact",
         page_path: pathname,
-        city: state.city || undefined,
-        value: 1,
-        currency: "INR"
+        form_source: formSource,
+        city: state.city || undefined
       });
       setState(initialState);
 
       const leadId = payload.leadId || payload.rfqId;
-      const query = leadId ? `?leadId=${encodeURIComponent(leadId)}` : "";
+      const queryParams = new URLSearchParams();
+      queryParams.set("formSource", formSource);
+      if (leadId) {
+        queryParams.set("leadId", leadId);
+      }
+      const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
       window.setTimeout(() => {
         router.push(`/thank-you${query}`);
       }, 350);

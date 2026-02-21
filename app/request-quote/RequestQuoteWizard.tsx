@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
-import { pushDataLayerEvent, trackAdsConversion } from "@/lib/ads";
+import { trackAdsConversion } from "@/lib/ads";
 import {
   BRAND_ACCENTS,
   CITY_OPTIONS,
@@ -518,8 +518,7 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      const isSuccessStatus = response.ok;
-      const isSuccess = isSuccessStatus && (data?.ok === true || data?.success === true);
+      const isSuccess = response.ok;
 
       if (!isSuccess) {
         setStatus("error");
@@ -532,21 +531,11 @@ export default function RequestQuoteWizard() {
         value: 1,
         method: "form",
         page_path: pathname,
+        form_source: "request-quote",
+        lead_id: resolvedRfqId || undefined,
         brand: state.brand || "",
         category: state.category || "",
         plan: state.product || ""
-      });
-      pushDataLayerEvent("lead_submit_success", {
-        form_name: "request_quote_wizard",
-        lead_type: "quote",
-        page_path: pathname,
-        lead_id: resolvedRfqId || undefined,
-        brand: state.brand || undefined,
-        category: state.category || undefined,
-        plan: state.product || undefined,
-        city: state.city || undefined,
-        value: 1,
-        currency: "INR"
       });
       setStatus("success");
       setNotice("");
@@ -561,7 +550,7 @@ export default function RequestQuoteWizard() {
       }
 
       const query = new URLSearchParams({
-        leadId: resolvedRfqId,
+        formSource: "request-quote",
         brand: state.brandLabel,
         city: state.city,
         qty: String(quantity),
@@ -569,6 +558,9 @@ export default function RequestQuoteWizard() {
         plan: state.product,
         timeline: state.timeline
       });
+      if (resolvedRfqId) {
+        query.set("leadId", resolvedRfqId);
+      }
 
       window.setTimeout(() => {
         router.push(`/thank-you?${query.toString()}`);

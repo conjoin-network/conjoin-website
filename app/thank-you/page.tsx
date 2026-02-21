@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
+import ThankYouTracking from "@/app/thank-you/ThankYouTracking";
 import { getLeadById } from "@/lib/leads";
 import { SALES_EMAIL, mailto } from "@/lib/contact";
 import { absoluteUrl } from "@/lib/seo";
@@ -28,6 +29,8 @@ export const metadata: Metadata = {
 
 type SearchParams = {
   leadId?: string;
+  formSource?: string;
+  form_source?: string;
   brand?: string;
   city?: string;
   qty?: string;
@@ -43,6 +46,7 @@ export default async function ThankYouPage({
 }) {
   const params = await searchParams;
   const lead = params.leadId ? await getLeadById(params.leadId) : null;
+  const formSource = params.formSource ?? params.form_source ?? "contact";
   const brand = params.brand ?? String(lead?.brand ?? "IT solution");
   const city = params.city ?? lead?.city ?? "Chandigarh";
   const requirement = params.plan ?? params.category ?? lead?.tier ?? lead?.category ?? "General requirement";
@@ -55,6 +59,7 @@ export default async function ThankYouPage({
   return (
     <Section tone="alt" className="py-10 md:py-14">
       <div className="mx-auto max-w-3xl space-y-6">
+        <ThankYouTracking leadId={params.leadId} formSource={formSource} />
         <header className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-5xl">We received your request</h1>
           <p className="text-sm md:text-base">We received your request. Our team will contact you.</p>

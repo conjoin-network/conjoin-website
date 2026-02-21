@@ -4,7 +4,7 @@ import type { AnchorHTMLAttributes } from "react";
 import { trackAdsConversion } from "@/lib/ads";
 
 type AdsTrackedLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
-  eventName?: "phone_click" | "whatsapp_click";
+  eventName?: "phone_click" | "call_click" | "whatsapp_click" | "request_quote_click";
   eventValue?: number;
 };
 

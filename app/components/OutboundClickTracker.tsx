@@ -17,6 +17,23 @@ function getHref(target: EventTarget | null) {
   return anchor.getAttribute("href") || "";
 }
 
+function isRequestQuoteHref(href: string) {
+  if (href.startsWith("/request-quote")) {
+    return true;
+  }
+
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(href, window.location.origin);
+    return parsed.pathname === "/request-quote";
+  } catch {
+    return false;
+  }
+}
+
 export default function OutboundClickTracker() {
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -31,12 +48,21 @@ export default function OutboundClickTracker() {
           : undefined;
 
       if (href.startsWith("tel:")) {
-        trackAdsConversion("phone_click", { value: 1, link_url: href, page_path: pagePath });
+        trackAdsConversion("call_click", { value: 1, link_url: href, page_path: pagePath });
         return;
       }
 
       if (href.includes("wa.me") || href.includes("api.whatsapp.com")) {
         trackAdsConversion("whatsapp_click", { value: 1, link_url: href, page_path: pagePath });
+        return;
+      }
+
+      if (isRequestQuoteHref(href)) {
+        trackAdsConversion("request_quote_click", {
+          value: 1,
+          link_url: href,
+          page_path: pagePath
+        });
       }
     };
 
@@ -46,4 +72,3 @@ export default function OutboundClickTracker() {
 
   return null;
 }
-
