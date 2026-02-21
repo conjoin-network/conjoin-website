@@ -15,6 +15,7 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   name: z.string().trim().min(1),
+  businessType: z.string().trim().optional(),
   company: z.string().trim().optional(),
   email: z.string().trim().email().optional(),
   phone: z.string().trim().optional(),
@@ -35,10 +36,14 @@ const schema = z.object({
   utm_content: z.string().trim().optional(),
   gclid: z.string().trim().optional(),
   gbraid: z.string().trim().optional(),
-  wbraid: z.string().trim().optional()
+  wbraid: z.string().trim().optional(),
+  device_type: z.string().trim().optional(),
+  timestamp: z.string().trim().optional()
 });
 
 const RATE_LIMIT = new Map<string, { ts: number; count: number }>();
+const RECENT_PHONE_SUBMITS = new Map<string, number>();
+const DUPLICATE_PHONE_WINDOW_MS = 5 * 60 * 1000;
 
 function checkRate(ip: string, limit = 20, windowMs = 60_000) {
   const now = Date.now();
@@ -64,6 +69,30 @@ function normalizePhone(v?: string) {
 function normalizeEmail(v?: string) {
   if (!v) return "";
   return String(v).trim().toLowerCase();
+}
+
+function isRecentPhoneDuplicate(phone: string) {
+  if (!phone) {
+    return false;
+  }
+  const now = Date.now();
+  const latest = RECENT_PHONE_SUBMITS.get(phone);
+  if (latest && now - latest < DUPLICATE_PHONE_WINDOW_MS) {
+    return true;
+  }
+  for (const [key, timestamp] of RECENT_PHONE_SUBMITS.entries()) {
+    if (now - timestamp > DUPLICATE_PHONE_WINDOW_MS) {
+      RECENT_PHONE_SUBMITS.delete(key);
+    }
+  }
+  return false;
+}
+
+function markRecentPhoneSubmit(phone: string) {
+  if (!phone) {
+    return;
+  }
+  RECENT_PHONE_SUBMITS.set(phone, Date.now());
 }
 
 function serializeError(error: unknown) {
@@ -180,6 +209,17 @@ export async function POST(request: NextRequest) {
     if (!email && !phone) {
       return NextResponse.json({ ok: false, requestId, error: "Please provide phone or email." }, { status: 400 });
     }
+    if (phone && isRecentPhoneDuplicate(phone)) {
+      return NextResponse.json(
+        {
+          ok: true,
+          requestId,
+          duplicate: true,
+          message: "We already received a recent request for this phone number. Our team will reach out shortly."
+        },
+        { status: 200 }
+      );
+    }
 
     const ua = request.headers.get("user-agent") || undefined;
     let leadId = `RFQ-${Date.now()}`;
@@ -193,7 +233,15 @@ export async function POST(request: NextRequest) {
       service: parsed.data.requirement,
       source
     });
-    const notes = appendAttributionToNotes(parsed.data.notes, {
+    const normalizedNotes = [
+      parsed.data.notes?.trim() ?? "",
+      parsed.data.businessType?.trim() ? `Business Type: ${parsed.data.businessType.trim()}` : "",
+      parsed.data.device_type?.trim() ? `Device: ${parsed.data.device_type.trim()}` : "",
+      parsed.data.timestamp?.trim() ? `Captured At: ${parsed.data.timestamp.trim()}` : ""
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    const notes = appendAttributionToNotes(normalizedNotes, {
       landing_page: landingPage,
       referrer,
       gclid: parsed.data.gclid,
@@ -229,6 +277,7 @@ export async function POST(request: NextRequest) {
       leadId = String((lead as { leadId?: string }).leadId ?? leadId);
       assignedTo = (lead as { assignedTo?: string | null }).assignedTo ?? assignment.assignee ?? null;
       saved = true;
+      markRecentPhoneSubmit(phone);
       console.info(
         "LEAD_SAVED_OK",
         JSON.stringify({

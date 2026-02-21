@@ -1,7 +1,7 @@
 "use client";
 
 import type { AnchorHTMLAttributes } from "react";
-import { trackAdsConversion } from "@/lib/ads";
+import { trackAdsConversionOncePerSession } from "@/lib/ads";
 
 type AdsTrackedLinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   eventName?: "phone_click" | "call_click" | "whatsapp_click" | "request_quote_click";
@@ -31,11 +31,15 @@ export default function AdsTrackedLink({
             ? `${window.location.pathname}${window.location.search}`
             : undefined;
 
-        trackAdsConversion(eventName, {
-          value: eventValue,
-          link_url: href,
-          page_path: pagePath
-        });
+        trackAdsConversionOncePerSession(
+          eventName,
+          {
+            value: eventValue,
+            link_url: href,
+            page_path: pagePath
+          },
+          eventName
+        );
       }}
     />
   );

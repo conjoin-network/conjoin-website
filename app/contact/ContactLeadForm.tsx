@@ -2,9 +2,11 @@
 
 import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import { trackAdsConversionOncePerSession } from "@/lib/ads";
 
 type FormState = {
   name: string;
+  businessType: string;
   company: string;
   email: string;
   phone: string;
@@ -26,6 +28,7 @@ type FormState = {
 
 const initialState: FormState = {
   name: "",
+  businessType: "",
   company: "",
   email: "",
   phone: "",
@@ -38,6 +41,7 @@ const initialState: FormState = {
 };
 
 const serviceOptions = [
+  "General IT Requirement",
   "Microsoft 365 Licensing",
   "Seqrite Endpoint Security",
   "Endpoint Security",
@@ -47,6 +51,16 @@ const serviceOptions = [
   "Local Installation",
   "Dealer Partnership",
   "Enterprise Security",
+  "Other"
+] as const;
+const businessTypeOptions = [
+  "SMB",
+  "Mid-Market",
+  "Enterprise",
+  "Education",
+  "Healthcare",
+  "Government",
+  "MSP / Dealer",
   "Other"
 ] as const;
 
@@ -62,6 +76,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
   const router = useRouter();
   const isMinimal = mode === "minimal";
   const [state, setState] = useState<FormState>(initialState);
+  const formStartTracked = React.useRef(false);
   // capture utm/gclid from query string on mount
   React.useEffect(() => {
     if (typeof window === "undefined") return;
@@ -99,10 +114,50 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
     return "contact";
   }
 
+  function detectDeviceType() {
+    if (typeof window === "undefined") {
+      return "server";
+    }
+    const ua = window.navigator.userAgent.toLowerCase();
+    if (/ipad|tablet|playbook|silk/.test(ua)) {
+      return "tablet";
+    }
+    if (/mobile|android|iphone|ipod/.test(ua)) {
+      return "mobile";
+    }
+    return "desktop";
+  }
+
+  function handleFormStart() {
+    if (formStartTracked.current) {
+      return;
+    }
+    formStartTracked.current = true;
+    const pagePath =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : pathname || "/contact";
+    trackAdsConversionOncePerSession(
+      "form_start",
+      {
+        form_name: "contact_lead_form",
+        page_path: pagePath
+      },
+      `form_start:${resolveFormSource(pathname)}`
+    );
+  }
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatus("submitting");
     setNotice("");
+
+    const normalizedName = state.name.trim() || "Website Lead";
+    const normalizedRequirement = state.requirement.trim() || "General IT Requirement";
+    const normalizedBusinessType = state.businessType.trim();
+    const normalizedNotes = [state.message.trim(), normalizedBusinessType ? `Business Type: ${normalizedBusinessType}` : ""]
+      .filter(Boolean)
+      .join(" | ");
 
     let response: Response;
     try {
@@ -110,15 +165,16 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: state.name,
+          name: normalizedName,
+          businessType: normalizedBusinessType || undefined,
           company: state.company,
           email: state.email,
           phone: state.phone,
-          requirement: state.requirement,
+          requirement: normalizedRequirement,
           usersDevices: state.users ? Number(state.users) : undefined,
           city: state.city,
           timeline: state.timeline,
-          notes: state.message,
+          notes: normalizedNotes,
           website: state.website,
           utm_source: state.utm_source,
           utm_medium: state.utm_medium,
@@ -131,7 +187,9 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
           source: pathname || "/contact",
           pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
           landing_page: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
-          referrer: typeof document !== "undefined" ? document.referrer : ""
+          referrer: typeof document !== "undefined" ? document.referrer : "",
+          device_type: detectDeviceType(),
+          timestamp: new Date().toISOString()
         })
       });
     } catch {
@@ -172,7 +230,12 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
   }
 
   return (
-    <form onSubmit={submit} className="surface-card space-y-4 p-5 md:p-6">
+    <form onSubmit={submit} onFocusCapture={handleFormStart} className="surface-card space-y-4 p-5 md:p-6">
+      <div className="grid gap-2 rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_88%,transparent)] p-3 text-xs font-semibold text-[var(--color-text-primary)] sm:grid-cols-3">
+        <span>Serving Chandigarh • Mohali • Panchkula</span>
+        <span>GST Billing | OEM Partner | Enterprise Support</span>
+        <span>Instant response within 10 minutes</span>
+      </div>
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Send Enquiry</h2>
       {isMinimal ? (
         <p className="text-sm text-[var(--color-text-secondary)]">
@@ -184,20 +247,39 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Name
           <input
-            required
+            autoFocus
             value={state.name}
             onChange={(event) => patch({ name: event.target.value })}
+            placeholder="Your name"
             className={fieldClass}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Company
-          <input
-            value={state.company}
-            onChange={(event) => patch({ company: event.target.value })}
-            className={fieldClass}
-          />
-        </label>
+        {isMinimal ? (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Business Type
+            <select
+              value={state.businessType}
+              onChange={(event) => patch({ businessType: event.target.value })}
+              className={fieldClass}
+            >
+              <option value="">Select business type</option>
+              {businessTypeOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Company
+            <input
+              value={state.company}
+              onChange={(event) => patch({ company: event.target.value })}
+              className={fieldClass}
+            />
+          </label>
+        )}
         {!isMinimal ? (
           <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
             Email
@@ -214,20 +296,22 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
           <input
             type="tel"
             required
+            minLength={10}
+            inputMode="tel"
             value={state.phone}
             onChange={(event) => patch({ phone: event.target.value })}
+            placeholder="10-digit mobile number"
             className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Service
+          Requirement Type
           <select
-            required
             value={state.requirement}
             onChange={(event) => patch({ requirement: event.target.value })}
             className={fieldClass}
           >
-            <option value="">Select service</option>
+            <option value="">Select requirement type</option>
             {serviceOptions.map((service) => (
               <option key={service} value={service}>
                 {service}
@@ -235,6 +319,17 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
             ))}
           </select>
         </label>
+        {isMinimal ? (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Company (optional)
+            <input
+              value={state.company}
+              onChange={(event) => patch({ company: event.target.value })}
+              className={fieldClass}
+              placeholder="Company name"
+            />
+          </label>
+        ) : null}
         {!isMinimal ? (
           <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
             Users / Devices

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { trackAdsConversion } from "@/lib/ads";
+import { trackAdsConversionOncePerSession } from "@/lib/ads";
 
 function getHref(target: EventTarget | null) {
   if (!(target instanceof Element)) {
@@ -48,26 +48,60 @@ export default function OutboundClickTracker() {
           : undefined;
 
       if (href.startsWith("tel:")) {
-        trackAdsConversion("call_click", { value: 1, link_url: href, page_path: pagePath });
+        trackAdsConversionOncePerSession(
+          "call_click",
+          { value: 1, link_url: href, page_path: pagePath },
+          "call_click"
+        );
         return;
       }
 
       if (href.includes("wa.me") || href.includes("api.whatsapp.com")) {
-        trackAdsConversion("whatsapp_click", { value: 1, link_url: href, page_path: pagePath });
+        trackAdsConversionOncePerSession(
+          "whatsapp_click",
+          { value: 1, link_url: href, page_path: pagePath },
+          "whatsapp_click"
+        );
         return;
       }
 
       if (isRequestQuoteHref(href)) {
-        trackAdsConversion("request_quote_click", {
-          value: 1,
-          link_url: href,
-          page_path: pagePath
-        });
+        trackAdsConversionOncePerSession(
+          "request_quote_click",
+          {
+            value: 1,
+            link_url: href,
+            page_path: pagePath
+          },
+          "request_quote_click"
+        );
+      }
+    };
+
+    const onScroll = () => {
+      if (typeof window === "undefined") {
+        return;
+      }
+      const root = document.documentElement;
+      const maxScrollable = Math.max(root.scrollHeight - window.innerHeight, 0);
+      if (maxScrollable <= 0) {
+        return;
+      }
+      const depth = window.scrollY / maxScrollable;
+      if (depth >= 0.5) {
+        const pagePath = `${window.location.pathname}${window.location.search}`;
+        trackAdsConversionOncePerSession("scroll_50", { value: 50, page_path: pagePath }, "scroll_50");
       }
     };
 
     document.addEventListener("click", onClick, { passive: true });
-    return () => document.removeEventListener("click", onClick);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+
+    return () => {
+      document.removeEventListener("click", onClick);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return null;

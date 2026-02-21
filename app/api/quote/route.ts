@@ -54,6 +54,9 @@ type QuotePayload = {
   company?: string;
   email?: string;
   phone?: string;
+  businessType?: string;
+  deviceType?: string;
+  timestamp?: string;
   website?: string;
   whatsappOptIn?: boolean;
 };
@@ -88,13 +91,19 @@ const quotePayloadSchema = z.object({
   referrer: z.string().optional(),
   timeline: z.string().optional(),
   notes: z.string().optional(),
-  contactName: z.string().trim().min(1, "Contact name is required."),
-  company: z.string().trim().min(1, "Company name is required."),
-  email: z.string().trim().email("Please enter a valid business email."),
+  contactName: z.string().trim().optional(),
+  company: z.string().trim().optional(),
+  email: z.string().trim().optional(),
   phone: z.string().trim().min(8, "Phone number is required."),
+  businessType: z.string().trim().optional(),
+  deviceType: z.string().trim().optional(),
+  timestamp: z.string().trim().optional(),
   website: z.string().optional(),
   whatsappOptIn: z.boolean().optional()
 });
+
+const RECENT_QUOTE_PHONE_SUBMITS = new Map<string, number>();
+const DUPLICATE_PHONE_WINDOW_MS = 5 * 60 * 1000;
 
 function toNumber(value: number | string | undefined) {
   const next = typeof value === "number" ? value : Number.parseInt(value ?? "", 10);
@@ -139,6 +148,37 @@ function isSmtpConfigured() {
       process.env.SMTP_USER?.trim() &&
       process.env.SMTP_PASS?.trim()
   );
+}
+
+function normalizePhone(phone: string) {
+  return phone.replace(/[^\d]/g, "").slice(-10);
+}
+
+function isRecentPhoneDuplicate(phone: string) {
+  if (!phone) {
+    return false;
+  }
+
+  const now = Date.now();
+  const latest = RECENT_QUOTE_PHONE_SUBMITS.get(phone);
+  if (latest && now - latest < DUPLICATE_PHONE_WINDOW_MS) {
+    return true;
+  }
+
+  for (const [key, timestamp] of RECENT_QUOTE_PHONE_SUBMITS.entries()) {
+    if (now - timestamp > DUPLICATE_PHONE_WINDOW_MS) {
+      RECENT_QUOTE_PHONE_SUBMITS.delete(key);
+    }
+  }
+
+  return false;
+}
+
+function markRecentPhoneSubmit(phone: string) {
+  if (!phone) {
+    return;
+  }
+  RECENT_QUOTE_PHONE_SUBMITS.set(phone, Date.now());
 }
 
 export async function POST(request: Request) {
@@ -213,7 +253,7 @@ export async function POST(request: Request) {
     const ciscoUsers = toNumber(payload.ciscoUsers);
     const ciscoSites = toNumber(payload.ciscoSites);
     const budgetRange = payload.budgetRange?.trim() ?? "";
-    const city = payload.city?.trim() ?? "";
+    const city = payload.city?.trim() || "Chandigarh";
     const sourcePage = payload.sourcePage?.trim() || "/request-quote";
     const source = payload.source?.trim() || sourcePage;
     const utmSource = payload.utmSource?.trim() ?? "";
@@ -229,17 +269,30 @@ export async function POST(request: Request) {
     const referrer = payload.referrer?.trim() || request.headers.get("referer") || "";
     const timeline = payload.timeline?.trim() || "This Week";
     const notes = payload.notes?.trim() ?? "";
-    const contactName = payload.contactName?.trim() ?? "";
+    const contactName = payload.contactName?.trim() || "Website Lead";
     const company = payload.company?.trim() ?? "";
     const email = payload.email?.trim() ?? "";
     const phone = payload.phone?.trim() ?? "";
+    const normalizedPhone = normalizePhone(phone);
+    const businessType = payload.businessType?.trim() ?? "";
+    const deviceType = payload.deviceType?.trim() ?? "";
+    const capturedAt = payload.timestamp?.trim() ?? "";
     const addons = Array.isArray(payload.addons)
       ? payload.addons.map((item) => item.trim()).filter(Boolean)
       : [];
     const otherBrand = payload.otherBrand?.trim() ?? "";
 
-    if (!category || !plan || !city || !contactName || !company || !email || !phone) {
+    if (!category || !plan || !phone) {
       return validationError("Please complete all required fields.");
+    }
+
+    if (normalizedPhone && isRecentPhoneDuplicate(normalizedPhone)) {
+      return NextResponse.json({
+        ok: true,
+        success: true,
+        duplicate: true,
+        message: "A recent quote request already exists for this phone number. Our team will connect shortly."
+      });
     }
 
     if (!(brand in QUOTE_CATALOG)) {
@@ -277,10 +330,19 @@ export async function POST(request: Request) {
     const qty = brand === "Microsoft" ? usersSeats : brand === "Seqrite" ? endpoints : ciscoUsers;
     const mergedNotesRaw =
       brand === "Cisco" || brand === "Other"
-        ? [notes, ciscoSites > 0 ? `Sites/Locations: ${ciscoSites}` : "", budgetRange ? `Budget: ${budgetRange}` : ""]
+        ? [
+            notes,
+            businessType ? `Business Type: ${businessType}` : "",
+            deviceType ? `Device: ${deviceType}` : "",
+            capturedAt ? `Captured At: ${capturedAt}` : "",
+            ciscoSites > 0 ? `Sites/Locations: ${ciscoSites}` : "",
+            budgetRange ? `Budget: ${budgetRange}` : ""
+          ]
             .filter(Boolean)
             .join(" | ")
-        : notes;
+        : [notes, businessType ? `Business Type: ${businessType}` : "", deviceType ? `Device: ${deviceType}` : "", capturedAt ? `Captured At: ${capturedAt}` : ""]
+            .filter(Boolean)
+            .join(" | ");
     const mergedNotes = appendAttributionToNotes(mergedNotesRaw, {
       landing_page: landingPage || pagePath || sourcePage,
       referrer,
@@ -327,6 +389,8 @@ export async function POST(request: Request) {
       referrer: referrer || undefined,
       timeline,
       addons,
+      businessType: businessType || undefined,
+      deviceType: deviceType || undefined,
       score: leadScore
     };
 
@@ -342,7 +406,7 @@ export async function POST(request: Request) {
       contactName,
       company,
       email,
-      phone,
+      phone: normalizedPhone || phone,
       notes: mergedNotes ?? "",
       source,
       sourcePage
@@ -350,9 +414,9 @@ export async function POST(request: Request) {
 
     const crmLead = await createCrmLead({
       name: contactName,
-      phone,
-      email,
-      company,
+      phone: normalizedPhone || phone,
+      email: email || undefined,
+      company: company || undefined,
       city,
       source,
       campaign: brand,
@@ -371,6 +435,7 @@ export async function POST(request: Request) {
       score: leadScore,
       assignedTo: suggestedAgent
     });
+    markRecentPhoneSubmit(normalizedPhone || phone);
 
     // Normalize a lightweight legacy-shaped lead object for downstream messaging and email templates
     const leadForMessaging: LeadRecord = {

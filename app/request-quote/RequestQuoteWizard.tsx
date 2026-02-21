@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
+import { trackAdsConversionOncePerSession } from "@/lib/ads";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
 import {
   BRAND_ACCENTS,
@@ -163,7 +164,7 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
   }
 
   if (currentStep === 5) {
-    return "Complete name, company, email, phone and city before submit.";
+    return "Enter phone before submit.";
   }
 
   return "Please complete required fields to continue.";
@@ -171,6 +172,7 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
 
 export default function RequestQuoteWizard() {
   const router = useRouter();
+  const formStartTracked = useRef(false);
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
@@ -416,7 +418,7 @@ export default function RequestQuoteWizard() {
     }
 
     if (currentStep === 5) {
-      return Boolean(state.contactName && state.company && state.email && state.phone && state.city);
+      return Boolean(state.phone.trim());
     }
 
     return true;
@@ -454,6 +456,9 @@ export default function RequestQuoteWizard() {
     setNotice("");
 
     const quantity = toNumber(state.quantity);
+    const normalizedCity = state.city.trim() || "Chandigarh";
+    const normalizedCompany = state.company.trim();
+    const normalizedEmail = state.email.trim();
 
     const payload = {
       brand: state.brand,
@@ -467,7 +472,7 @@ export default function RequestQuoteWizard() {
       ciscoUsers: state.brand === "Cisco" || state.brand === "Other" ? quantity : "",
       ciscoSites: "",
       budgetRange: "",
-      city: state.city,
+      city: normalizedCity,
       source: state.source,
       sourcePage: state.sourcePage,
       utmSource: state.utmSource,
@@ -486,9 +491,16 @@ export default function RequestQuoteWizard() {
       notes: state.notes,
       website: state.website,
       contactName: state.contactName,
-      company: state.company,
-      email: state.email,
-      phone: state.phone
+      company: normalizedCompany || undefined,
+      email: normalizedEmail || undefined,
+      phone: state.phone,
+      deviceType:
+        typeof window !== "undefined" && /mobile|android|iphone|ipod/i.test(window.navigator.userAgent)
+          ? "mobile"
+          : typeof window !== "undefined" && /ipad|tablet/i.test(window.navigator.userAgent)
+            ? "tablet"
+            : "desktop",
+      timestamp: new Date().toISOString()
     };
 
     try {
@@ -550,7 +562,7 @@ export default function RequestQuoteWizard() {
       const query = new URLSearchParams({
         formSource: "request-quote",
         brand: state.brandLabel,
-        city: state.city,
+        city: normalizedCity,
         qty: String(quantity),
         category: state.category,
         plan: state.product,
@@ -607,6 +619,25 @@ export default function RequestQuoteWizard() {
     }
   }
 
+  function handleFormStartCapture() {
+    if (formStartTracked.current) {
+      return;
+    }
+    formStartTracked.current = true;
+    const pagePath =
+      typeof window !== "undefined"
+        ? `${window.location.pathname}${window.location.search}`
+        : "/request-quote";
+    trackAdsConversionOncePerSession(
+      "form_start",
+      {
+        form_name: "request_quote_wizard",
+        page_path: pagePath
+      },
+      "form_start:request_quote"
+    );
+  }
+
   return (
     <Section tone="alt" className="py-10 md:py-14">
       <div className="mx-auto max-w-6xl space-y-6">
@@ -628,7 +659,7 @@ export default function RequestQuoteWizard() {
         </header>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_330px]">
-          <Card className="section-revealed space-y-6 border-t-2 p-5 md:p-7">
+          <Card className="section-revealed space-y-6 border-t-2 p-5 md:p-7" onFocusCapture={handleFormStartCapture}>
             <div className="space-y-3">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-text-secondary)]">
                 Step {step} of {steps.length}
@@ -915,13 +946,14 @@ export default function RequestQuoteWizard() {
               <div className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    Name
+                    Name (optional)
                     <input
                       type="text"
                       value={state.contactName}
                       onChange={(event) => patch({ contactName: event.target.value })}
                       className={formFieldClass}
                       autoComplete="name"
+                      placeholder="Optional"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -932,6 +964,7 @@ export default function RequestQuoteWizard() {
                       onChange={(event) => patch({ company: event.target.value })}
                       className={formFieldClass}
                       autoComplete="organization"
+                      placeholder="Optional"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -942,6 +975,7 @@ export default function RequestQuoteWizard() {
                       onChange={(event) => patch({ phone: event.target.value })}
                       className={formFieldClass}
                       autoComplete="tel"
+                      required
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -952,6 +986,7 @@ export default function RequestQuoteWizard() {
                       onChange={(event) => patch({ email: event.target.value })}
                       className={formFieldClass}
                       autoComplete="email"
+                      placeholder="Optional"
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">

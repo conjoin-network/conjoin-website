@@ -8,6 +8,7 @@ import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import AnalyticsRouteTracker from "@/app/components/AnalyticsRouteTracker";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
+import FloatingCallButton from "@/app/components/FloatingCallButton";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
@@ -412,6 +413,7 @@ export default function RootLayout({
             </Container>
           </footer>
         </div>
+        <FloatingCallButton />
         <FloatingWhatsApp />
         {primaryTagId ? (
           <>

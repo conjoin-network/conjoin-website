@@ -3,37 +3,14 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
-import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
+import { SALES_PHONE_NUMBER, tel } from "@/lib/contact";
 
-function inferBrand(pathname: string) {
-  if (pathname.includes("microsoft")) {
-    return "Microsoft";
-  }
-  if (pathname.includes("seqrite")) {
-    return "Seqrite";
-  }
-  if (pathname.includes("cisco")) {
-    return "Cisco";
-  }
-  return "IT solutions";
-}
-
-function inferCity(pathname: string) {
-  if (pathname.startsWith("/locations/")) {
-    const slug = pathname.split("/")[2] ?? "";
-    if (slug) {
-      return slug.replace(/-/g, " ");
-    }
-  }
-  return "Chandigarh";
-}
-
-export default function FloatingWhatsApp() {
+export default function FloatingCallButton() {
   const pathname = usePathname() ?? "/";
-  const [nearFooter, setNearFooter] = useState(false);
-  const [viewportHeight, setViewportHeight] = useState(900);
   const hiddenByPath = pathname.startsWith("/admin") || pathname.startsWith("/api");
   const isFormRoute = pathname.startsWith("/request-quote");
+  const [nearFooter, setNearFooter] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState(900);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -47,7 +24,6 @@ export default function FloatingWhatsApp() {
     updateHeight();
     window.addEventListener("resize", updateHeight, { passive: true });
     window.addEventListener("orientationchange", updateHeight);
-
     return () => {
       window.removeEventListener("resize", updateHeight);
       window.removeEventListener("orientationchange", updateHeight);
@@ -64,20 +40,13 @@ export default function FloatingWhatsApp() {
       (entries) => {
         setNearFooter(entries.some((entry) => entry.isIntersecting));
       },
-      {
-        rootMargin: "0px 0px 200px 0px",
-        threshold: 0
-      }
+      { rootMargin: "0px 0px 200px 0px", threshold: 0 }
     );
 
     observer.observe(footer);
     return () => observer.disconnect();
   }, []);
 
-  const brand = inferBrand(pathname);
-  const city = inferCity(pathname);
-  const requirement = pathname.startsWith("/products/") ? "Product advisory" : "Quote support";
-  const href = getWhatsAppLink(buildQuoteMessage({ brand, city, requirement }));
   const isShortViewport = viewportHeight < 720;
   const bottomOffset = useMemo(() => {
     let next = isFormRoute ? (isShortViewport ? 124 : 108) : (isShortViewport ? 28 : 20);
@@ -91,28 +60,28 @@ export default function FloatingWhatsApp() {
     return null;
   }
 
+  const href = tel(SALES_PHONE_NUMBER);
+
   return (
     <a
       href={href}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Chat on WhatsApp"
+      aria-label="Call Sales"
       data-ads-tracked="1"
-      onClick={() => {
+      onClick={() =>
         trackAdsConversionOncePerSession(
-          "whatsapp_click",
+          "call_click",
           {
             value: 1,
             page_path: pathname,
             link_url: href
           },
-          "whatsapp_click"
-        );
-      }}
-      className={`floating-whatsapp interactive-btn fixed z-[60] inline-flex min-h-11 items-center justify-center rounded-full bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white transition-all duration-200 ${isFormRoute ? "is-form-route" : ""} ${nearFooter ? "is-near-footer" : ""}`}
+          "call_click"
+        )
+      }
+      className={`floating-call interactive-btn fixed z-[59] inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-all duration-200 ${nearFooter ? "is-near-footer" : ""}`}
       style={{ "--floating-bottom-offset": `${bottomOffset}px` } as CSSProperties}
     >
-      WhatsApp
+      Call Now
     </a>
   );
 }

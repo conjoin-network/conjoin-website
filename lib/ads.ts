@@ -6,6 +6,8 @@ export const ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID?.trim() || "AW-17956
 export const ADS_CONVERSION_LABEL =
   process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL?.trim() || "gN4jCKrqhPsbEPvq_JC";
 const TRACKING_DEBUG_FLAG = process.env.NEXT_PUBLIC_TRACKING_DEBUG === "1";
+const SESSION_EVENT_PREFIX = "conjoin_event_once:";
+const memoryEventDedupe = new Set<string>();
 
 declare global {
   interface Window {
@@ -57,6 +59,38 @@ export function trackAdsConversion(eventName: string, params?: Record<string, un
   debugTracking(normalizedEventName, payload);
 }
 
+function markEventOncePerSession(key: string) {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  try {
+    if (window.sessionStorage.getItem(key) === "1") {
+      return false;
+    }
+    window.sessionStorage.setItem(key, "1");
+    return true;
+  } catch {
+    if (memoryEventDedupe.has(key)) {
+      return false;
+    }
+    memoryEventDedupe.add(key);
+    return true;
+  }
+}
+
+export function trackAdsConversionOncePerSession(
+  eventName: string,
+  params?: Record<string, unknown>,
+  scopeKey?: string
+) {
+  const dedupeKey = `${SESSION_EVENT_PREFIX}${scopeKey ?? normalizeEventName(eventName)}`;
+  if (!markEventOncePerSession(dedupeKey)) {
+    return;
+  }
+  trackAdsConversion(eventName, params);
+}
+
 export function pushDataLayerEvent(eventName: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined") {
     return;
@@ -91,6 +125,7 @@ export function trackLeadConversion(input: LeadConversionInput) {
     currency: "INR"
   };
 
+  trackAdsConversion("form_submit_success", payload);
   trackAdsConversion("generate_lead", payload);
 
   // Prevent double-counting when Google Ads imports GA4 key events by default.

@@ -323,7 +323,34 @@ html[data-header-scrolled="true"] .site-header {
   transform: scale(0.98);
 }
 
+.floating-call {
+  left: calc(env(safe-area-inset-left, 0px) + 1rem);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--floating-bottom-offset, 20px));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, #fff);
+  color: #fff;
+  background: var(--color-primary);
+  box-shadow: 0 12px 25px -14px rgb(37 99 235 / 85%);
+}
+
+.floating-call:hover,
+.floating-call:focus-visible {
+  background: #1d4ed8;
+  color: #fff;
+}
+
+.floating-call.is-near-footer {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
 .menu-open-lock .floating-whatsapp {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+.menu-open-lock .floating-call {
   opacity: 0;
   pointer-events: none;
   transform: translateY(10px);
@@ -432,7 +459,8 @@ html[data-header-scrolled="true"] .site-header {
   .section-revealed,
   .mobile-nav-overlay,
   .mobile-nav-sheet,
-  .floating-whatsapp {
+  .floating-whatsapp,
+  .floating-call {
     animation: none;
   }
 }
@@ -457,6 +485,10 @@ html[data-header-scrolled="true"] .site-header {
 
   .floating-whatsapp {
     right: calc(env(safe-area-inset-right, 0px) + 0.9rem);
+  }
+
+  .floating-call {
+    left: calc(env(safe-area-inset-left, 0px) + 0.9rem);
   }
 
   .mobile-nav-sheet nav a {
