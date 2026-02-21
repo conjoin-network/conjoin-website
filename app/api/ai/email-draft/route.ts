@@ -4,6 +4,7 @@ import { getAdminActorLabel, getPortalSessionFromRequest } from "@/lib/admin-ses
 import { logAuditEvent } from "@/lib/event-log";
 import { generateLeadEmailDraft } from "@/lib/ai";
 import { getLeadById, patchLead } from "@/lib/leads";
+import { canSessionAccessLead } from "@/lib/crm-access";
 
 const payloadSchema = z.object({
   leadId: z.string().trim().min(1, "Lead ID is required.")
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });
   }
 
-  if (!session.isManagement && lead.assignedTo !== session.assignee) {
+  if (!canSessionAccessLead(session, lead)) {
     return NextResponse.json({ ok: false, message: "Access denied for this lead." }, { status: 403 });
   }
 
@@ -61,4 +62,3 @@ export async function POST(request: Request) {
     }
   });
 }
-

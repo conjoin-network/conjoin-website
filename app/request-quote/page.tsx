@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import JsonLd from "@/app/components/JsonLd";
+import Container from "@/app/components/Container";
+import Section from "@/app/components/Section";
+import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import RequestQuoteWizard from "@/app/request-quote/RequestQuoteWizard";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
@@ -37,6 +40,18 @@ export default function RequestQuotePage() {
 
   return (
     <>
+      <Section tone="alt" className="pb-0 pt-10 md:pt-14">
+        <Container className="space-y-5">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Request Quote</h2>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Quick lead capture for immediate callback.
+            </p>
+            <p className="text-xs text-[var(--color-text-secondary)]">GST Invoice • Same-day activation • Local support</p>
+          </div>
+          <ContactLeadForm mode="minimal" />
+        </Container>
+      </Section>
       <RequestQuoteWizard />
       <JsonLd id="request-quote-faq-jsonld" data={faqJsonLd} />
     </>

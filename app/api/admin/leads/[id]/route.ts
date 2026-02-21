@@ -4,6 +4,8 @@ import { getAdminActorLabel, getPortalSessionFromRequest } from "@/lib/admin-ses
 import { getCrmLead, updateCrmLead } from "@/lib/crm";
 import { logAuditEvent } from "@/lib/event-log";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
+import { canSessionAccessLead, inferLeadScope } from "@/lib/crm-access";
+import { upsertWorkflowMetaInNotes } from "@/lib/lead-workflow-meta";
 
 type UpdatePayload = {
   status?: LeadStatus;
@@ -55,7 +57,7 @@ export async function PATCH(
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });
   }
 
-  if (!session.isManagement && existingLead.assignedTo !== session.assignee) {
+  if (!canSessionAccessLead(session, existingLead)) {
     return NextResponse.json({ ok: false, message: "Access denied for this lead." }, { status: 403 });
   }
 
@@ -90,7 +92,37 @@ export async function PATCH(
   const updatePayload: { status?: string; assignedTo?: string | null; notes?: string } = {};
   if (status) updatePayload.status = mapAdminStatusToDb(status);
   if (payload.assignedTo !== undefined) updatePayload.assignedTo = payload.assignedTo === null ? null : assignedTo;
-  if (note) updatePayload.notes = (existingLead.notes ? existingLead.notes + "\n" : "") + `${actor}: ${note}`;
+  const nextWorkflowPatch: {
+    nextFollowUpAt?: string | null;
+    lastContactedAt?: string | null;
+    firstContactAt?: string | null;
+    firstContactBy?: string | null;
+    scope?: "SALES" | "DEALER" | "ENTERPRISE" | "LOCAL_OPS" | "UNSCOPED";
+  } = {};
+
+  if (nextFollowUpAt !== undefined) {
+    nextWorkflowPatch.nextFollowUpAt = nextFollowUpAt;
+  }
+  if (payload.markContacted) {
+    const nowIso = new Date().toISOString();
+    nextWorkflowPatch.lastContactedAt = nowIso;
+    if (!existingLead.firstContactAt) {
+      nextWorkflowPatch.firstContactAt = nowIso;
+      nextWorkflowPatch.firstContactBy = actor;
+    }
+  }
+  const changedAssignee = payload.assignedTo !== undefined ? payload.assignedTo === null ? null : assignedTo : existingLead.assignedTo;
+  nextWorkflowPatch.scope = inferLeadScope({
+    assignedTo: changedAssignee,
+    source: existingLead.source,
+    campaign: existingLead.brand,
+    requirement: existingLead.category,
+    notes: existingLead.notes
+  });
+
+  const noteWithActor = note ? `${actor}: ${note}` : "";
+  const combinedPlainNotes = [existingLead.notes ?? "", noteWithActor].filter(Boolean).join("\n");
+  updatePayload.notes = upsertWorkflowMetaInNotes(combinedPlainNotes, nextWorkflowPatch);
 
   const updated = await updateCrmLead(id, updatePayload);
 

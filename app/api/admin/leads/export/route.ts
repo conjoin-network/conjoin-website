@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { listCrmLeads } from "@/lib/crm";
 import type { LeadFilters } from "@/lib/leads";
+import { canSessionAccessLead } from "@/lib/crm-access";
 
 function parseFilters(url: URL): LeadFilters {
   const dateRangeParam = url.searchParams.get("dateRange");
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     console.error("ADMIN_LEADS_EXPORT_FAILED", JSON.stringify({ error: serialized }));
     allLeads = [];
   }
-  const visibleLeads = session.isManagement ? allLeads : allLeads.filter((lead) => lead.assignedTo === session.assignee);
+  const visibleLeads = allLeads.filter((lead) => canSessionAccessLead(session, lead));
   const leads = visibleLeads; // minimal export from CRM-normalized shape
 
   const headers = [

@@ -1,5 +1,6 @@
 const DEFAULT_LEAD_NOTIFY_LOCAL_PARTS = ["manod", "prabhjyot", "zeena"] as const;
 const DEFAULT_LEAD_NOTIFY_DOMAIN = "conjoinnetwork.com";
+const DEFAULT_LEADS_DESK_EMAIL = "conjoin.leads@gmail.com";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
 
@@ -21,10 +22,16 @@ export function resolveLeadNotifyRecipients() {
 
   const unique = [...new Set(parsed)];
   if (unique.length > 0) {
+    if (!unique.includes(DEFAULT_LEADS_DESK_EMAIL)) {
+      unique.unshift(DEFAULT_LEADS_DESK_EMAIL);
+    }
     return unique;
   }
 
-  return DEFAULT_LEAD_NOTIFY_LOCAL_PARTS.map((localPart) => `${localPart}@${DEFAULT_LEAD_NOTIFY_DOMAIN}`);
+  return [
+    DEFAULT_LEADS_DESK_EMAIL,
+    ...DEFAULT_LEAD_NOTIFY_LOCAL_PARTS.map((localPart) => `${localPart}@${DEFAULT_LEAD_NOTIFY_DOMAIN}`)
+  ];
 }
 
 export function isCustomerConfirmationEnabled() {

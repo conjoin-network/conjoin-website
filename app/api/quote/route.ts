@@ -18,6 +18,7 @@ import { applyRateLimit, getClientIp, isHoneypotTriggered } from "@/lib/request-
 import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
 import { z } from "zod";
 import { appendAttributionToNotes } from "@/lib/lead-attribution";
+import { suggestAssigneeForService } from "@/lib/crm-access";
 
 type QuotePayload = {
   brand?: string;
@@ -295,7 +296,11 @@ export async function POST(request: Request) {
       category,
       city
     });
-    const suggestedAgent = suggestAgentForLead(brand, category);
+    const assignment = suggestAssigneeForService({
+      service: `${brand} ${category} ${plan}`.trim(),
+      source
+    });
+    const suggestedAgent = assignment.assignee || suggestAgentForLead(brand, category);
 
     const normalizedPayload = {
       brand,

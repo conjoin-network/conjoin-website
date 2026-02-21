@@ -1,5 +1,6 @@
 import prisma from "./prisma";
 import { parseAttributionFromNotes } from "./lead-attribution";
+import { parseWorkflowMetaFromNotes } from "./lead-workflow-meta";
 
 type SortDirection = "asc" | "desc";
 
@@ -158,7 +159,8 @@ function toIsoString(value: Date | string) {
 function normalize(lead: CrmLeadDbRow): CrmLeadView {
   const score = typeof lead.score === "number" ? lead.score : Number(lead.score ?? 0);
   const attribution = parseAttributionFromNotes(lead.notes ?? null);
-  const normalizedNotes = attribution.notes;
+  const workflow = parseWorkflowMetaFromNotes(attribution.notes);
+  const normalizedNotes = workflow.notes;
   const normalizedReferrer = lead.referrer ?? attribution.meta.referrer ?? null;
   const normalizedPagePath = lead.pageUrl ?? attribution.meta.landing_page ?? null;
   const normalizedGclid = lead.gclid ?? attribution.meta.gclid ?? null;
@@ -201,10 +203,10 @@ function normalize(lead: CrmLeadDbRow): CrmLeadView {
     wbraid: lead.wbraid ?? attribution.meta.wbraid ?? null,
     ip: lead.ip ?? null,
     userAgent: lead.userAgent ?? null,
-    lastContactedAt: null,
-    firstContactAt: null,
-    firstContactBy: null,
-    nextFollowUpAt: null,
+    lastContactedAt: workflow.meta.lastContactedAt ?? null,
+    firstContactAt: workflow.meta.firstContactAt ?? null,
+    firstContactBy: workflow.meta.firstContactBy ?? null,
+    nextFollowUpAt: workflow.meta.nextFollowUpAt ?? null,
     activityNotes: [],
     aiSummary: null,
     aiEmailDraft: null,

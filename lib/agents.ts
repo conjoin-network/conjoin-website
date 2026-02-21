@@ -44,3 +44,28 @@ export function suggestAgentForLead(brand: string, category = "") {
   }
   return pickFromPool(["Girish", "Nidhi", "Rimpy"]);
 }
+
+const AGENT_EMAIL_ENV_MAP: Record<string, string | undefined> = {
+  Girish: process.env.AGENT_EMAIL_GIRISH,
+  Kiran: process.env.AGENT_EMAIL_KIRAN,
+  Rimpy: process.env.AGENT_EMAIL_RIMPY,
+  Nidhi: process.env.AGENT_EMAIL_NIDHI,
+  Zeena: process.env.AGENT_EMAIL_ZEENA,
+  Bharat: process.env.AGENT_EMAIL_BHARAT,
+  Pardeep: process.env.AGENT_EMAIL_PARDEEP
+};
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/i;
+
+export function getAgentNotificationEmail(name: string | null | undefined) {
+  const key = (name ?? "").trim();
+  if (!key) {
+    return null;
+  }
+
+  const configured = AGENT_EMAIL_ENV_MAP[key]?.trim().toLowerCase() ?? "";
+  if (!configured || !EMAIL_REGEX.test(configured)) {
+    return null;
+  }
+  return configured;
+}

@@ -1,10 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const ADMIN_SESSION_COOKIE = "conjoin_admin_session";
-const ADMIN_SESSION_VERSION = "v2";
+const ADMIN_SESSION_VERSION = "v3";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 12;
 
 export type PortalRole = "OWNER" | "MANAGER" | "AGENT" | "SUPPORT";
+export type CrmRole = "SUPER_ADMIN" | "ADMIN" | "SALES" | "DEALER" | "ENTERPRISE" | "LOCAL_OPS";
 
 type SessionCookieOptions = {
   httpOnly: true;
@@ -18,6 +19,7 @@ type PortalUserConfig = {
   username: string;
   password: string;
   role: PortalRole;
+  crmRole: CrmRole;
   displayName: string;
   assignee: string | null;
   canExport: boolean;
@@ -28,6 +30,7 @@ type SessionTokenPayload = {
   v: string;
   u: string;
   r: PortalRole;
+  c: CrmRole;
   n: string;
   a: string | null;
   x: 1 | 0;
@@ -38,6 +41,7 @@ type SessionTokenPayload = {
 export type PortalSession = {
   username: string;
   role: PortalRole;
+  crmRole: CrmRole;
   displayName: string;
   assignee: string | null;
   canExport: boolean;
@@ -96,6 +100,7 @@ function buildPortalSession(config: PortalUserConfig): PortalSession {
   return {
     username: config.username,
     role: config.role,
+    crmRole: config.crmRole,
     displayName: config.displayName,
     assignee: config.assignee,
     canExport: config.canExport,
@@ -115,6 +120,7 @@ function makeUser(config: Partial<PortalUserConfig> & Pick<PortalUserConfig, "ro
     username,
     password,
     role: config.role,
+    crmRole: config.crmRole ?? "SALES",
     displayName: config.displayName?.trim() || username,
     assignee: config.assignee?.trim() || null,
     canExport: Boolean(config.canExport),
@@ -126,6 +132,7 @@ export function getPortalUsers(): PortalUserConfig[] {
   const users: Array<PortalUserConfig | null> = [
     makeUser({
       role: "OWNER",
+      crmRole: "SUPER_ADMIN",
       username:
         process.env.CRM_ADMIN_EMAIL ||
         process.env.CRM_ADMIN_USER ||
@@ -137,33 +144,66 @@ export function getPortalUsers(): PortalUserConfig[] {
         process.env.OWNER_PASS ||
         process.env.ADMIN_PASSWORD ||
         process.env.ADMIN_PASS,
-      displayName: process.env.OWNER_NAME || "Owner",
+      displayName: process.env.OWNER_NAME || "Manod",
       canExport: true,
       canAssign: true
     }),
     makeUser({
       role: "MANAGER",
+      crmRole: "ADMIN",
       username: process.env.MANAGER_USER,
       password: process.env.MANAGER_PASS,
-      displayName: process.env.MANAGER_NAME || "Manager",
+      displayName: process.env.MANAGER_NAME || "Prabhjyot",
       canExport: parseBoolean(process.env.MANAGER_CAN_EXPORT, false),
       canAssign: true
     }),
     makeUser({
       role: "AGENT",
-      username: process.env.AGENT_USER,
-      password: process.env.AGENT_PASS,
-      displayName: process.env.AGENT_NAME || "Girish",
-      assignee: process.env.AGENT_ASSIGNEE || process.env.AGENT_NAME || "Girish",
+      crmRole: "SALES",
+      username: process.env.NIDHI_USER || process.env.AGENT_USER,
+      password: process.env.NIDHI_PASS || process.env.AGENT_PASS,
+      displayName: process.env.NIDHI_NAME || "Nidhi",
+      assignee: process.env.NIDHI_ASSIGNEE || "Nidhi",
+      canExport: false,
+      canAssign: false
+    }),
+    makeUser({
+      role: "AGENT",
+      crmRole: "DEALER",
+      username: process.env.RIMPY_USER,
+      password: process.env.RIMPY_PASS,
+      displayName: process.env.RIMPY_NAME || "Rimpy",
+      assignee: process.env.RIMPY_ASSIGNEE || "Rimpy",
+      canExport: false,
+      canAssign: false
+    }),
+    makeUser({
+      role: "AGENT",
+      crmRole: "ENTERPRISE",
+      username: process.env.ZEENA_USER,
+      password: process.env.ZEENA_PASS,
+      displayName: process.env.ZEENA_NAME || "Zeena",
+      assignee: process.env.ZEENA_ASSIGNEE || "Zeena",
       canExport: false,
       canAssign: false
     }),
     makeUser({
       role: "SUPPORT",
-      username: process.env.SUPPORT_USER,
-      password: process.env.SUPPORT_PASS,
-      displayName: process.env.SUPPORT_NAME || "Kiran",
-      assignee: process.env.SUPPORT_ASSIGNEE || process.env.SUPPORT_NAME || "Kiran",
+      crmRole: "LOCAL_OPS",
+      username: process.env.BHARAT_USER || process.env.SUPPORT_USER,
+      password: process.env.BHARAT_PASS || process.env.SUPPORT_PASS,
+      displayName: process.env.BHARAT_NAME || "Bharat",
+      assignee: process.env.BHARAT_ASSIGNEE || "Bharat",
+      canExport: false,
+      canAssign: false
+    }),
+    makeUser({
+      role: "SUPPORT",
+      crmRole: "LOCAL_OPS",
+      username: process.env.PARDEEP_USER,
+      password: process.env.PARDEEP_PASS,
+      displayName: process.env.PARDEEP_NAME || "Pardeep",
+      assignee: process.env.PARDEEP_ASSIGNEE || "Pardeep",
       canExport: false,
       canAssign: false
     })
@@ -195,6 +235,7 @@ export function createPortalSessionToken(session: PortalSession) {
     v: ADMIN_SESSION_VERSION,
     u: session.username,
     r: session.role,
+    c: session.crmRole,
     n: session.displayName,
     a: session.assignee,
     x: session.canExport ? 1 : 0,
@@ -231,6 +272,7 @@ export function readPortalSessionFromToken(token: string | undefined | null): Po
     return {
       username: parsed.u,
       role: parsed.r,
+      crmRole: parsed.c ?? (parsed.r === "OWNER" ? "SUPER_ADMIN" : parsed.r === "MANAGER" ? "ADMIN" : "SALES"),
       displayName: parsed.n,
       assignee: parsed.a,
       canExport: parsed.x === 1,

@@ -92,6 +92,7 @@ type ApiResponse = {
     agents: typeof AGENT_OPTIONS;
     permissions: {
       role: "OWNER" | "MANAGER" | "AGENT" | "SUPPORT";
+      crmRole: "SUPER_ADMIN" | "ADMIN" | "SALES" | "DEALER" | "ENTERPRISE" | "LOCAL_OPS";
       displayName: string;
       assignee: string | null;
       canExport: boolean;
@@ -137,7 +138,7 @@ const defaultFilters: FilterState = {
 const STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: "New",
   IN_PROGRESS: "Contacted",
-  QUOTED: "Qualified",
+  QUOTED: "Negotiation",
   WON: "Won",
   LOST: "Lost"
 };
@@ -207,6 +208,39 @@ function buildLeadSummary(lead: LeadItem) {
   ].join("\n");
 }
 
+function formatLeadAge(createdAt: string) {
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) {
+    return "-";
+  }
+
+  const diffMs = Date.now() - created.getTime();
+  const diffHours = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60)));
+  if (diffHours < 24) {
+    return `${diffHours}h`;
+  }
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d ${diffHours % 24}h`;
+}
+
+function followUpState(nextFollowUpAt: string | null | undefined) {
+  if (!nextFollowUpAt) {
+    return { label: "Follow-up not set", tone: "text-amber-200" };
+  }
+  const date = new Date(nextFollowUpAt);
+  if (Number.isNaN(date.getTime())) {
+    return { label: "Invalid follow-up", tone: "text-rose-200" };
+  }
+  const diff = date.getTime() - Date.now();
+  if (diff < 0) {
+    return { label: "Overdue", tone: "text-rose-200" };
+  }
+  if (diff <= 24 * 60 * 60 * 1000) {
+    return { label: "Due within 24h", tone: "text-amber-200" };
+  }
+  return { label: "Upcoming", tone: "text-emerald-200" };
+}
+
 export default function AdminLeadsClient() {
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
   const [leads, setLeads] = useState<LeadItem[]>([]);
@@ -219,6 +253,7 @@ export default function AdminLeadsClient() {
     agents: AGENT_OPTIONS,
     permissions: {
       role: "OWNER",
+      crmRole: "SUPER_ADMIN",
       displayName: "Owner",
       assignee: null,
       canExport: true,
@@ -373,7 +408,7 @@ export default function AdminLeadsClient() {
       };
 
       if (!res.ok) {
-        throw new Error(payload?.error || payload?.message || `Create failed ()`);
+        throw new Error(payload?.error || payload?.message || `Create failed (${res.status})`);
       }
       if (payload?.ok === false) {
         throw new Error(payload?.error || payload?.message || "Create failed");
@@ -624,7 +659,7 @@ export default function AdminLeadsClient() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <p className="text-xs text-[var(--color-text-secondary)]">
-              Signed in as {permissions.displayName} ({permissions.role})
+              Signed in as {permissions.displayName} ({permissions.crmRole})
               {!permissions.isManagement && permissions.assignee ? ` • Assigned scope: ${permissions.assignee}` : ""}
             </p>
             <p className={`text-xs ${backendHealth === "ok" ? "text-emerald-300" : "text-amber-200"}`}>
@@ -888,6 +923,7 @@ export default function AdminLeadsClient() {
                     <td className="px-4 py-4 text-xs text-[var(--color-text-secondary)]">
                       <p>{formatDate(lead.createdAt)}</p>
                       <p>{lead.leadId}</p>
+                      <p>Age: {formatLeadAge(lead.createdAt)}</p>
                       <p>1st contact: {formatDate(lead.firstContactAt)}</p>
                       <p>By: {lead.firstContactBy || "-"}</p>
                     </td>
@@ -992,6 +1028,9 @@ export default function AdminLeadsClient() {
                         onChange={(event) => updateDraft(lead.leadId, "nextFollowUpAt", event.target.value)}
                         className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-2 text-xs"
                       />
+                      <p className={`mt-1 text-xs ${followUpState(draft.nextFollowUpAt).tone}`}>
+                        {followUpState(draft.nextFollowUpAt).label}
+                      </p>
                       <p className="mt-1 text-xs text-[var(--color-text-secondary)]">Last contacted: {formatDate(lead.lastContactedAt)}</p>
                     </td>
                     <td className="px-4 py-4">

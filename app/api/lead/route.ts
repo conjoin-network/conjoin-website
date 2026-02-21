@@ -9,6 +9,7 @@ import { suggestAgentForLead } from "@/lib/agents";
 import { logAuditEvent } from "@/lib/event-log";
 import { captureServerError } from "@/lib/error-logger";
 import { isPrismaInitializationError } from "@/lib/prisma-errors";
+import { suggestAssigneeForService } from "@/lib/crm-access";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -296,6 +297,10 @@ export async function POST(request: Request) {
       category: "Contact Form",
       city: parsed.data.city
     });
+    const assignment = suggestAssigneeForService({
+      service: parsed.data.requirement,
+      source: parsed.data.source
+    });
 
     const provisionalLeadId = `RFQ-${Date.now()}`;
     let lead;
@@ -307,7 +312,7 @@ export async function POST(request: Request) {
         qty: parsed.data.users,
         score: leadScore,
         priority: scoreToPriority(leadScore),
-        assignedTo: suggestAgentForLead("Other", "Contact Form"),
+        assignedTo: assignment.assignee || suggestAgentForLead("Other", "Contact Form"),
         plan: parsed.data.requirement,
         usersSeats: parsed.data.users,
         city: parsed.data.city,

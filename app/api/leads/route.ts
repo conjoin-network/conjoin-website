@@ -8,6 +8,7 @@ import { AGENT_OPTIONS } from "@/lib/agents";
 import { LEAD_STATUSES } from "@/lib/quote-catalog";
 import { isPrismaInitializationError } from "@/lib/prisma-errors";
 import { appendAttributionToNotes } from "@/lib/lead-attribution";
+import { canSessionAccessLead, suggestAssigneeForService } from "@/lib/crm-access";
 
 export const runtime = "nodejs";
 
@@ -117,6 +118,7 @@ function normalizeListStatusFilter(value: string | null) {
   }
 
   const normalized = value.trim().toUpperCase();
+  if (normalized === "NEGOTIATION") return "QUOTED";
   if (normalized === "CONTACTED") return "IN_PROGRESS";
   if (normalized === "QUALIFIED") return "QUOTED";
   if (normalized === "CLOSED") return "WON";
@@ -127,6 +129,7 @@ function buildPermissions(session: ReturnType<typeof getPortalSessionFromRequest
   if (session) {
     return {
       role: session.role,
+      crmRole: session.crmRole,
       displayName: session.displayName,
       assignee: session.assignee,
       canExport: session.canExport,
@@ -137,6 +140,7 @@ function buildPermissions(session: ReturnType<typeof getPortalSessionFromRequest
 
   return {
     role: "OWNER",
+    crmRole: "SUPER_ADMIN",
     displayName: "Owner",
     assignee: null,
     canExport: true,
@@ -180,9 +184,14 @@ export async function POST(request: NextRequest) {
     let leadId = `RFQ-${Date.now()}`;
     let saved = false;
     let saveError: unknown = null;
+    let assignedTo: string | null = null;
     const landingPage = parsed.data.landing_page?.trim() || parsed.data.pageUrl?.trim() || request.nextUrl.pathname;
     const referrer = parsed.data.referrer?.trim() || request.headers.get("referer") || "";
     const source = parsed.data.source?.trim() || landingPage || "website";
+    const assignment = suggestAssigneeForService({
+      service: parsed.data.requirement,
+      source
+    });
     const notes = appendAttributionToNotes(parsed.data.notes, {
       landing_page: landingPage,
       referrer,
@@ -200,6 +209,8 @@ export async function POST(request: NextRequest) {
         email: email || undefined,
         company: parsed.data.company,
         source,
+        assignedTo: assignment.assignee,
+        assignedAgent: assignment.assignee,
         requirement: parsed.data.requirement,
         usersDevices: parsed.data.usersDevices,
         city: parsed.data.city,
@@ -215,6 +226,7 @@ export async function POST(request: NextRequest) {
         userAgent: ua
       });
       leadId = String((lead as { leadId?: string }).leadId ?? leadId);
+      assignedTo = (lead as { assignedTo?: string | null }).assignedTo ?? assignment.assignee ?? null;
       saved = true;
       console.info(
         "LEAD_SAVED_OK",
@@ -256,7 +268,8 @@ export async function POST(request: NextRequest) {
         phone: phone || submitted.phone || "",
         ip: String(ip),
         userAgent: ua ?? "",
-        saved
+        saved,
+        assignedTo: assignedTo ?? undefined
       });
     } catch (error) {
       console.error("LEAD_ALERT_FAILED", JSON.stringify({ requestId, leadId, error: serializeError(error) }));
@@ -322,9 +335,13 @@ export async function GET(request: NextRequest) {
     const toDate = parseDateInput(url.searchParams.get("to"));
 
     const allLeads = (await listCrmLeads()) || [];
-    const scopedLeads = permissions.isManagement
-      ? allLeads
-      : allLeads.filter((lead) => (lead.assignedTo || "") === (permissions.assignee || ""));
+    const scopedLeads = allLeads.filter((lead) =>
+      session
+        ? canSessionAccessLead(session, lead)
+        : permissions.isManagement
+          ? true
+          : (lead.assignedTo || "") === (permissions.assignee || "")
+    );
 
     const leads = scopedLeads.filter((lead) => {
       const leadStatus = String(lead.status || "").toUpperCase();

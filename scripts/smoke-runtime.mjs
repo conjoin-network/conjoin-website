@@ -242,12 +242,40 @@ async function checkLeadsApiAndAdminInbox() {
   assert(postJson.ok === true, "Expected /api/leads response ok=true");
   assert(typeof postJson.leadId === "string" && postJson.leadId.length > 0, "Expected /api/leads leadId string");
 
-  const { response: listResponse, payload: listPayload } = await fetchAdminLeadsWithAuth();
-  assert(listResponse.ok, `Expected /api/admin/leads 2xx, got ${listResponse.status}`);
-  const leads = Array.isArray(listPayload?.leads) ? listPayload.leads : [];
-  assert(leads.length >= 0, "Expected leads array from /api/admin/leads");
-  const found = leads.some((lead) => lead?.leadId === postJson.leadId);
-  assert(found, `Expected leadId ${postJson.leadId} in admin list`);
+  let found = false;
+  let lastStatus = 0;
+  let lastPayload = null;
+
+  for (let attempt = 1; attempt <= 20; attempt += 1) {
+    const { response: listResponse, payload: listPayload } = await fetchAdminLeadsWithAuth();
+    lastStatus = listResponse.status;
+    lastPayload = listPayload;
+    assert(listResponse.ok, `Expected /api/admin/leads 2xx, got ${listResponse.status}`);
+
+    const leads = Array.isArray(listPayload?.leads) ? listPayload.leads : [];
+    found = leads.some((lead) => lead?.leadId === postJson.leadId);
+    if (found) {
+      break;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+
+  if (!found) {
+    const sample = Array.isArray(lastPayload?.leads)
+      ? lastPayload.leads.slice(0, 5).map((lead) => ({
+          leadId: lead?.leadId ?? null,
+          assignedTo: lead?.assignedTo ?? null,
+          source: lead?.source ?? null,
+          contactName: lead?.contactName ?? null
+        }))
+      : [];
+    throw new Error(
+      `Expected leadId ${postJson.leadId} in admin list (status=${lastStatus}). sample=${JSON.stringify(sample)} warning=${String(
+        lastPayload?.warning ?? ""
+      )} permissions=${JSON.stringify(lastPayload?.meta?.permissions ?? null)} total=${String(lastPayload?.meta?.total ?? "n/a")}`
+    );
+  }
 
   console.log(`PASS /api/leads -> /api/admin/leads leadId=${postJson.leadId}`);
 }

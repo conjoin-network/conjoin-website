@@ -3,6 +3,7 @@ import { getPortalSessionFromRequest } from "@/lib/admin-session";
 import { getLeadById, updateLeadStatus } from "@/lib/leads";
 import { logAuditEvent } from "@/lib/event-log";
 import { LEAD_STATUSES, type LeadStatus } from "@/lib/quote-catalog";
+import { canSessionAccessLead } from "@/lib/crm-access";
 
 export async function POST(request: Request) {
   const session = getPortalSessionFromRequest(request);
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(new URL("/admin/leads?error=missing", request.url), 303);
   }
 
-  if (!session.isManagement && lead.assignedTo !== session.assignee) {
+  if (!canSessionAccessLead(session, lead)) {
     return NextResponse.redirect(new URL("/admin/leads?error=unauthorized", request.url), 303);
   }
 

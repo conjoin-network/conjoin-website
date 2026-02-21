@@ -3,6 +3,7 @@ import { getAdminActorLabel, getPortalSessionFromRequest } from "@/lib/admin-ses
 import { logAuditEvent } from "@/lib/event-log";
 import { generateLeadSummary } from "@/lib/ai";
 import { getLeadById, setLeadAiSummary } from "@/lib/leads";
+import { canSessionAccessLead } from "@/lib/crm-access";
 import { z } from "zod";
 
 const payloadSchema = z.object({
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, message: "Lead not found." }, { status: 404 });
   }
 
-  if (!session.isManagement && lead.assignedTo !== session.assignee) {
+  if (!canSessionAccessLead(session, lead)) {
     return NextResponse.json({ ok: false, message: "Access denied for this lead." }, { status: 403 });
   }
 

@@ -37,6 +37,19 @@ const initialState: FormState = {
   website: ""
 };
 
+const serviceOptions = [
+  "Microsoft 365 Licensing",
+  "Seqrite Endpoint Security",
+  "Endpoint Security",
+  "IT Procurement",
+  "Setup & Migration",
+  "Renewal Support",
+  "Local Installation",
+  "Dealer Partnership",
+  "Enterprise Security",
+  "Other"
+] as const;
+
 const trackingKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid", "gbraid", "wbraid"] as const;
 type TrackingKey = (typeof trackingKeys)[number];
 
@@ -44,7 +57,7 @@ type ContactLeadFormProps = {
   mode?: "default" | "minimal";
 };
 
-export default function ContactLeadForm({ mode = "default" }: ContactLeadFormProps) {
+export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormProps) {
   const pathname = usePathname() ?? "/contact";
   const router = useRouter();
   const isMinimal = mode === "minimal";
@@ -180,40 +193,47 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Company
           <input
-            required={!isMinimal}
             value={state.company}
             onChange={(event) => patch({ company: event.target.value })}
             className={fieldClass}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Email
-          <input
-            type="email"
-            value={state.email}
-            onChange={(event) => patch({ email: event.target.value })}
-            className={fieldClass}
-          />
-        </label>
+        {!isMinimal ? (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Email
+            <input
+              type="email"
+              value={state.email}
+              onChange={(event) => patch({ email: event.target.value })}
+              className={fieldClass}
+            />
+          </label>
+        ) : null}
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Phone
           <input
             type="tel"
-            required={isMinimal}
+            required
             value={state.phone}
             onChange={(event) => patch({ phone: event.target.value })}
             className={fieldClass}
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Requirement
-          <input
+          Service
+          <select
             required
             value={state.requirement}
             onChange={(event) => patch({ requirement: event.target.value })}
-            placeholder="Microsoft licensing, Seqrite renewal, etc."
             className={fieldClass}
-          />
+          >
+            <option value="">Select service</option>
+            {serviceOptions.map((service) => (
+              <option key={service} value={service}>
+                {service}
+              </option>
+            ))}
+          </select>
         </label>
         {!isMinimal ? (
           <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">

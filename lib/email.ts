@@ -3,6 +3,7 @@ import { LEADS_EMAIL, SALES_EMAIL } from "@/lib/contact";
 import { buildCustomerLeadTemplate, buildInternalLeadTemplate } from "@/lib/emailTemplates";
 import { isCustomerConfirmationEnabled, resolveLeadNotifyRecipients } from "@/lib/lead-notify";
 import type { LeadRecord } from "@/lib/leads";
+import { getAgentNotificationEmail } from "@/lib/agents";
 
 function getConfiguredTransport() {
   const host = process.env.SMTP_HOST;
@@ -55,6 +56,31 @@ export async function sendLeadNotification(lead: LeadRecord) {
   } catch (error) {
     console.error("LEAD_EMAIL_SEND_FAILED", error instanceof Error ? error.message : "Unknown email error");
     return { sent: false, reason: "Email provider unavailable" };
+  }
+
+  const assignedEmail = getAgentNotificationEmail(lead.assignedTo);
+  if (assignedEmail && !recipients.includes(assignedEmail)) {
+    try {
+      await transporter.sendMail({
+        from: `"${internal.fromName}" <${fromAddress}>`,
+        replyTo: internal.replyTo,
+        to: assignedEmail,
+        subject: `[Assigned] ${internal.subject}`,
+        text: [
+          `Assigned to: ${lead.assignedTo ?? "Unassigned"}`,
+          `Lead ID: ${lead.leadId}`,
+          "",
+          internal.text
+        ].join("\n"),
+        html: `${internal.html}<p style="font-size:12px;color:#64748b;">Assigned to: ${lead.assignedTo ?? "Unassigned"}</p>`
+      });
+      console.info("LEAD_ASSIGNEE_EMAIL_SENT", JSON.stringify({ leadId: lead.leadId, assignee: lead.assignedTo, to: assignedEmail }));
+    } catch (error) {
+      console.warn(
+        "LEAD_ASSIGNEE_EMAIL_FAILED",
+        JSON.stringify({ leadId: lead.leadId, assignee: lead.assignedTo, message: error instanceof Error ? error.message : String(error) })
+      );
+    }
   }
 
   const sendCustomerConfirmation = isCustomerConfirmationEnabled();
