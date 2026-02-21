@@ -55,34 +55,34 @@ export const metadata: Metadata = {
   },
   description: "Procurement-focused Microsoft, Seqrite and OEM solution advisory for North India businesses.",
   alternates: {
-    canonical: "/"
+    canonical: SITE_URL
   },
   icons: {
-    icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" }
-    ],
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
-    shortcut: "/favicon-32x32.png"
   },
   openGraph: {
-    title: "ConjoinNetwork | Procurement-Ready IT Licensing & Security",
-    description: "Licensing, migration, security, renewals and support with compliance-ready commercial proposals.",
-    url: absoluteUrl("/"),
-    siteName: "ConjoinNetwork",
-    type: "website",
+    title: "Conjoin Network Pvt. Ltd. | Microsoft 365 & Enterprise IT Chandigarh",
+    description: "Partner-led Microsoft 365, Endpoint Security, and Enterprise IT solutions across Chandigarh, Mohali & Panchkula.",
+    url: SITE_URL,
+    siteName: "Conjoin Network",
     images: [
       {
-        url: absoluteUrl("/brand/conjoin-logo.png"),
-        alt: "ConjoinNetwork"
+        url: absoluteUrl("/og-image.png"),
+        width: 1200,
+        height: 630,
+        alt: "Conjoin Network – Enterprise IT Partner"
       }
-    ]
+    ],
+    locale: "en_IN",
+    type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "ConjoinNetwork | Procurement-Ready IT Licensing & Security",
-    description: "Licensing, migration, security, renewals and support with compliance-ready commercial proposals.",
-    images: [absoluteUrl("/brand/conjoin-logo.png")]
+    title: "Conjoin Network | Enterprise IT Partner",
+    description: "Microsoft 365, Security & IT Procurement – Chandigarh",
+    images: [absoluteUrl("/og-image.png")]
   }
 };
 
