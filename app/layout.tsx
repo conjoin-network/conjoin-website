@@ -359,7 +359,7 @@ export default function RootLayout({
                     eventName="whatsapp_click"
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex min-h-10 items-center justify-center rounded-xl bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white"
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-white/20 bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white hover:bg-[#0b4b45] focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-alt-bg)]"
                   >
                     WhatsApp Sales
                   </AdsTrackedLink>

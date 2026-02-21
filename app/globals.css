@@ -301,7 +301,16 @@ html[data-header-scrolled="true"] .site-header {
 .floating-whatsapp {
   right: calc(env(safe-area-inset-right, 0px) + 1rem);
   bottom: calc(env(safe-area-inset-bottom, 0px) + var(--floating-bottom-offset, 20px));
+  border: 1px solid rgb(255 255 255 / 20%);
+  color: #fff;
+  background: var(--brand-whatsapp);
   box-shadow: 0 12px 25px -14px rgba(18, 140, 126, 0.9);
+}
+
+.floating-whatsapp:hover,
+.floating-whatsapp:focus-visible {
+  background: #0b4b45;
+  color: #fff;
 }
 
 .floating-whatsapp.is-near-footer {

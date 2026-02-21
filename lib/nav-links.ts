@@ -17,7 +17,7 @@ export const PRIMARY_NAV_LINKS: PrimaryNavLink[] = [
   },
   {
     href: "/seqrite-chandigarh",
-    label: "Seqrite",
+    label: "Seqrite Chandigarh",
     matchPrefix: "/seqrite-chandigarh"
   },
   {

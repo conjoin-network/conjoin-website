@@ -39,49 +39,44 @@ const serviceArea = [
 
 const microsoftFaqs = [
   {
-    question: "How quickly can we renew Microsoft 365 licenses?",
+    question: "What is the Microsoft 365 pricing approach for Chandigarh businesses?",
     answer:
-      "Most renewals are processed the same day after user count and tenant details are confirmed."
+      "Pricing depends on plan mix, seat count, and support scope. We share a clear commercial summary for Basic, Standard, and Premium options before purchase."
   },
   {
-    question: "Can you migrate email from Google Workspace or legacy servers?",
+    question: "How long does renewal usually take?",
     answer:
-      "Yes. We handle mailbox assessment, migration planning, and controlled cutover with minimal downtime."
+      "Standard renewals are usually completed the same day once tenant and quantity details are confirmed."
   },
   {
-    question: "Which Microsoft 365 plan should we choose?",
+    question: "How quickly can new licenses be activated?",
     answer:
-      "We map plan selection to user roles, security needs, and compliance requirements to avoid over-licensing."
+      "For common business plans, activation typically starts within hours after order confirmation and compliance checks."
   },
   {
-    question: "Do you support Microsoft Teams setup and governance?",
+    question: "Can you migrate from Google Workspace or legacy email to Microsoft 365?",
     answer:
-      "Yes. We configure Teams structure, admin controls, and collaboration policies for business use."
+      "Yes. We plan migration waves, mailbox transfer, and cutover checkpoints to minimize disruption."
   },
   {
-    question: "Will we receive GST-compliant invoicing?",
+    question: "Do you provide GST invoice and procurement-ready documents?",
     answer:
-      "Yes. Commercial proposals and invoices are prepared for procurement and finance workflows."
+      "Yes. We provide GST-compliant invoicing and commercial documentation suitable for procurement and finance approvals."
   },
   {
-    question: "Do you provide onboarding after purchase?",
+    question: "What are your support hours after deployment?",
     answer:
-      "Yes. We provide onboarding checklists, admin handover, and user enablement support."
+      "Business-hours support is available with SLA-governed response windows, and escalation paths are defined in the handover pack."
   },
   {
-    question: "Can Microsoft security add-ons be included?",
+    question: "How should we choose between Business Basic, Standard, and Premium?",
     answer:
-      "Yes. Defender, Intune, and identity controls can be included based on your environment and risk profile."
+      "We map each plan to role-based needs, security requirements, and collaboration usage so you avoid both under- and over-licensing."
   },
   {
-    question: "Do you support branch offices outside Chandigarh?",
+    question: "Is secure migration and compliance readiness included?",
     answer:
-      "Yes. We support organizations across Tricity and nearby serviceable regions with remote-first delivery."
-  },
-  {
-    question: "How do we request a quote quickly?",
-    answer:
-      "Use the quote form below or call/WhatsApp us with user count, city, and timeline for a fast response."
+      "Yes. We include baseline identity/security checks and migration controls aligned to compliance-friendly operations."
   }
 ];
 
@@ -164,24 +159,32 @@ export default function Microsoft365ChandigarhPage() {
               Punjab, Haryana, Himachal Pradesh, Jammu and Kashmir, and Uttarakhand.
             </p>
             <div className="flex flex-wrap gap-3">
-              <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white">
-                Call {SALES_PHONE_DISPLAY}
-              </AdsTrackedLink>
+              <a
+                href="#lead-form"
+                className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white"
+              >
+                Request Quote
+              </a>
               <AdsTrackedLink
                 href={whatsappHref}
                 eventName="whatsapp_click"
                 target="_blank"
                 rel="noreferrer"
-                className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-slate-900 px-5 text-sm font-semibold text-white"
+                className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-white/20 bg-[var(--brand-whatsapp)] px-5 text-sm font-semibold text-white hover:bg-[#0b4b45] focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               >
-                WhatsApp
+                WhatsApp Now
               </AdsTrackedLink>
-              <a
-                href="#lead-form"
-                className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-transparent px-5 text-sm font-semibold text-[var(--color-text-primary)]"
-              >
-                Get Quote
-              </a>
+              <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-transparent px-5 text-sm font-semibold text-[var(--color-text-primary)]">
+                Call {SALES_PHONE_DISPLAY}
+              </AdsTrackedLink>
+            </div>
+            <p className="text-xs font-semibold text-[var(--color-text-secondary)]">GST Invoice • Same-day activation • Local support</p>
+            <div className="grid gap-2 text-xs font-semibold text-[var(--color-text-primary)] sm:grid-cols-2 lg:grid-cols-4">
+              {["Partner-led", "SLA support", "Secure migration", "Compliance-ready"].map((item) => (
+                <span key={item} className="rounded-lg border border-[var(--color-border)] px-2.5 py-1.5 text-center">
+                  {item}
+                </span>
+              ))}
             </div>
             <p className="text-xs text-[var(--color-text-secondary)]">
               Urgent help:{" "}
@@ -284,7 +287,7 @@ export default function Microsoft365ChandigarhPage() {
               <Link href="/contact" className="hover:underline">Contact Page</Link>
             </div>
           </Card>
-          <ContactLeadForm />
+          <ContactLeadForm mode="minimal" />
         </div>
       </Section>
       <div className="fixed inset-x-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] md:hidden bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)]">

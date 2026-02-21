@@ -40,8 +40,13 @@ const initialState: FormState = {
 const trackingKeys = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "gclid"] as const;
 type TrackingKey = (typeof trackingKeys)[number];
 
-export default function ContactLeadForm() {
+type ContactLeadFormProps = {
+  mode?: "default" | "minimal";
+};
+
+export default function ContactLeadForm({ mode = "default" }: ContactLeadFormProps) {
   const pathname = usePathname() ?? "/contact";
+  const isMinimal = mode === "minimal";
   const [state, setState] = useState<FormState>(initialState);
   // capture utm/gclid from query string on mount
   React.useEffect(() => {
@@ -144,6 +149,11 @@ export default function ContactLeadForm() {
   return (
     <form onSubmit={submit} className="surface-card space-y-4 p-5 md:p-6">
       <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Send Enquiry</h2>
+      {isMinimal ? (
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          Share only the essentials now. We collect implementation details during follow-up.
+        </p>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
@@ -158,7 +168,7 @@ export default function ContactLeadForm() {
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Company
           <input
-            required
+            required={!isMinimal}
             value={state.company}
             onChange={(event) => patch({ company: event.target.value })}
             className={fieldClass}
@@ -177,6 +187,7 @@ export default function ContactLeadForm() {
           Phone
           <input
             type="tel"
+            required={isMinimal}
             value={state.phone}
             onChange={(event) => patch({ phone: event.target.value })}
             className={fieldClass}
@@ -192,16 +203,18 @@ export default function ContactLeadForm() {
             className={fieldClass}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Users / Devices
-          <input
-            type="number"
-            min={1}
-            value={state.users}
-            onChange={(event) => patch({ users: event.target.value })}
-            className={fieldClass}
-          />
-        </label>
+        {!isMinimal ? (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Users / Devices
+            <input
+              type="number"
+              min={1}
+              value={state.users}
+              onChange={(event) => patch({ users: event.target.value })}
+              className={fieldClass}
+            />
+          </label>
+        ) : null}
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           City
           <input
@@ -210,29 +223,33 @@ export default function ContactLeadForm() {
             className={fieldClass}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-          Timeline
-          <select
-            value={state.timeline}
-            onChange={(event) => patch({ timeline: event.target.value })}
-            className={fieldClass}
-          >
-            <option value="Today">Today</option>
-            <option value="This Week">This Week</option>
-            <option value="This Month">This Month</option>
-          </select>
-        </label>
+        {!isMinimal ? (
+          <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+            Timeline
+            <select
+              value={state.timeline}
+              onChange={(event) => patch({ timeline: event.target.value })}
+              className={fieldClass}
+            >
+              <option value="Today">Today</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+            </select>
+          </label>
+        ) : null}
       </div>
 
-      <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
-        Notes
-        <textarea
-          rows={4}
-          value={state.message}
-          onChange={(event) => patch({ message: event.target.value })}
-          className={fieldClass}
-        />
-      </label>
+      {!isMinimal ? (
+        <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
+          Notes
+          <textarea
+            rows={4}
+            value={state.message}
+            onChange={(event) => patch({ message: event.target.value })}
+            className={fieldClass}
+          />
+        </label>
+      ) : null}
 
       <div className="hidden" aria-hidden="true">
         <label>
