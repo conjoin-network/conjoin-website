@@ -135,10 +135,15 @@ export default function Carousel({
               onClick={() => setIndex(dotIndex)}
               aria-label={`Go to slide ${dotIndex + 1}`}
               aria-current={active}
-              className={`h-2.5 rounded-full transition-all ${
-                active ? "w-6 bg-blue-600" : "w-2.5 bg-slate-300"
-              }`}
-            />
+              className="relative inline-flex h-11 w-11 touch-manipulation items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/70"
+            >
+              <span
+                aria-hidden
+                className={`inline-block h-2.5 rounded-full transition-all ${
+                  active ? "w-6 bg-blue-600" : "w-2.5 bg-slate-300"
+                }`}
+              />
+            </button>
           );
         })}
       </div>

@@ -159,7 +159,10 @@ export default function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning data-theme="dark" style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}>
-      <head />
+      <head>
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--color-page-bg)] text-[var(--color-text-primary)] min-h-screen`}
         style={{ backgroundColor: "#0b1220", color: "#e7edf8" }}
@@ -316,8 +319,8 @@ export default function RootLayout({
                     <Link href="/microsoft" className="hover:underline">
                       Microsoft
                     </Link>
-                    <Link href="/seqrite" className="hover:underline">
-                      Seqrite
+                    <Link href="/seqrite" aria-label="Seqrite products portfolio" className="hover:underline">
+                      Seqrite Products
                     </Link>
                     <Link href="/brands" className="hover:underline">
                       Brands
