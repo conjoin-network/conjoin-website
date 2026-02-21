@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createCrmLead, listCrmLeads } from '@/lib/crm';
+import { sendInternalLeadAlert } from '@/lib/whatsapp-internal-alert';
 
 export const runtime = 'nodejs';
 
@@ -40,6 +41,24 @@ export async function POST(request: Request) {
     if (!parsed.success) return NextResponse.json({ ok: false, error: parsed.error.errors[0].message }, { status: 400 });
 
     const lead = await createCrmLead(parsed.data);
+    try {
+      await sendInternalLeadAlert({
+        leadId: lead.leadId,
+        name: lead.contactName,
+        company: lead.company ?? "",
+        phone: lead.phone ?? "",
+        city: lead.city ?? "",
+        requirement: lead.requirement ?? "",
+        qty: lead.usersDevices ?? null,
+        usersSeats: lead.usersDevices ?? null,
+        sourcePage: "/crm/leads",
+        pagePath: "/crm/leads",
+        assignedTo: lead.assignedTo ?? null,
+        ip: String(ip)
+      });
+    } catch (error) {
+      console.error("CRM_LEAD_WHATSAPP_ALERT_FAILED", error);
+    }
     return NextResponse.json({ ok: true, lead });
   } catch (error) {
     console.error('CRM_LEAD_POST_ERROR', error);

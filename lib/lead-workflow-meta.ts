@@ -9,6 +9,9 @@ export type LeadWorkflowMeta = {
   nextFollowUpAt?: string | null;
   scope?: CrmLeadScope | null;
   service?: string | null;
+  whatsappStatus?: "PENDING" | "SENT" | "FAILED" | null;
+  whatsappLastNotifiedAt?: string | null;
+  whatsappError?: string | null;
 };
 
 function toTrimmed(value: string | null | undefined, limit: number) {
@@ -36,6 +39,9 @@ export function normalizeWorkflowMeta(input: LeadWorkflowMeta): LeadWorkflowMeta
   const firstContactBy = toTrimmed(input.firstContactBy, 80);
   const scope = toTrimmed(input.scope ?? "", 24) as CrmLeadScope;
   const service = toTrimmed(input.service ?? "", 160);
+  const whatsappStatus = toTrimmed(input.whatsappStatus ?? "", 16) as "PENDING" | "SENT" | "FAILED";
+  const whatsappLastNotifiedAt = toIsoOrEmpty(input.whatsappLastNotifiedAt ?? "");
+  const whatsappError = toTrimmed(input.whatsappError ?? "", 240);
 
   return {
     ...(firstContactAt ? { firstContactAt } : {}),
@@ -43,7 +49,10 @@ export function normalizeWorkflowMeta(input: LeadWorkflowMeta): LeadWorkflowMeta
     ...(lastContactedAt ? { lastContactedAt } : {}),
     ...(nextFollowUpAt ? { nextFollowUpAt } : {}),
     ...(scope ? { scope } : {}),
-    ...(service ? { service } : {})
+    ...(service ? { service } : {}),
+    ...(whatsappStatus ? { whatsappStatus } : {}),
+    ...(whatsappLastNotifiedAt ? { whatsappLastNotifiedAt } : {}),
+    ...(whatsappError ? { whatsappError } : {})
   };
 }
 
@@ -96,4 +105,3 @@ export function upsertWorkflowMetaInNotes(notes: string | null | undefined, patc
   }
   return `${cleanNotes}\n${encoded}`;
 }
-

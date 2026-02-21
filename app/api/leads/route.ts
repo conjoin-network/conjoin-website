@@ -9,6 +9,7 @@ import { LEAD_STATUSES } from "@/lib/quote-catalog";
 import { isPrismaInitializationError } from "@/lib/prisma-errors";
 import { appendAttributionToNotes } from "@/lib/lead-attribution";
 import { canSessionAccessLead, suggestAssigneeForService } from "@/lib/crm-access";
+import { sendInternalLeadAlert } from "@/lib/whatsapp-internal-alert";
 
 export const runtime = "nodejs";
 
@@ -273,6 +274,30 @@ export async function POST(request: NextRequest) {
       });
     } catch (error) {
       console.error("LEAD_ALERT_FAILED", JSON.stringify({ requestId, leadId, error: serializeError(error) }));
+    }
+
+    if (saved) {
+      try {
+        await sendInternalLeadAlert({
+          leadId,
+          name: parsed.data.name,
+          company: parsed.data.company ?? "",
+          phone,
+          city: parsed.data.city ?? "",
+          requirement: parsed.data.requirement,
+          qty: parsed.data.usersDevices ?? null,
+          usersSeats: parsed.data.usersDevices ?? null,
+          pagePath: landingPage || null,
+          sourcePage: parsed.data.pageUrl ?? null,
+          utmSource: parsed.data.utm_source ?? null,
+          utmCampaign: parsed.data.utm_campaign ?? null,
+          gclid: parsed.data.gclid ?? null,
+          assignedTo,
+          ip: String(ip)
+        });
+      } catch (error) {
+        console.error("LEAD_WHATSAPP_ALERT_FAILED", JSON.stringify({ requestId, leadId, error: serializeError(error) }));
+      }
     }
 
     if (!saved) {

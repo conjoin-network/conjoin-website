@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AGENT_OPTIONS } from "@/lib/agents";
 import { SALES_PHONE_DISPLAY } from "@/lib/contact";
-import { buildQuoteMessage, getLeadWhatsAppLink } from "@/lib/whatsapp";
+import { buildQuoteMessage, getLeadWhatsAppLink, getWhatsAppLink } from "@/lib/whatsapp";
 import { LEAD_PRIORITIES, LEAD_STATUSES, type LeadPriority, type LeadStatus } from "@/lib/quote-catalog";
 import { Modal } from "@/src/components/ui/Modal";
 
@@ -70,6 +70,9 @@ type LeadItem = {
   notes: string;
   activityNotes: LeadActivityNote[];
   aiSummary?: LeadAiSummary | null;
+  whatsappStatus?: "PENDING" | "SENT" | "FAILED" | null;
+  whatsappLastNotifiedAt?: string | null;
+  whatsappError?: string | null;
   contactName: string;
   company: string;
   email: string;
@@ -239,6 +242,32 @@ function followUpState(nextFollowUpAt: string | null | undefined) {
     return { label: "Due within 24h", tone: "text-amber-200" };
   }
   return { label: "Upcoming", tone: "text-emerald-200" };
+}
+
+function getWhatsAppDeliveryChip(status: LeadItem["whatsappStatus"]) {
+  if (status === "SENT") {
+    return { label: "WhatsApp: Sent", tone: "text-emerald-200" };
+  }
+  if (status === "FAILED") {
+    return { label: "WhatsApp: Failed", tone: "text-rose-200" };
+  }
+  return { label: "WhatsApp: Pending", tone: "text-amber-200" };
+}
+
+function buildInternalAlertPreview(lead: LeadItem) {
+  return [
+    `🔥 New Lead: ${lead.leadId}`,
+    `Name: ${lead.contactName}`,
+    `Company: ${lead.company || "-"}`,
+    `Phone: ${lead.phone || "-"}`,
+    `City: ${lead.city || "-"}`,
+    `Need: ${lead.brand || "-"} ${lead.category || "-"} ${lead.tier || "-"}`.trim(),
+    `Qty/Users: ${String(lead.qty || lead.usersSeats || "-")}`,
+    `Page: ${lead.pagePath || lead.sourcePage || "-"}`,
+    `UTM: ${lead.utmSource || "-"}/${lead.utmCampaign || "-"}`,
+    `GCLID: -`,
+    `Open CRM: https://conjoinnetwork.com/admin/leads?focus=${encodeURIComponent(lead.leadId)}`
+  ].join("\n");
 }
 
 export default function AdminLeadsClient() {
@@ -917,6 +946,8 @@ export default function AdminLeadsClient() {
                   timeline: lead.timeline ?? "This Week"
                 });
                 const whatsappHref = getLeadWhatsAppLink({ message, assignedTo: draft.assignedTo || null });
+                const internalAlertHref = getWhatsAppLink(buildInternalAlertPreview(lead));
+                const deliveryChip = getWhatsAppDeliveryChip(lead.whatsappStatus);
 
                 return (
                   <tr key={lead.leadId} className="align-top odd:bg-transparent even:bg-[var(--color-alt-bg)]/40">
@@ -1051,6 +1082,16 @@ export default function AdminLeadsClient() {
                         >
                           WhatsApp customer
                         </a>
+                        {lead.whatsappStatus !== "SENT" ? (
+                          <a
+                            href={internalAlertHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex min-h-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-2 text-xs font-semibold text-[var(--color-text-primary)]"
+                          >
+                            Send internal WhatsApp
+                          </a>
+                        ) : null}
                         <button
                           type="button"
                           onClick={() => copySummary(lead)}
@@ -1076,6 +1117,13 @@ export default function AdminLeadsClient() {
                         <p className="text-[11px] text-[var(--color-text-secondary)]">
                           For compliance, please use official quotes only.
                         </p>
+                        <p className={`text-[11px] ${deliveryChip.tone}`}>
+                          {deliveryChip.label}
+                          {lead.whatsappLastNotifiedAt ? ` • ${formatDate(lead.whatsappLastNotifiedAt)}` : ""}
+                        </p>
+                        {lead.whatsappStatus === "FAILED" && lead.whatsappError ? (
+                          <p className="text-[11px] text-rose-200">Reason: {lead.whatsappError}</p>
+                        ) : null}
                       </div>
                     </td>
                     <td className="px-4 py-4">

@@ -9,7 +9,8 @@ type SendPayload = {
 };
 
 function isProviderConfigured() {
-  return Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim() && process.env.WHATSAPP_PHONE_NUMBER_ID?.trim());
+  const token = process.env.WHATSAPP_TOKEN?.trim() || process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  return Boolean(token && process.env.WHATSAPP_PHONE_NUMBER_ID?.trim());
 }
 
 export async function POST(request: Request) {

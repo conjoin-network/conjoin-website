@@ -8,7 +8,8 @@ type MessagingResult = {
 };
 
 export async function sendWhatsApp(input: { message: string; to: string }): Promise<MessagingResult> {
-  const providerEnabled = (process.env.WHATSAPP_PROVIDER ?? "").toLowerCase() === "enabled";
+  const provider = (process.env.WHATSAPP_PROVIDER ?? "").trim().toLowerCase();
+  const providerEnabled = ["enabled", "cloud", "meta"].includes(provider);
   if (!providerEnabled) {
     console.info("WHATSAPP_NOOP", JSON.stringify({ to: input.to, message: input.message }));
     return { ok: false, reason: "WHATSAPP_PROVIDER disabled" };

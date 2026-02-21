@@ -35,11 +35,12 @@ export function normalizeWhatsAppNumber(value: string) {
 }
 
 export function isWhatsAppConfigured() {
-  return Boolean(process.env.WHATSAPP_ACCESS_TOKEN?.trim() && process.env.WHATSAPP_PHONE_NUMBER_ID?.trim());
+  const token = process.env.WHATSAPP_TOKEN?.trim() || process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  return Boolean(token && process.env.WHATSAPP_PHONE_NUMBER_ID?.trim());
 }
 
 export async function sendWhatsAppText(to: string, text: string): Promise<WhatsAppSendResult> {
-  const token = process.env.WHATSAPP_ACCESS_TOKEN?.trim();
+  const token = process.env.WHATSAPP_TOKEN?.trim() || process.env.WHATSAPP_ACCESS_TOKEN?.trim();
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID?.trim();
 
   if (!token || !phoneNumberId) {

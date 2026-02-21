@@ -10,6 +10,7 @@ import { logAuditEvent } from "@/lib/event-log";
 import { captureServerError } from "@/lib/error-logger";
 import { isPrismaInitializationError } from "@/lib/prisma-errors";
 import { suggestAssigneeForService } from "@/lib/crm-access";
+import { sendInternalLeadAlert } from "@/lib/whatsapp-internal-alert";
 import { z } from "zod";
 
 export const runtime = "nodejs";
@@ -385,6 +386,28 @@ export async function POST(request: Request) {
         context: requestContext(request, parsedBodyKeys)
       })
     );
+
+    try {
+      await sendInternalLeadAlert({
+        leadId: lead.leadId,
+        name: parsed.data.name,
+        company: parsed.data.company,
+        phone: parsed.data.phone,
+        city: parsed.data.city,
+        requirement: parsed.data.requirement,
+        qty: parsed.data.users,
+        usersSeats: parsed.data.users,
+        pagePath: parsed.data.pagePath,
+        sourcePage: "/contact",
+        assignedTo: lead.assignedTo ?? null,
+        ip
+      });
+    } catch (error) {
+      console.error(
+        "CONTACT_LEAD_WHATSAPP_ALERT_FAILED",
+        JSON.stringify({ requestId, leadId: lead.leadId, error: serializeError(error) })
+      );
+    }
 
     const missingDeliveryEnvKeys = getMissingDeliveryEnvKeys();
     if (missingDeliveryEnvKeys.length > 0) {

@@ -85,6 +85,9 @@ export type CrmLeadView = {
   firstContactAt: string | null;
   firstContactBy: string | null;
   nextFollowUpAt: string | null;
+  whatsappStatus: "PENDING" | "SENT" | "FAILED" | null;
+  whatsappLastNotifiedAt: string | null;
+  whatsappError: string | null;
   activityNotes: CrmLeadNote[];
   aiSummary: null;
   aiEmailDraft: null;
@@ -207,6 +210,9 @@ function normalize(lead: CrmLeadDbRow): CrmLeadView {
     firstContactAt: workflow.meta.firstContactAt ?? null,
     firstContactBy: workflow.meta.firstContactBy ?? null,
     nextFollowUpAt: workflow.meta.nextFollowUpAt ?? null,
+    whatsappStatus: workflow.meta.whatsappStatus ?? null,
+    whatsappLastNotifiedAt: workflow.meta.whatsappLastNotifiedAt ?? null,
+    whatsappError: workflow.meta.whatsappError ?? null,
     activityNotes: [],
     aiSummary: null,
     aiEmailDraft: null,

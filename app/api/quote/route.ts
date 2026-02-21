@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createCrmLead } from "@/lib/crm";
 import type { LeadRecord } from "@/lib/leads";
 import { enqueueMessageIntent, updateMessageIntentStatus } from "@/lib/message-queue";
-import { sendEmail, sendWhatsApp } from "@/lib/messaging";
+import { sendEmail } from "@/lib/messaging";
 import { LEADS_EMAIL } from "@/lib/contact";
 import { calculateLeadScore } from "@/lib/scoring";
 import { suggestAgentForLead } from "@/lib/agents";
@@ -15,10 +15,10 @@ import {
   isValidProductSelection
 } from "@/lib/quote-catalog";
 import { applyRateLimit, getClientIp, isHoneypotTriggered } from "@/lib/request-guards";
-import { buildQuoteMessage, getPrimaryWhatsAppNumber } from "@/lib/whatsapp";
 import { z } from "zod";
 import { appendAttributionToNotes } from "@/lib/lead-attribution";
 import { suggestAssigneeForService } from "@/lib/crm-access";
+import { sendInternalLeadAlert } from "@/lib/whatsapp-internal-alert";
 
 type QuotePayload = {
   brand?: string;
@@ -426,41 +426,28 @@ export async function POST(request: Request) {
       hasUtmSource: Boolean(utmSource)
     });
 
-    const messageText = buildQuoteMessage({
-      brand: String(leadForMessaging.brand),
-      city: String(leadForMessaging.city ?? ""),
-      requirement: String(leadForMessaging.plan ?? leadForMessaging.category ?? "General requirement"),
-      qty: Number(leadForMessaging.qty ?? 0),
-      timeline: leadForMessaging.timeline ?? "This Week"
-    });
-    const whatsappTo = getPrimaryWhatsAppNumber();
-
-    const whatsappIntent = await enqueueMessageIntent({
+    await sendInternalLeadAlert({
       leadId: leadForMessaging.leadId,
-      channel: "whatsapp",
-      to: whatsappTo,
-      payload: messageText
+      name: contactName,
+      company,
+      phone,
+      city,
+      requirement: `${brand} ${category} ${plan}`.trim(),
+      qty,
+      usersSeats: usersSeats || null,
+      pagePath: pagePath || sourcePage,
+      sourcePage,
+      utmSource: utmSource || null,
+      utmCampaign: utmCampaign || null,
+      gclid: gclid || null,
+      assignedTo: suggestedAgent
     });
+
     const emailIntent = await enqueueMessageIntent({
       leadId: leadForMessaging.leadId,
       channel: "email",
       to: process.env.LEADS_EMAIL ?? LEADS_EMAIL,
       payload: `Lead ${leadForMessaging.leadId} notification`
-    });
-
-    const whatsappResult = await sendWhatsApp({ to: whatsappTo, message: messageText });
-    if (whatsappResult.ok) {
-      await updateMessageIntentStatus(whatsappIntent.id, "SENT");
-    }
-    await safeLogAuditEvent({
-      type: "whatsapp_sent",
-      leadId: leadForMessaging.leadId,
-      actor: "quote_api",
-      details: {
-        to: whatsappTo,
-        ok: whatsappResult.ok,
-        reason: whatsappResult.reason ?? null
-      }
     });
 
     if (!smtpConfigured) {

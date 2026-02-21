@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createCrmLead } from '@/lib/crm';
 import { sendCaptureAlert } from '@/lib/captureEmail';
+import { sendInternalLeadAlert } from '@/lib/whatsapp-internal-alert';
 
 export const runtime = 'nodejs';
 
@@ -79,6 +80,28 @@ export async function POST(request: Request) {
       await sendCaptureAlert({ ...parsed.data, ip, userAgent: ua });
     } catch (e) {
       console.error('CAPTURE_ALERT_FAILED', e);
+    }
+
+    try {
+      await sendInternalLeadAlert({
+        leadId: lead.leadId,
+        name: parsed.data.name,
+        company: parsed.data.company ?? '',
+        phone: parsed.data.phone,
+        city: parsed.data.city ?? '',
+        requirement: parsed.data.requirement ?? '',
+        qty: parsed.data.usersDevices ?? null,
+        usersSeats: parsed.data.usersDevices ?? null,
+        pagePath: '/contact',
+        sourcePage: '/contact',
+        utmSource: parsed.data.utm_source ?? null,
+        utmCampaign: parsed.data.utm_campaign ?? null,
+        gclid: parsed.data.gclid ?? null,
+        assignedTo: lead.assignedTo ?? null,
+        ip: String(ip)
+      });
+    } catch (e) {
+      console.error('CAPTURE_WHATSAPP_ALERT_FAILED', e);
     }
 
     return NextResponse.json({ ok: true, id: lead.leadId });

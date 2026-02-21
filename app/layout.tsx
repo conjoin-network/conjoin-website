@@ -15,6 +15,7 @@ import OutboundClickTracker from "@/app/components/OutboundClickTracker";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
+import EnterpriseTrustBar from "@/app/components/EnterpriseTrustBar";
 import { ADS_ID } from "@/lib/ads";
 import { GA_ID, isGAEnabled } from "@/lib/ga";
 import {
@@ -262,6 +263,7 @@ export default function RootLayout({
               </div>
             </Container>
           </header>
+          <EnterpriseTrustBar />
           <main className="flex-1 bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">{children}</main>
           <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
             <Container className="space-y-6 pb-24 pt-10 text-sm text-[var(--color-text-secondary)] md:py-10">
