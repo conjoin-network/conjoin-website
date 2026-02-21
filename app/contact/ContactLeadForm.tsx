@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { pushDataLayerEvent, trackAdsConversion } from "@/lib/ads";
 import { event as trackGaEvent } from "@/lib/ga";
 
@@ -46,6 +46,7 @@ type ContactLeadFormProps = {
 
 export default function ContactLeadForm({ mode = "default" }: ContactLeadFormProps) {
   const pathname = usePathname() ?? "/contact";
+  const router = useRouter();
   const isMinimal = mode === "minimal";
   const [state, setState] = useState<FormState>(initialState);
   // capture utm/gclid from query string on mount
@@ -104,7 +105,13 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
           referrer: typeof document !== "undefined" ? document.referrer : ""
         })
       });
-      const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string; error?: string };
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        message?: string;
+        error?: string;
+        leadId?: string;
+        rfqId?: string;
+      };
       const isSuccessStatus = response.ok; // accepts 200–299 (incl 201)
       const isSuccess = isSuccessStatus && payload.ok !== false;
 
@@ -140,6 +147,12 @@ export default function ContactLeadForm({ mode = "default" }: ContactLeadFormPro
         currency: "INR"
       });
       setState(initialState);
+
+      const leadId = payload.leadId || payload.rfqId;
+      const query = leadId ? `?leadId=${encodeURIComponent(leadId)}` : "";
+      window.setTimeout(() => {
+        router.push(`/thank-you${query}`);
+      }, 350);
     } catch {
       setStatus("error");
       setNotice("Service temporarily unavailable. Please try again shortly.");
