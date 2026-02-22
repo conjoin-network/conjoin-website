@@ -18,6 +18,7 @@ import TrackingDebugPanel from "@/app/components/TrackingDebugPanel";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
 import EnterpriseTrustBar from "@/app/components/EnterpriseTrustBar";
+import EstimatorBar from "@/app/components/EstimatorBar";
 import { ADS_ID } from "@/lib/ads";
 import { GA_ID, isGAEnabled } from "@/lib/ga";
 import {
@@ -173,6 +174,7 @@ export default function RootLayout({
         <HeaderScrollState />
         <div className="flex min-h-screen flex-col bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">
           <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
+            <EstimatorBar />
             <Container className="min-h-[80px] py-3 md:min-h-[96px] md:py-4">
               <div className="hidden items-center justify-between gap-3 md:flex">
                 <Link
