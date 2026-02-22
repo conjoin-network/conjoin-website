@@ -314,9 +314,9 @@ html[data-header-scrolled="true"] .site-header {
 }
 
 .floating-whatsapp.is-near-footer {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
 }
 
 .floating-whatsapp:active {
@@ -339,9 +339,9 @@ html[data-header-scrolled="true"] .site-header {
 }
 
 .floating-call.is-near-footer {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(10px);
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
 }
 
 .menu-open-lock .floating-whatsapp {

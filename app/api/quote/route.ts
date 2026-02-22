@@ -201,14 +201,11 @@ export async function POST(request: Request) {
   const ip = getClientIp(request);
   const rate = applyRateLimit({
     key: `api:quote:${ip}`,
-    limit: 20,
+    limit: 3,
     windowMs: 10 * 60 * 1000
   });
   if (!rate.allowed) {
-    return NextResponse.json(
-      { ok: false, message: "Too many requests. Please retry shortly." },
-      { status: 429, headers: { "Retry-After": String(rate.retryAfterSeconds) } }
-    );
+    return new Response(null, { status: 204 });
   }
 
   let rawPayload: QuotePayload;
@@ -234,7 +231,7 @@ export async function POST(request: Request) {
     const payload = parsed.data;
 
     if (isHoneypotTriggered(payload.website)) {
-      return NextResponse.json({ ok: true, message: "Request accepted." });
+      return new Response(null, { status: 204 });
     }
 
     const requireNotifications = process.env.REQUIRE_LEAD_NOTIFICATIONS === "true";
@@ -287,12 +284,7 @@ export async function POST(request: Request) {
     }
 
     if (normalizedPhone && isRecentPhoneDuplicate(normalizedPhone)) {
-      return NextResponse.json({
-        ok: true,
-        success: true,
-        duplicate: true,
-        message: "A recent quote request already exists for this phone number. Our team will connect shortly."
-      });
+      return new Response(null, { status: 204 });
     }
 
     if (!(brand in QUOTE_CATALOG)) {

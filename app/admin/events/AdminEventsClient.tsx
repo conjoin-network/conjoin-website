@@ -24,7 +24,12 @@ const EVENT_TYPES = [
   "status_changed",
   "note_added",
   "email_sent",
-  "whatsapp_sent"
+  "whatsapp_sent",
+  "form_start",
+  "form_submit_success",
+  "call_click",
+  "whatsapp_click",
+  "request_quote_click"
 ];
 
 function formatDate(value: string) {

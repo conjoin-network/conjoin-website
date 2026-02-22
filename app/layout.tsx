@@ -14,6 +14,7 @@ import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
 import OutboundClickTracker from "@/app/components/OutboundClickTracker";
 import PartnerDisclaimer from "@/app/components/PartnerDisclaimer";
+import TrackingDebugPanel from "@/app/components/TrackingDebugPanel";
 import WebVitalsReporter from "@/app/components/WebVitalsReporter";
 import JsonLd from "@/app/components/JsonLd";
 import EnterpriseTrustBar from "@/app/components/EnterpriseTrustBar";
@@ -443,6 +444,7 @@ export default function RootLayout({
         ) : null}
         {isGAEnabled ? <AnalyticsRouteTracker /> : null}
         <OutboundClickTracker />
+        <TrackingDebugPanel />
         {clarityProjectId ? (
           <Script
             id="clarity-init"

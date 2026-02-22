@@ -8,6 +8,13 @@ export const ADS_CONVERSION_LABEL =
 const TRACKING_DEBUG_FLAG = process.env.NEXT_PUBLIC_TRACKING_DEBUG === "1";
 const SESSION_EVENT_PREFIX = "conjoin_event_once:";
 const memoryEventDedupe = new Set<string>();
+const SERVER_TRACKED_EVENTS = new Set([
+  "form_start",
+  "form_submit_success",
+  "whatsapp_click",
+  "call_click",
+  "request_quote_click"
+]);
 
 declare global {
   interface Window {
@@ -15,6 +22,12 @@ declare global {
     dataLayer?: Array<Record<string, unknown>>;
   }
 }
+
+export type TrackingEventPayload = {
+  name: string;
+  params: Record<string, unknown>;
+  timestamp: number;
+};
 
 export function getAdsSendTo(label = ADS_CONVERSION_LABEL) {
   if (!ADS_ID) {
@@ -45,6 +58,60 @@ function normalizeEventName(eventName: string) {
   return eventName;
 }
 
+function dispatchTrackingEvent(payload: TrackingEventPayload) {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(new CustomEvent("conjoin:tracking-event", { detail: payload }));
+}
+
+function getAttributionFromUrl() {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  const params = new URLSearchParams(window.location.search);
+  return {
+    gclid: params.get("gclid") ?? undefined,
+    utm_source: params.get("utm_source") ?? undefined,
+    utm_campaign: params.get("utm_campaign") ?? undefined,
+    utm_medium: params.get("utm_medium") ?? undefined,
+    utm_term: params.get("utm_term") ?? undefined,
+    utm_content: params.get("utm_content") ?? undefined
+  };
+}
+
+function trackServerEvent(eventName: string, params: Record<string, unknown>) {
+  if (typeof window === "undefined" || !SERVER_TRACKED_EVENTS.has(eventName)) {
+    return;
+  }
+
+  const body = JSON.stringify({
+    event: eventName,
+    pagePath: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : undefined,
+    ...getAttributionFromUrl(),
+    ...params
+  });
+
+  try {
+    if (typeof navigator !== "undefined" && typeof navigator.sendBeacon === "function") {
+      const blob = new Blob([body], { type: "application/json" });
+      const sent = navigator.sendBeacon("/api/track/event", blob);
+      if (sent) {
+        return;
+      }
+    }
+  } catch {
+    // noop: fallback to fetch below
+  }
+
+  void fetch("/api/track/event", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+    keepalive: true
+  }).catch(() => undefined);
+}
+
 export function trackAdsConversion(eventName: string, params?: Record<string, unknown>) {
   if (typeof window === "undefined") {
     return;
@@ -56,6 +123,12 @@ export function trackAdsConversion(eventName: string, params?: Record<string, un
   if (typeof window.gtag === "function") {
     window.gtag("event", normalizedEventName, payload);
   }
+  trackServerEvent(normalizedEventName, payload);
+  dispatchTrackingEvent({
+    name: normalizedEventName,
+    params: payload,
+    timestamp: Date.now()
+  });
   debugTracking(normalizedEventName, payload);
 }
 
@@ -125,7 +198,7 @@ export function trackLeadConversion(input: LeadConversionInput) {
     currency: "INR"
   };
 
-  trackAdsConversion("form_submit_success", payload);
+  trackAdsConversionOncePerSession("form_submit_success", payload, "form_submit_success");
   trackAdsConversion("generate_lead", payload);
 
   // Prevent double-counting when Google Ads imports GA4 key events by default.

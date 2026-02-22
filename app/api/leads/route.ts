@@ -45,7 +45,7 @@ const RATE_LIMIT = new Map<string, { ts: number; count: number }>();
 const RECENT_PHONE_SUBMITS = new Map<string, number>();
 const DUPLICATE_PHONE_WINDOW_MS = 5 * 60 * 1000;
 
-function checkRate(ip: string, limit = 20, windowMs = 60_000) {
+function checkRate(ip: string, limit = 3, windowMs = 10 * 60_000) {
   const now = Date.now();
   const cur = RATE_LIMIT.get(ip);
   if (!cur || now - cur.ts > windowMs) {
@@ -185,7 +185,7 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || request.headers.get("x-client-ip") || "local";
     if (!checkRate(String(ip))) {
-      return NextResponse.json({ ok: false, requestId, error: "Too many requests" }, { status: 429 });
+      return new Response(null, { status: 204 });
     }
 
     let rawBody: unknown;
@@ -201,7 +201,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (parsed.data.website && parsed.data.website.trim() !== "") {
-      return NextResponse.json({ ok: true, requestId, message: "Accepted" });
+      return new Response(null, { status: 204 });
     }
 
     const email = normalizeEmail(parsed.data.email);
@@ -210,15 +210,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, requestId, error: "Please provide phone or email." }, { status: 400 });
     }
     if (phone && isRecentPhoneDuplicate(phone)) {
-      return NextResponse.json(
-        {
-          ok: true,
-          requestId,
-          duplicate: true,
-          message: "We already received a recent request for this phone number. Our team will reach out shortly."
-        },
-        { status: 200 }
-      );
+      return new Response(null, { status: 204 });
     }
 
     const ua = request.headers.get("user-agent") || undefined;

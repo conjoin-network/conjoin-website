@@ -53,6 +53,7 @@ const serviceOptions = [
   "Enterprise Security",
   "Other"
 ] as const;
+const minimalRequirementOptions = ["Microsoft 365", "Seqrite", "Cisco", "Other"] as const;
 const businessTypeOptions = [
   "SMB",
   "Mid-Market",
@@ -90,6 +91,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
   }, []);
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
+  const [toast, setToast] = useState("");
   const fieldClass =
     "form-field-surface w-full rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-sm focus:border-[var(--color-primary)] focus:ring-2 focus:ring-blue-500/35";
 
@@ -209,10 +211,21 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
     if (response.ok) {
       setStatus("success");
       setNotice("Thank you. Our team will contact you shortly.");
+      setToast("Request received. Redirecting to confirmation...");
       setState(initialState);
 
       const formSource = resolveFormSource(pathname);
       const leadId = payload.leadId || payload.rfqId;
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          "conjoin_submit_success",
+          JSON.stringify({
+            formSource,
+            leadId: leadId || null,
+            timestamp: Date.now()
+          })
+        );
+      }
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
       if (leadId) {
@@ -220,6 +233,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
       window.setTimeout(() => {
+        setToast("");
         router.push(`/thank-you${query}`);
       }, 350);
       return;
@@ -247,6 +261,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Name
           <input
+            required
             autoFocus
             value={state.name}
             onChange={(event) => patch({ name: event.target.value })}
@@ -307,12 +322,13 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           Requirement Type
           <select
+            required
             value={state.requirement}
             onChange={(event) => patch({ requirement: event.target.value })}
             className={fieldClass}
           >
             <option value="">Select requirement type</option>
-            {serviceOptions.map((service) => (
+            {(isMinimal ? minimalRequirementOptions : serviceOptions).map((service) => (
               <option key={service} value={service}>
                 {service}
               </option>
@@ -396,6 +412,12 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         </p>
       ) : null}
 
+      {toast ? (
+        <p className="fixed bottom-6 right-4 z-[72] rounded-xl border border-emerald-300/60 bg-emerald-600 px-4 py-2 text-xs font-semibold text-white shadow-lg md:right-6">
+          {toast}
+        </p>
+      ) : null}
+
       <button
         type="submit"
         disabled={status === "submitting"}
@@ -403,6 +425,9 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       >
         {status === "submitting" ? "Submitting..." : "Submit Enquiry"}
       </button>
+      <p className="text-xs text-[var(--color-text-secondary)]">
+        Instant support available on Call and WhatsApp after submit.
+      </p>
     </form>
   );
 }

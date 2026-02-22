@@ -557,6 +557,14 @@ export default function RequestQuoteWizard() {
       }
       if (typeof window !== "undefined") {
         window.localStorage.removeItem(DRAFT_KEY);
+        window.sessionStorage.setItem(
+          "conjoin_submit_success",
+          JSON.stringify({
+            formSource: "request-quote",
+            leadId: resolvedRfqId || null,
+            timestamp: Date.now()
+          })
+        );
       }
 
       const query = new URLSearchParams({
