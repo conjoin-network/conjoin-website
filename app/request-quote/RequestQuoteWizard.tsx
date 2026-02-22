@@ -32,6 +32,11 @@ type WizardState = {
   company: string;
   email: string;
   phone: string;
+  customerType: "Enterprise" | "Partner" | "Govt-PSU" | "SMB";
+  tenderGemRef: string;
+  documentationRequired: boolean;
+  partnerEndCustomer: string;
+  backToBackBilling: boolean;
   whatsappOptIn: boolean;
   notes: string;
   website: string;
@@ -51,6 +56,7 @@ type WizardState = {
 
 const steps = ["Brand", "Product", "Users / Devices", "Deployment", "Contact"] as const;
 const timelineOptions = ["Today", "This Week", "This Month", "Planned Window"] as const;
+const customerTypeOptions: Array<WizardState["customerType"]> = ["Enterprise", "Partner", "Govt-PSU", "SMB"];
 const DRAFT_KEY = "conjoin_rfq_draft_v2";
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const primaryBrands: LeadBrand[] = ["Microsoft", "Seqrite", "Cisco", "Other"];
@@ -221,6 +227,11 @@ export default function RequestQuoteWizard() {
       company: "",
       email: "",
       phone: "",
+      customerType: "Enterprise",
+      tenderGemRef: "",
+      documentationRequired: false,
+      partnerEndCustomer: "",
+      backToBackBilling: false,
       whatsappOptIn: true,
       notes: "",
       website: "",
@@ -494,6 +505,11 @@ export default function RequestQuoteWizard() {
       company: normalizedCompany || undefined,
       email: normalizedEmail || undefined,
       phone: state.phone,
+      customerType: state.customerType,
+      tenderGemRef: state.customerType === "Govt-PSU" ? state.tenderGemRef : undefined,
+      documentationRequired: state.customerType === "Govt-PSU" ? state.documentationRequired : undefined,
+      partnerEndCustomer: state.customerType === "Partner" ? state.partnerEndCustomer : undefined,
+      backToBackBilling: state.customerType === "Partner" ? state.backToBackBilling : undefined,
       deviceType:
         typeof window !== "undefined" && /mobile|android|iphone|ipod/i.test(window.navigator.userAgent)
           ? "mobile"
@@ -998,6 +1014,28 @@ export default function RequestQuoteWizard() {
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    Customer Type
+                    <select
+                      value={state.customerType}
+                      onChange={(event) =>
+                        patch({
+                          customerType: event.target.value as WizardState["customerType"],
+                          tenderGemRef: event.target.value === "Govt-PSU" ? state.tenderGemRef : "",
+                          documentationRequired: event.target.value === "Govt-PSU" ? state.documentationRequired : false,
+                          partnerEndCustomer: event.target.value === "Partner" ? state.partnerEndCustomer : "",
+                          backToBackBilling: event.target.value === "Partner" ? state.backToBackBilling : false
+                        })
+                      }
+                      className={formFieldClass}
+                    >
+                      {customerTypeOptions.map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
                     City
                     <input
                       type="text"
@@ -1015,20 +1053,71 @@ export default function RequestQuoteWizard() {
                       ))}
                     </datalist>
                   </label>
-                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    Timeline
-                    <select
-                      value={state.timeline}
-                      onChange={(event) => patch({ timeline: event.target.value })}
-                      className={formFieldClass}
-                    >
-                      {timelineOptions.map((timeline) => (
-                        <option key={timeline} value={timeline}>
-                          {timeline}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  {state.customerType !== "SMB" ? (
+                    <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                      Timeline
+                      <select
+                        value={state.timeline}
+                        onChange={(event) => patch({ timeline: event.target.value })}
+                        className={formFieldClass}
+                      >
+                        {timelineOptions.map((timeline) => (
+                          <option key={timeline} value={timeline}>
+                            {timeline}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+
+                  {state.customerType === "Govt-PSU" ? (
+                    <>
+                      <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                        Tender / GeM Ref (optional)
+                        <input
+                          type="text"
+                          value={state.tenderGemRef}
+                          onChange={(event) => patch({ tenderGemRef: event.target.value })}
+                          className={formFieldClass}
+                          placeholder="Tender ID / GeM Ref"
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                        <input
+                          type="checkbox"
+                          checked={state.documentationRequired}
+                          onChange={(event) => patch({ documentationRequired: event.target.checked })}
+                          className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
+                        />
+                        Documentation required
+                      </label>
+                    </>
+                  ) : null}
+
+                  {state.customerType === "Partner" ? (
+                    <>
+                      <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                        End Customer Name (protected)
+                        <input
+                          type="text"
+                          value={state.partnerEndCustomer}
+                          onChange={(event) => patch({ partnerEndCustomer: event.target.value })}
+                          className={formFieldClass}
+                          placeholder="Optional"
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)]">
+                        <input
+                          type="checkbox"
+                          checked={state.backToBackBilling}
+                          onChange={(event) => patch({ backToBackBilling: event.target.checked })}
+                          className="h-4 w-4 rounded border-[var(--color-border)] accent-[var(--color-primary)]"
+                        />
+                        Need back-to-back billing
+                      </label>
+                    </>
+                  ) : null}
+
                   <label className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
                     <input
                       type="checkbox"

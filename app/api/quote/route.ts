@@ -55,6 +55,11 @@ type QuotePayload = {
   email?: string;
   phone?: string;
   businessType?: string;
+  customerType?: "Enterprise" | "Partner" | "Govt-PSU" | "SMB";
+  tenderGemRef?: string;
+  documentationRequired?: boolean;
+  partnerEndCustomer?: string;
+  backToBackBilling?: boolean;
   deviceType?: string;
   timestamp?: string;
   website?: string;
@@ -96,6 +101,11 @@ const quotePayloadSchema = z.object({
   email: z.string().trim().optional(),
   phone: z.string().trim().min(8, "Phone number is required."),
   businessType: z.string().trim().optional(),
+  customerType: z.enum(["Enterprise", "Partner", "Govt-PSU", "SMB"]).optional(),
+  tenderGemRef: z.string().trim().optional(),
+  documentationRequired: z.boolean().optional(),
+  partnerEndCustomer: z.string().trim().optional(),
+  backToBackBilling: z.boolean().optional(),
   deviceType: z.string().trim().optional(),
   timestamp: z.string().trim().optional(),
   website: z.string().optional(),
@@ -272,6 +282,11 @@ export async function POST(request: Request) {
     const phone = payload.phone?.trim() ?? "";
     const normalizedPhone = normalizePhone(phone);
     const businessType = payload.businessType?.trim() ?? "";
+    const customerType = payload.customerType ?? "Enterprise";
+    const tenderGemRef = payload.tenderGemRef?.trim() ?? "";
+    const documentationRequired = Boolean(payload.documentationRequired);
+    const partnerEndCustomer = payload.partnerEndCustomer?.trim() ?? "";
+    const backToBackBilling = Boolean(payload.backToBackBilling);
     const deviceType = payload.deviceType?.trim() ?? "";
     const capturedAt = payload.timestamp?.trim() ?? "";
     const addons = Array.isArray(payload.addons)
@@ -320,7 +335,7 @@ export async function POST(request: Request) {
     }
 
     const qty = brand === "Microsoft" ? usersSeats : brand === "Seqrite" ? endpoints : ciscoUsers;
-    const mergedNotesRaw =
+    const baseNotes =
       brand === "Cisco" || brand === "Other"
         ? [
             notes,
@@ -335,6 +350,16 @@ export async function POST(request: Request) {
         : [notes, businessType ? `Business Type: ${businessType}` : "", deviceType ? `Device: ${deviceType}` : "", capturedAt ? `Captured At: ${capturedAt}` : ""]
             .filter(Boolean)
             .join(" | ");
+    const customerTypeNotes = [
+      `Customer Type: ${customerType}`,
+      customerType === "Govt-PSU" && tenderGemRef ? `Tender/GeM Ref: ${tenderGemRef}` : "",
+      customerType === "Govt-PSU" && documentationRequired ? "Documentation Required: Yes" : "",
+      customerType === "Partner" && partnerEndCustomer ? `Partner End Customer: ${partnerEndCustomer}` : "",
+      customerType === "Partner" && backToBackBilling ? "Back-to-Back Billing: Yes" : ""
+    ]
+      .filter(Boolean)
+      .join(" | ");
+    const mergedNotesRaw = [baseNotes, customerTypeNotes].filter(Boolean).join(" | ");
     const mergedNotes = appendAttributionToNotes(mergedNotesRaw, {
       landing_page: landingPage || pagePath || sourcePage,
       referrer,
@@ -342,23 +367,40 @@ export async function POST(request: Request) {
       gbraid,
       wbraid
     });
-    const leadScore = calculateLeadScore({
+    const isGovtOrBankLead =
+      customerType === "Govt-PSU" ||
+      /(?:\bbank\b|\bnbfc\b|\bfinancial\b)/i.test(`${businessType} ${company} ${notes}`);
+    const isPartnerLead = customerType === "Partner";
+    const leadScore = Math.min(
+      100,
+      calculateLeadScore({
+        brand,
+        qty,
+        timeline,
+        source,
+        category,
+        city
+      }) + (isGovtOrBankLead ? 15 : 0) + (isPartnerLead ? 8 : 0)
+    );
+    const assignment = suggestAssigneeForService({
+      service: `${brand} ${category} ${plan} ${customerType} ${businessType}`.trim(),
+      source
+    });
+    let suggestedAgent = assignment.assignee || suggestAgentForLead(brand, category);
+    if (isGovtOrBankLead) {
+      suggestedAgent = "Prabhjyot";
+    } else if (isPartnerLead) {
+      suggestedAgent = "Rimpy";
+    }
+    const leadSegment = isGovtOrBankLead ? "GOVT_OR_BANK" : isPartnerLead ? "CHANNEL_PARTNER" : customerType.toUpperCase();
+
+    const normalizedPayload = {
       brand,
       qty,
       timeline,
       source,
       category,
-      city
-    });
-    const assignment = suggestAssigneeForService({
-      service: `${brand} ${category} ${plan}`.trim(),
-      source
-    });
-    const suggestedAgent = assignment.assignee || suggestAgentForLead(brand, category);
-
-    const normalizedPayload = {
-      brand,
-      category,
+      city,
       plan,
       deployment: deployment || undefined,
       tier: plan,
@@ -368,10 +410,7 @@ export async function POST(request: Request) {
       ciscoUsers: brand === "Cisco" || brand === "Other" ? ciscoUsers : undefined,
       ciscoSites: brand === "Cisco" || brand === "Other" ? ciscoSites : undefined,
       budgetRange: brand === "Cisco" || brand === "Other" ? budgetRange : undefined,
-      qty,
-      city,
       sourcePage,
-      source,
       utmSource: utmSource || undefined,
       utmCampaign: utmCampaign || undefined,
       utmMedium: utmMedium || undefined,
@@ -379,9 +418,10 @@ export async function POST(request: Request) {
       utmTerm: utmTerm || undefined,
       pagePath: pagePath || undefined,
       referrer: referrer || undefined,
-      timeline,
       addons,
       businessType: businessType || undefined,
+      customerType,
+      leadSegment,
       deviceType: deviceType || undefined,
       score: leadScore
     };
@@ -469,13 +509,17 @@ export async function POST(request: Request) {
         tier: plan,
         qty,
         city,
-        source
+        source,
+        customerType,
+        leadSegment
       }
     });
     console.info("[quote] lead_saved", {
       leadId: crmLead.leadId,
       brand,
       city,
+      customerType,
+      leadSegment,
       sourcePage,
       createdAt: crmLead.createdAt,
       pagePath: pagePath || sourcePage,
@@ -489,7 +533,7 @@ export async function POST(request: Request) {
       company,
       phone,
       city,
-      requirement: `${brand} ${category} ${plan}`.trim(),
+      requirement: `${brand} ${category} ${plan} ${customerType}`.trim(),
       qty,
       usersSeats: usersSeats || null,
       pagePath: pagePath || sourcePage,
