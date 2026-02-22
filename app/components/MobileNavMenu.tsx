@@ -2,16 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  buildEstimatorQuoteHref,
+  defaultEstimatorService,
+  ESTIMATOR_M365_PLANS,
+  ESTIMATOR_SEQRITE_QTY,
+  ESTIMATOR_SERVICE_OPTIONS,
+  type EstimatorServiceOption
+} from "@/lib/estimator";
 import { isNavActive, PRIMARY_NAV_LINKS } from "@/lib/nav-links";
 
 export default function MobileNavMenu() {
   const pathname = usePathname() ?? "/";
   const [open, setOpen] = useState(false);
+  const [service, setService] = useState<EstimatorServiceOption>(() => defaultEstimatorService(pathname));
+  const [m365Plan, setM365Plan] = useState<(typeof ESTIMATOR_M365_PLANS)[number]>("Business Standard");
+  const [seqriteQty, setSeqriteQty] = useState<(typeof ESTIMATOR_SEQRITE_QTY)[number]>("50");
+  const [quoteDetails, setQuoteDetails] = useState("");
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const scrollYRef = useRef(0);
   const pathnameRef = useRef(pathname);
+  const requestQuoteHref = useMemo(
+    () =>
+      buildEstimatorQuoteHref({
+        service,
+        source: "mobile-menu",
+        m365Plan,
+        seqriteQty,
+        details: quoteDetails
+      }),
+    [m365Plan, quoteDetails, seqriteQty, service]
+  );
+
+  useEffect(() => {
+    setService(defaultEstimatorService(pathname));
+  }, [pathname]);
 
   useEffect(() => {
     const body = document.body;
@@ -148,6 +175,63 @@ export default function MobileNavMenu() {
                 <span className="sr-only">Close menu</span>
               </button>
             </div>
+
+            <section className="mt-4 space-y-2 rounded-xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-alt-bg)_88%,transparent)] p-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--color-text-secondary)]">Quick RFQ Estimator</p>
+              <select
+                value={service}
+                onChange={(event) => setService(event.target.value as EstimatorServiceOption)}
+                className="form-field-surface min-h-11 w-full rounded-lg border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)]"
+                aria-label="Select service"
+              >
+                {ESTIMATOR_SERVICE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              {service === "Microsoft 365" ? (
+                <select
+                  value={m365Plan}
+                  onChange={(event) => setM365Plan(event.target.value as (typeof ESTIMATOR_M365_PLANS)[number])}
+                  className="form-field-surface min-h-11 w-full rounded-lg border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)]"
+                  aria-label="Select Microsoft plan"
+                >
+                  {ESTIMATOR_M365_PLANS.map((plan) => (
+                    <option key={plan} value={plan}>
+                      {plan}
+                    </option>
+                  ))}
+                </select>
+              ) : service === "Seqrite" ? (
+                <select
+                  value={seqriteQty}
+                  onChange={(event) => setSeqriteQty(event.target.value as (typeof ESTIMATOR_SEQRITE_QTY)[number])}
+                  className="form-field-surface min-h-11 w-full rounded-lg border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)]"
+                  aria-label="Select endpoint count"
+                >
+                  {ESTIMATOR_SEQRITE_QTY.map((qty) => (
+                    <option key={qty} value={qty}>
+                      {qty} endpoints
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={quoteDetails}
+                  onChange={(event) => setQuoteDetails(event.target.value)}
+                  placeholder="Quote details (optional)"
+                  className="form-field-surface min-h-11 w-full rounded-lg border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)]"
+                />
+              )}
+              <Link
+                href={requestQuoteHref}
+                onClick={() => setOpen(false)}
+                className="interactive-btn inline-flex min-h-11 w-full items-center justify-center rounded-lg border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-3 text-sm font-semibold text-white"
+              >
+                Continue to Request Quote
+              </Link>
+            </section>
 
             <nav
               className="mt-4 flex flex-col gap-1 overflow-y-auto pr-1"

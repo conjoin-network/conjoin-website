@@ -151,7 +151,7 @@ export default function Microsoft365ChandigarhPage() {
   };
 
   return (
-    <div className="pb-28 md:pb-0">
+    <div>
       <Section className="pb-10 pt-10 md:pb-14 md:pt-12">
         <header className="hero-panel rounded-3xl p-7 md:p-10">
           <div className="max-w-4xl space-y-5">
@@ -305,17 +305,6 @@ export default function Microsoft365ChandigarhPage() {
           <ContactLeadForm mode="minimal" />
         </div>
       </Section>
-      <div className="fixed inset-x-0 z-40 px-4 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] md:hidden bottom-[calc(env(safe-area-inset-bottom,0px)+4.5rem)]">
-        <div className="grid grid-cols-2 gap-2 rounded-2xl border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_94%,transparent)] p-2 backdrop-blur-sm">
-          <AdsTrackedLink href={callHref} eventName="phone_click" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-3 text-sm font-semibold text-white">
-            Call
-          </AdsTrackedLink>
-          <AdsTrackedLink href={whatsappHref} eventName="whatsapp_click" target="_blank" rel="noreferrer" className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] bg-[var(--brand-whatsapp)] px-3 text-sm font-semibold text-white">
-            WhatsApp
-          </AdsTrackedLink>
-        </div>
-      </div>
-
       <JsonLd id="m365-chd-localbusiness" data={localBusinessJsonLd} />
       <JsonLd id="m365-chd-service" data={serviceJsonLd} />
       <JsonLd id="m365-chd-faq" data={faqJsonLd} />

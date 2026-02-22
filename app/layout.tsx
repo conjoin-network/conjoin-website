@@ -9,6 +9,7 @@ import AnalyticsRouteTracker from "@/app/components/AnalyticsRouteTracker";
 import { ButtonLink } from "@/app/components/Button";
 import FloatingWhatsApp from "@/app/components/FloatingWhatsApp";
 import FloatingCallButton from "@/app/components/FloatingCallButton";
+import MobileBottomCtaBar from "@/app/components/MobileBottomCtaBar";
 import HeaderScrollState from "@/app/components/HeaderScrollState";
 import MainNav from "@/app/components/MainNav";
 import MobileNavMenu from "@/app/components/MobileNavMenu";
@@ -175,8 +176,8 @@ export default function RootLayout({
         <div className="flex min-h-screen flex-col bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">
           <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
             <EstimatorBar />
-            <Container className="min-h-[80px] py-3 md:min-h-[96px] md:py-4">
-              <div className="hidden items-center justify-between gap-3 md:flex">
+            <Container className="min-h-[66px] py-2 lg:min-h-[96px] lg:py-4">
+              <div className="hidden items-center justify-between gap-3 lg:flex">
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
@@ -221,8 +222,8 @@ export default function RootLayout({
                 </div>
               </div>
 
-              <div className="md:hidden">
-                <div className="flex items-center justify-between gap-2">
+              <div className="lg:hidden">
+                <div className="flex flex-nowrap items-center justify-between gap-2">
                 <Link
                   href="/"
                   aria-label="ConjoinNetwork Home"
@@ -238,27 +239,9 @@ export default function RootLayout({
                         priority
                       />
                     </span>
-                    <span className="hidden max-w-[12.5rem] text-[10px] font-medium tracking-[0.02em] text-[var(--color-text-secondary)] md:inline">
-                      Procurement-led IT. Delivered with clarity.
-                    </span>
                   </Link>
-                  <div className="flex items-center gap-2">
-                    <Link
-                      href="/search"
-                      aria-label="Search"
-                      className="header-icon-btn inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                    >
-                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                        <path
-                          d="M9 15a6 6 0 1 1 4.243-1.757L17 17"
-                          stroke="currentColor"
-                          strokeWidth="1.7"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </Link>
-                    <ButtonLink href="/request-quote" variant="primary" className="min-h-11 px-3 text-xs whitespace-nowrap max-[360px]:px-2">
+                  <div className="flex min-w-0 items-center justify-end gap-2">
+                    <ButtonLink href="/request-quote?source=mobile-header" variant="primary" className="min-h-10 px-3 text-[11px] whitespace-nowrap max-[360px]:px-2">
                       Request Quote
                     </ButtonLink>
                     <MobileNavMenu />
@@ -268,7 +251,7 @@ export default function RootLayout({
             </Container>
           </header>
           <EnterpriseTrustBar />
-          <main className="flex-1 bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">{children}</main>
+          <main className="flex-1 bg-[var(--color-page-bg)] pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] text-[var(--color-text-primary)] lg:pb-0">{children}</main>
           <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
             <Container className="space-y-6 pb-24 pt-10 text-sm text-[var(--color-text-secondary)] md:py-10">
               <div className="grid gap-6 md:grid-cols-3">
@@ -416,6 +399,7 @@ export default function RootLayout({
             </Container>
           </footer>
         </div>
+        <MobileBottomCtaBar />
         <FloatingCallButton />
         <FloatingWhatsApp />
         {primaryTagId ? (

@@ -78,7 +78,7 @@ export default function FloatingCallButton() {
           "call_click"
         )
       }
-      className={`floating-call interactive-btn fixed z-[59] inline-flex min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-all duration-200 ${nearFooter ? "is-near-footer" : ""}`}
+      className={`floating-call interactive-btn fixed z-[59] hidden min-h-11 items-center justify-center rounded-full px-4 text-sm font-semibold transition-all duration-200 lg:inline-flex ${nearFooter ? "is-near-footer" : ""}`}
       style={{ "--floating-bottom-offset": `${bottomOffset}px` } as CSSProperties}
     >
       Call Now

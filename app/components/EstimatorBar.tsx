@@ -4,45 +4,30 @@ import { useEffect, useMemo, useState } from "react";
 import { usePathname } from "next/navigation";
 import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import { SALES_PHONE_NUMBER, tel } from "@/lib/contact";
+import {
+  buildEstimatorQuoteHref,
+  defaultEstimatorService,
+  ESTIMATOR_M365_PLANS,
+  ESTIMATOR_SEQRITE_QTY,
+  ESTIMATOR_SERVICE_OPTIONS,
+  type EstimatorServiceOption
+} from "@/lib/estimator";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
-
-type ServiceOption = "Microsoft 365" | "Seqrite" | "Cisco" | "Networking" | "Security" | "Other";
-
-const SERVICE_OPTIONS: ServiceOption[] = ["Microsoft 365", "Seqrite", "Cisco", "Networking", "Security", "Other"];
-const M365_PLANS = ["Business Basic", "Business Standard", "Business Premium", "E3", "E5"] as const;
-const SEQRITE_QTY = ["25", "50", "100", "250", "500"] as const;
 const MICROCOPY = [
   "GeM/PSU/Bank procurement support • Quote in 15 mins",
   "GST invoice • Partner-safe billing",
   "Enterprise SLA support available"
 ] as const;
 
-function defaultServiceForPath(pathname: string): ServiceOption {
-  if (pathname.includes("/microsoft-365-chandigarh")) {
-    return "Microsoft 365";
-  }
-  if (pathname.includes("/seqrite-chandigarh")) {
-    return "Seqrite";
-  }
-  return "Other";
-}
-
-function serviceToBrand(service: ServiceOption) {
-  if (service === "Microsoft 365") return "Microsoft";
-  if (service === "Seqrite") return "Seqrite";
-  if (service === "Cisco") return "Cisco";
-  return "Other";
-}
-
 export default function EstimatorBar() {
   const pathname = usePathname() ?? "/";
-  const [service, setService] = useState<ServiceOption>(() => defaultServiceForPath(pathname));
-  const [m365Plan, setM365Plan] = useState<(typeof M365_PLANS)[number]>("Business Standard");
-  const [seqriteQty, setSeqriteQty] = useState<(typeof SEQRITE_QTY)[number]>("50");
+  const [service, setService] = useState<EstimatorServiceOption>(() => defaultEstimatorService(pathname));
+  const [m365Plan, setM365Plan] = useState<(typeof ESTIMATOR_M365_PLANS)[number]>("Business Standard");
+  const [seqriteQty, setSeqriteQty] = useState<(typeof ESTIMATOR_SEQRITE_QTY)[number]>("50");
   const [microcopyIndex, setMicrocopyIndex] = useState(0);
 
   useEffect(() => {
-    setService(defaultServiceForPath(pathname));
+    setService(defaultEstimatorService(pathname));
   }, [pathname]);
 
   useEffect(() => {
@@ -53,24 +38,12 @@ export default function EstimatorBar() {
   }, []);
 
   const requestQuoteHref = useMemo(() => {
-    const params = new URLSearchParams({
+    return buildEstimatorQuoteHref({
+      service,
       source: "estimator-bar",
-      brand: serviceToBrand(service)
+      m365Plan,
+      seqriteQty
     });
-
-    if (service === "Microsoft 365") {
-      params.set("plan", m365Plan);
-      params.set("category", "Microsoft 365");
-    }
-    if (service === "Seqrite") {
-      params.set("category", "Endpoint Security");
-      params.set("qty", seqriteQty);
-    }
-    if (service === "Networking" || service === "Security") {
-      params.set("category", service);
-    }
-
-    return `/request-quote?${params.toString()}`;
   }, [m365Plan, seqriteQty, service]);
 
   const whatsappHref = useMemo(
@@ -87,7 +60,13 @@ export default function EstimatorBar() {
 
   return (
     <div className="border-b border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-alt-bg)_92%,black_8%)]">
-      <div className="mx-auto grid max-w-[1280px] gap-2 px-3 py-2 text-[11px] sm:px-4 lg:grid-cols-[1.3fr_1.6fr_1.2fr] lg:items-center">
+      <div className="mx-auto max-w-[1280px] px-3 py-1.5 lg:hidden">
+        <p className="truncate text-[11px] font-semibold text-[var(--color-text-primary)]">
+          Instant Quote • GST Invoice • Local Support
+        </p>
+      </div>
+
+      <div className="mx-auto hidden max-w-[1280px] gap-2 px-3 py-2 text-[11px] sm:px-4 lg:grid lg:grid-cols-[1.3fr_1.6fr_1.2fr] lg:items-center">
         <div className="min-h-8 space-y-0.5">
           <p className="font-semibold text-[var(--color-text-primary)]">Instant Quote • GST Invoice • Local Support</p>
           <p className="text-[var(--color-text-secondary)]">{MICROCOPY[microcopyIndex]}</p>
@@ -100,10 +79,10 @@ export default function EstimatorBar() {
           <select
             id="estimator-service"
             value={service}
-            onChange={(event) => setService(event.target.value as ServiceOption)}
+            onChange={(event) => setService(event.target.value as EstimatorServiceOption)}
             className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
           >
-            {SERVICE_OPTIONS.map((option) => (
+            {ESTIMATOR_SERVICE_OPTIONS.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -113,11 +92,11 @@ export default function EstimatorBar() {
           {service === "Microsoft 365" ? (
             <select
               value={m365Plan}
-              onChange={(event) => setM365Plan(event.target.value as (typeof M365_PLANS)[number])}
+              onChange={(event) => setM365Plan(event.target.value as (typeof ESTIMATOR_M365_PLANS)[number])}
               className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
               aria-label="Microsoft 365 plan"
             >
-              {M365_PLANS.map((plan) => (
+              {ESTIMATOR_M365_PLANS.map((plan) => (
                 <option key={plan} value={plan}>
                   {plan}
                 </option>
@@ -126,11 +105,11 @@ export default function EstimatorBar() {
           ) : service === "Seqrite" ? (
             <select
               value={seqriteQty}
-              onChange={(event) => setSeqriteQty(event.target.value as (typeof SEQRITE_QTY)[number])}
+              onChange={(event) => setSeqriteQty(event.target.value as (typeof ESTIMATOR_SEQRITE_QTY)[number])}
               className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
               aria-label="Seqrite endpoints"
             >
-              {SEQRITE_QTY.map((qty) => (
+              {ESTIMATOR_SEQRITE_QTY.map((qty) => (
                 <option key={qty} value={qty}>
                   {qty} endpoints
                 </option>
