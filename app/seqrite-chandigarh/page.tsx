@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AdsTrackedLink from "@/app/components/AdsTrackedLink";
 import Card from "@/app/components/Card";
+import EnterpriseFocusCards from "@/app/components/EnterpriseFocusCards";
 import FaqAccordion from "@/app/components/FaqAccordion";
+import IndustriesWeServe from "@/app/components/IndustriesWeServe";
 import JsonLd from "@/app/components/JsonLd";
+import ProcurementReadyBlock from "@/app/components/ProcurementReadyBlock";
 import Section from "@/app/components/Section";
 import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import {
@@ -231,6 +234,18 @@ export default function SeqriteChandigarhPage() {
             </div>
           </Card>
         </div>
+      </Section>
+
+      <Section tone="alt" className="py-10 md:py-14">
+        <ProcurementReadyBlock />
+      </Section>
+
+      <Section className="py-10 md:py-14">
+        <EnterpriseFocusCards />
+      </Section>
+
+      <Section tone="alt" className="py-10 md:py-14">
+        <IndustriesWeServe />
       </Section>
 
       <Section tone="alt" className="py-10 md:py-14">

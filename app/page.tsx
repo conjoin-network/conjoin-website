@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { ButtonLink } from "@/app/components/Button";
 import Card from "@/app/components/Card";
 import Carousel from "@/app/components/ui/Carousel";
+import EnterpriseFocusCards from "@/app/components/EnterpriseFocusCards";
+import IndustriesWeServe from "@/app/components/IndustriesWeServe";
+import ProcurementReadyBlock from "@/app/components/ProcurementReadyBlock";
 import RelatedLinks from "@/app/components/RelatedLinks";
 import Section from "@/app/components/Section";
 import { getTheme, withThemeStyles } from "@/lib/brand/themes";
@@ -309,6 +312,18 @@ export default function Home() {
             })}
           </div>
         </div>
+      </Section>
+
+      <Section className="py-10 md:py-14">
+        <ProcurementReadyBlock />
+      </Section>
+
+      <Section tone="alt" className="py-10 md:py-14">
+        <EnterpriseFocusCards />
+      </Section>
+
+      <Section className="py-10 md:py-14">
+        <IndustriesWeServe />
       </Section>
 
       <Section className="py-10 md:py-14">

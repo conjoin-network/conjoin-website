@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Container from "@/app/components/Container";
 
 const TRUST_POINTS = [
+  "GeM Process Supported",
   "SLA Support",
   "OEM-aligned Procurement",
   "GST Invoice + Compliance",
@@ -35,16 +36,16 @@ export default function EnterpriseTrustBar() {
         </div>
         <div className="grid gap-2 text-xs text-[var(--color-text-secondary)] md:grid-cols-3">
           <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-            <span className="font-semibold text-[var(--color-text-primary)]">Procurement Ready:</span> Formal quote pack, commercial notes, and
-            compliance-first procurement support.
+            <span className="font-semibold text-[var(--color-text-primary)]">Government & PSU:</span> GeM-process aligned procurement support and
+            documentation-first quote handling.
           </p>
           <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-            <span className="font-semibold text-[var(--color-text-primary)]">Partner Network:</span> Microsoft, Seqrite, Cisco and other OEM-aligned
-            sourcing channels.
+            <span className="font-semibold text-[var(--color-text-primary)]">Channel-First:</span> Partner-safe billing flow with non-circumvention
+            commitment and OEM-distributor alignment.
           </p>
           <p className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2">
-            <span className="font-semibold text-[var(--color-text-primary)]">Governance:</span> Discovery, approval, deployment and audit handover in
-            a single operating flow.
+            <span className="font-semibold text-[var(--color-text-primary)]">Governance:</span> Structured procurement, transparent documentation, and
+            audit-friendly workflows.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -67,4 +68,3 @@ export default function EnterpriseTrustBar() {
     </section>
   );
 }
-

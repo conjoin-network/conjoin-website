@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import JsonLd from "@/app/components/JsonLd";
 import Container from "@/app/components/Container";
+import ProcurementReadyBlock from "@/app/components/ProcurementReadyBlock";
 import Section from "@/app/components/Section";
 import ContactLeadForm from "@/app/contact/ContactLeadForm";
 import RequestQuoteWizard from "@/app/request-quote/RequestQuoteWizard";
@@ -50,6 +51,11 @@ export default function RequestQuotePage() {
             <p className="text-xs text-[var(--color-text-secondary)]">GST Invoice • Same-day activation • Local support</p>
           </div>
           <ContactLeadForm mode="minimal" />
+        </Container>
+      </Section>
+      <Section className="py-8 md:py-10">
+        <Container>
+          <ProcurementReadyBlock />
         </Container>
       </Section>
       <RequestQuoteWizard />
