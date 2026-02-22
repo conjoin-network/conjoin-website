@@ -5,7 +5,7 @@ import Card from "@/app/components/Card";
 import JsonLd from "@/app/components/JsonLd";
 import PageHero from "@/app/components/PageHero";
 import Section from "@/app/components/Section";
-import ContactLeadForm from "@/app/contact/ContactLeadForm";
+import SmartRfqEstimator from "@/app/components/SmartRfqEstimator";
 import {
   ORG_AREA_SERVED,
   ORG_NAME,
@@ -105,7 +105,7 @@ export default function ContactPage() {
             </div>
           </Card>
 
-          <ContactLeadForm />
+          <SmartRfqEstimator sourceContext="contact" title="Instant RFQ Estimator" />
         </div>
       </Section>
 

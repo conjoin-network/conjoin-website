@@ -3,7 +3,7 @@ import JsonLd from "@/app/components/JsonLd";
 import Container from "@/app/components/Container";
 import ProcurementReadyBlock from "@/app/components/ProcurementReadyBlock";
 import Section from "@/app/components/Section";
-import ContactLeadForm from "@/app/contact/ContactLeadForm";
+import SmartRfqEstimator from "@/app/components/SmartRfqEstimator";
 import RequestQuoteWizard from "@/app/request-quote/RequestQuoteWizard";
 import { absoluteUrl, buildMetadata } from "@/lib/seo";
 
@@ -46,11 +46,11 @@ export default function RequestQuotePage() {
           <div className="space-y-2">
             <h2 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-4xl">Request Quote</h2>
             <p className="text-sm text-[var(--color-text-secondary)]">
-              Quick lead capture for immediate callback.
+              Smart estimator with conditional fields for faster quote qualification.
             </p>
             <p className="text-xs text-[var(--color-text-secondary)]">GST Invoice • Same-day activation • Local support</p>
           </div>
-          <ContactLeadForm mode="minimal" />
+          <SmartRfqEstimator sourceContext="request-quote" title="Smart RFQ Estimator" />
         </Container>
       </Section>
       <Section className="py-8 md:py-10">
