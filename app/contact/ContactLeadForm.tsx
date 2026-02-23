@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
 
 type FormState = {
@@ -74,7 +74,6 @@ type ContactLeadFormProps = {
 
 export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormProps) {
   const pathname = usePathname() ?? "/contact";
-  const router = useRouter();
   const isMinimal = mode === "minimal";
   const [state, setState] = useState<FormState>(initialState);
   const formStartTracked = React.useRef(false);
@@ -228,14 +227,17 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
+      if (state.city.trim()) {
+        queryParams.set("city", state.city.trim());
+      }
+      queryParams.set("category", normalizedRequirement);
       if (leadId) {
         queryParams.set("leadId", leadId);
       }
-      const query = queryParams.toString() ? `?${queryParams.toString()}` : "";
-      window.setTimeout(() => {
-        setToast("");
-        router.push(`/thank-you${query}`);
-      }, 350);
+      const query = queryParams.toString();
+      if (typeof window !== "undefined") {
+        window.location.assign(`/thank-you?${query}`);
+      }
       return;
     }
 

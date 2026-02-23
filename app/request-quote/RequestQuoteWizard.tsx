@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
@@ -177,7 +176,6 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
 }
 
 export default function RequestQuoteWizard() {
-  const router = useRouter();
   const formStartTracked = useRef(false);
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -596,9 +594,9 @@ export default function RequestQuoteWizard() {
         query.set("leadId", resolvedRfqId);
       }
 
-      window.setTimeout(() => {
-        router.push(`/thank-you?${query.toString()}`);
-      }, 550);
+      if (typeof window !== "undefined") {
+        window.location.assign(`/thank-you?${query.toString()}`);
+      }
     } catch (error) {
       setStatus("error");
       setNotice(

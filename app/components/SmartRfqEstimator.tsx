@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { trackLeadConversion } from "@/lib/ads";
-import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
+import { usePathname } from "next/navigation";
 
 type BuyerType = "Government/PSU" | "Enterprise" | "SMB" | "Partner/Reseller" | "Individual";
 type ServiceCategory =
@@ -70,7 +68,6 @@ export default function SmartRfqEstimator({
   title = "Smart RFQ Estimator"
 }: SmartRfqEstimatorProps) {
   const pathname = usePathname() ?? "/";
-  const router = useRouter();
   const [step, setStep] = useState(1);
   const [buyerType, setBuyerType] = useState<BuyerType>("Enterprise");
   const [category, setCategory] = useState<ServiceCategory>(() => defaultCategoryFromPath(pathname));
@@ -224,13 +221,6 @@ export default function SmartRfqEstimator({
       const leadId = data.leadId || data.rfqId;
       setStatus("success");
       setNotice("Thank you. Request received. Redirecting to confirmation...");
-      trackLeadConversion({
-        leadId: leadId || undefined,
-        pagePath,
-        formSource: sourceContext,
-        city: normalizedCity,
-        leadType: category
-      });
 
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
@@ -243,17 +233,6 @@ export default function SmartRfqEstimator({
         );
       }
 
-      const whatsappLink = getWhatsAppLink(
-        buildQuoteMessage({
-          brand: category,
-          city: normalizedCity,
-          requirement: serviceSummary,
-          qty: category === "Microsoft 365" ? usersCount : devicesCount,
-          timeline
-        })
-      );
-      window.open(whatsappLink, "_blank", "noopener,noreferrer");
-
       const query = new URLSearchParams({
         formSource: sourceContext,
         city: normalizedCity,
@@ -263,20 +242,9 @@ export default function SmartRfqEstimator({
         query.set("leadId", leadId);
       }
 
-      window.setTimeout(() => {
-        setName("");
-        setPhone("");
-        setEmail("");
-        setCompany("");
-        setCity("Chandigarh");
-        setNotes("");
-        setUsersCount("");
-        setDevicesCount("");
-        setM365Needs([]);
-        setEndpointNeeds([]);
-        setStep(1);
-        router.push(`/thank-you?${query.toString()}`);
-      }, 450);
+      if (typeof window !== "undefined") {
+        window.location.assign(`/thank-you?${query.toString()}`);
+      }
     } catch (error) {
       setStatus("error");
       setNotice(

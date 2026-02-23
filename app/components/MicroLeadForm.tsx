@@ -2,8 +2,6 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { usePathname } from "next/navigation";
-import { trackLeadConversion } from "@/lib/ads";
-import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
 const serviceOptions = ["Microsoft 365", "Seqrite", "Networking", "Surveillance", "Other"] as const;
 const cityOptions = ["Chandigarh", "Mohali", "Panchkula", "Other"] as const;
@@ -46,16 +44,16 @@ function getAttributionParams(search: string) {
   };
 }
 
-export default function MicroLeadForm({
-  sourceContext,
-  presetService,
-  planName,
-  usersLabel = "Users / Devices",
-  title = "Request Quote",
-  showServiceSelect = true,
-  showCity = true,
-  showWhatsAppAfterSuccess = true
-}: MicroLeadFormProps) {
+export default function MicroLeadForm(props: MicroLeadFormProps) {
+  const {
+    sourceContext,
+    presetService,
+    planName,
+    usersLabel = "Users / Devices",
+    title = "Request Quote",
+    showServiceSelect = true,
+    showCity = true
+  } = props;
   const pathname = usePathname() ?? "/";
   const [step, setStep] = useState<1 | 2>(1);
   const [service, setService] = useState(presetService || "Microsoft 365");
@@ -67,7 +65,6 @@ export default function MicroLeadForm({
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [notice, setNotice] = useState("");
-  const [whatsappHref, setWhatsappHref] = useState("");
 
   const serviceValue = presetService || service;
   const quantityValue = Number.parseInt(users, 10);
@@ -154,26 +151,27 @@ export default function MicroLeadForm({
       const leadId = payload.leadId || payload.rfqId;
       setStatus("success");
       setNotice("Thank you. Our team will contact you shortly.");
-      trackLeadConversion({
-        leadId: leadId || undefined,
-        pagePath,
+      const query = new URLSearchParams({
         formSource: sourceContext,
-        city: showCity ? city : undefined,
-        leadType: serviceValue
+        city: showCity ? city : "Chandigarh",
+        category: serviceValue,
       });
-      if (showWhatsAppAfterSuccess) {
-        setWhatsappHref(
-          getWhatsAppLink(
-            buildQuoteMessage({
-              brand: serviceValue,
-              city: showCity ? city : "Chandigarh",
-              requirement,
-              qty: String(quantityValue)
-            })
-          )
-        );
+      if (leadId) {
+        query.set("leadId", leadId);
       }
-      resetForm();
+      if (typeof window !== "undefined") {
+        window.sessionStorage.setItem(
+          "conjoin_submit_success",
+          JSON.stringify({
+            formSource: sourceContext,
+            leadId: leadId || null,
+            timestamp: Date.now()
+          })
+        );
+        window.location.assign(`/thank-you?${query.toString()}`);
+      } else {
+        resetForm();
+      }
     } catch (error) {
       setStatus("error");
       setNotice(
@@ -329,17 +327,6 @@ export default function MicroLeadForm({
         >
           {notice}
         </p>
-      ) : null}
-
-      {status === "success" && whatsappHref ? (
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--brand-whatsapp)] bg-[var(--brand-whatsapp)] px-4 text-sm font-semibold text-white"
-        >
-          Continue on WhatsApp
-        </a>
       ) : null}
     </form>
   );
