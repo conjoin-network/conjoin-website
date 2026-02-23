@@ -5,6 +5,7 @@ import Card from "@/app/components/Card";
 import ThankYouTracking from "@/app/thank-you/ThankYouTracking";
 import { getLeadById } from "@/lib/leads";
 import { SALES_EMAIL, mailto } from "@/lib/contact";
+import { resolveLeadContext } from "@/lib/lead-flow";
 import { absoluteUrl } from "@/lib/seo";
 import { getLeadWhatsAppLink } from "@/lib/whatsapp";
 
@@ -35,30 +36,10 @@ type SearchParams = {
   city?: string;
   qty?: string;
   category?: string;
+  requirement?: string;
   plan?: string;
   timeline?: string;
 };
-
-function normalizeValue(value: string | null | undefined) {
-  return value?.trim() ?? "";
-}
-
-function inferBrandFromText(value: string | null | undefined) {
-  const normalized = normalizeValue(value).toLowerCase();
-  if (!normalized) {
-    return "";
-  }
-  if (normalized.includes("microsoft")) {
-    return "Microsoft";
-  }
-  if (normalized.includes("seqrite") || normalized.includes("quick heal")) {
-    return "Seqrite";
-  }
-  if (normalized.includes("cisco")) {
-    return "Cisco";
-  }
-  return "";
-}
 
 export default async function ThankYouPage({
   searchParams
@@ -68,22 +49,24 @@ export default async function ThankYouPage({
   const params = await searchParams;
   const lead = params.leadId ? await getLeadById(params.leadId) : null;
   const formSource = params.formSource ?? params.form_source ?? "contact";
-  const leadBrand = typeof lead?.brand === "string" ? normalizeValue(lead.brand) : "";
-  const brand =
-    normalizeValue(params.brand) ||
-    leadBrand ||
-    inferBrandFromText(params.plan) ||
-    inferBrandFromText(typeof lead?.requirement === "string" ? lead.requirement : "") ||
-    "Other";
+  const context = resolveLeadContext({
+    sourceContext: formSource,
+    brand: params.brand ?? (typeof lead?.brand === "string" ? lead.brand : ""),
+    category: params.category ?? (typeof lead?.category === "string" ? lead.category : ""),
+    requirement:
+      params.requirement ??
+      params.plan ??
+      (typeof lead?.tier === "string" ? lead.tier : "") ??
+      (typeof lead?.requirement === "string" ? lead.requirement : "")
+  });
+  const brand = context.brand;
+  const category = context.category;
   const city = params.city ?? lead?.city ?? "Chandigarh";
-  const category =
-    normalizeValue(params.category) ||
-    normalizeValue(typeof lead?.category === "string" ? lead.category : "") ||
-    "IT solution";
   const requirement =
-    normalizeValue(params.plan) ||
-    normalizeValue(typeof lead?.tier === "string" ? lead.tier : "") ||
-    normalizeValue(typeof lead?.requirement === "string" ? lead.requirement : "") ||
+    (params.requirement ?? "").trim() ||
+    (params.plan ?? "").trim() ||
+    (typeof lead?.tier === "string" ? lead.tier.trim() : "") ||
+    (typeof lead?.requirement === "string" ? lead.requirement.trim() : "") ||
     category;
   const qty = params.qty ?? (typeof lead?.qty === "number" ? String(lead.qty) : "-");
   const timeline = params.timeline ?? lead?.timeline ?? "This Week";
@@ -138,6 +121,8 @@ export default async function ThankYouPage({
             <dl className="mt-2 grid grid-cols-[120px_1fr] gap-y-1 text-sm">
               <dt className="font-medium text-[var(--color-text-primary)]">Brand</dt>
               <dd>{brand}</dd>
+              <dt className="font-medium text-[var(--color-text-primary)]">Category</dt>
+              <dd>{category}</dd>
               <dt className="font-medium text-[var(--color-text-primary)]">Requirement</dt>
               <dd>{requirement}</dd>
               <dt className="font-medium text-[var(--color-text-primary)]">{quantityLabel}</dt>

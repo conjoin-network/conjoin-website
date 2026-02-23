@@ -2,6 +2,10 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { usePathname } from "next/navigation";
+import {
+  appendAttributionToQuery,
+  resolveLeadContext
+} from "@/lib/lead-flow";
 
 const serviceOptions = ["Microsoft 365", "Seqrite", "Networking", "Surveillance", "Other"] as const;
 const cityOptions = ["Chandigarh", "Mohali", "Panchkula", "Other"] as const;
@@ -23,6 +27,7 @@ function parseApiResponse(value: unknown) {
   }
   return value as {
     ok?: boolean;
+    queued?: boolean;
     error?: string;
     message?: string;
     leadId?: string;
@@ -42,32 +47,6 @@ function getAttributionParams(search: string) {
     gbraid: params.get("gbraid") ?? undefined,
     wbraid: params.get("wbraid") ?? undefined
   };
-}
-
-function resolveBrand(service: string, sourceContext: string, pathname: string) {
-  const normalizedService = service.trim().toLowerCase();
-  const normalizedContext = sourceContext.trim().toLowerCase();
-  const normalizedPath = pathname.trim().toLowerCase();
-  if (normalizedService.includes("microsoft")) {
-    return "Microsoft";
-  }
-  if (
-    normalizedService.includes("seqrite") ||
-    normalizedService.includes("quick heal") ||
-    normalizedContext.includes("seqrite") ||
-    normalizedPath.includes("/seqrite")
-  ) {
-    return "Seqrite";
-  }
-  if (
-    normalizedService.includes("cisco") ||
-    normalizedService.includes("network") ||
-    normalizedContext.includes("cisco") ||
-    normalizedPath.includes("/cisco")
-  ) {
-    return "Cisco";
-  }
-  return "Other";
 }
 
 export default function MicroLeadForm(props: MicroLeadFormProps) {
@@ -139,6 +118,12 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
     const pagePath = typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname;
     const attribution = typeof window !== "undefined" ? getAttributionParams(window.location.search) : {};
     const requirement = planName ? `${serviceValue} - ${planName}` : serviceValue;
+    const context = resolveLeadContext({
+      pathname,
+      sourceContext,
+      requirement,
+      category: serviceValue
+    });
 
     try {
       const response = await fetch("/api/leads", {
@@ -175,18 +160,26 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
       }
 
       const leadId = payload.leadId || payload.rfqId;
-      const brand = resolveBrand(serviceValue, sourceContext, pathname);
+      const isSuccess = response.ok && payload.ok !== false && payload.queued !== true;
+      if (!isSuccess) {
+        setStatus("error");
+        setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
+        return;
+      }
+
       setStatus("success");
       setNotice("Thank you. Our team will contact you shortly.");
       const query = new URLSearchParams({
         formSource: sourceContext,
-        brand,
+        brand: context.brand,
         city: showCity ? city : "Chandigarh",
-        category: serviceValue,
+        category: context.category,
+        requirement
       });
       if (leadId) {
         query.set("leadId", leadId);
       }
+      appendAttributionToQuery(query, attribution);
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
           "conjoin_submit_success",

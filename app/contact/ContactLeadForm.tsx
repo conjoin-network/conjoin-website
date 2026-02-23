@@ -3,6 +3,11 @@
 import React, { useState } from "react";
 import { usePathname } from "next/navigation";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
+import {
+  appendAttributionToQuery,
+  resolveLeadContext,
+  type AttributionQuery
+} from "@/lib/lead-flow";
 
 type FormState = {
   name: string;
@@ -115,18 +120,17 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
     return "contact";
   }
 
-  function resolveBrand(requirement: string) {
-    const normalized = requirement.trim().toLowerCase();
-    if (normalized.includes("microsoft")) {
-      return "Microsoft";
-    }
-    if (normalized.includes("seqrite") || normalized.includes("quick heal")) {
-      return "Seqrite";
-    }
-    if (normalized.includes("cisco")) {
-      return "Cisco";
-    }
-    return "Other";
+  function attributionFromState(value: FormState): AttributionQuery {
+    return {
+      utm_source: value.utm_source,
+      utm_medium: value.utm_medium,
+      utm_campaign: value.utm_campaign,
+      utm_term: value.utm_term,
+      utm_content: value.utm_content,
+      gclid: value.gclid,
+      gbraid: value.gbraid,
+      wbraid: value.wbraid
+    };
   }
 
   function detectDeviceType() {
@@ -170,6 +174,13 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
     const normalizedName = state.name.trim() || "Website Lead";
     const normalizedRequirement = state.requirement.trim() || "General IT Requirement";
     const normalizedBusinessType = state.businessType.trim();
+    const formSource = resolveFormSource(pathname);
+    const context = resolveLeadContext({
+      pathname,
+      sourceContext: formSource,
+      requirement: normalizedRequirement
+    });
+    const attribution = attributionFromState(state);
     const normalizedNotes = [state.message.trim(), normalizedBusinessType ? `Business Type: ${normalizedBusinessType}` : ""]
       .filter(Boolean)
       .join(" | ");
@@ -186,19 +197,22 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
           email: state.email,
           phone: state.phone,
           requirement: normalizedRequirement,
+          brand: context.brand,
+          category: context.category,
+          solutionType: normalizedRequirement,
           usersDevices: state.users ? Number(state.users) : undefined,
           city: state.city,
           timeline: state.timeline,
           notes: normalizedNotes,
           website: state.website,
-          utm_source: state.utm_source,
-          utm_medium: state.utm_medium,
-          utm_campaign: state.utm_campaign,
-          utm_term: state.utm_term,
-          utm_content: state.utm_content,
-          gclid: state.gclid,
-          gbraid: state.gbraid,
-          wbraid: state.wbraid,
+          utm_source: attribution.utm_source,
+          utm_medium: attribution.utm_medium,
+          utm_campaign: attribution.utm_campaign,
+          utm_term: attribution.utm_term,
+          utm_content: attribution.utm_content,
+          gclid: attribution.gclid,
+          gbraid: attribution.gbraid,
+          wbraid: attribution.wbraid,
           source: pathname || "/contact",
           pageUrl: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
           landing_page: typeof window !== "undefined" ? `${window.location.pathname}${window.location.search}` : pathname || "/contact",
@@ -219,15 +233,17 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       error?: string;
       leadId?: string;
       rfqId?: string;
+      queued?: boolean;
     };
 
-    if (response.ok) {
+    const isSuccess = response.ok && payload.ok !== false && !payload.queued;
+
+    if (isSuccess) {
       setStatus("success");
       setNotice("Thank you. Our team will contact you shortly.");
       setToast("Request received. Redirecting to confirmation...");
       setState(initialState);
 
-      const formSource = resolveFormSource(pathname);
       const leadId = payload.leadId || payload.rfqId;
       if (typeof window !== "undefined") {
         window.sessionStorage.setItem(
@@ -241,14 +257,16 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
-      queryParams.set("brand", resolveBrand(normalizedRequirement));
+      queryParams.set("brand", context.brand);
       if (state.city.trim()) {
         queryParams.set("city", state.city.trim());
       }
-      queryParams.set("category", normalizedRequirement);
+      queryParams.set("category", context.category);
+      queryParams.set("requirement", normalizedRequirement);
       if (leadId) {
         queryParams.set("leadId", leadId);
       }
+      appendAttributionToQuery(queryParams, attribution);
       const query = queryParams.toString();
       if (typeof window !== "undefined") {
         window.location.assign(`/thank-you?${query}`);

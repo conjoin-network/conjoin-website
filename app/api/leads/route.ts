@@ -185,7 +185,10 @@ export async function POST(request: NextRequest) {
   try {
     const ip = request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || request.headers.get("x-client-ip") || "local";
     if (!checkRate(String(ip))) {
-      return new Response(null, { status: 204 });
+      return NextResponse.json(
+        { ok: false, requestId, error: "Too many requests. Please retry in a few minutes." },
+        { status: 429 }
+      );
     }
 
     let rawBody: unknown;
@@ -201,7 +204,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (parsed.data.website && parsed.data.website.trim() !== "") {
-      return new Response(null, { status: 204 });
+      return NextResponse.json({ ok: false, requestId, error: "Invalid request payload." }, { status: 400 });
     }
 
     const email = normalizeEmail(parsed.data.email);
@@ -210,7 +213,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, requestId, error: "Please provide phone or email." }, { status: 400 });
     }
     if (phone && isRecentPhoneDuplicate(phone)) {
-      return new Response(null, { status: 204 });
+      console.warn("LEAD_DUPLICATE_PHONE_WINDOW", JSON.stringify({ requestId, phoneTail: phone.slice(-4) }));
     }
 
     const ua = request.headers.get("user-agent") || undefined;

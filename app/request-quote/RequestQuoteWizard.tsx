@@ -5,6 +5,7 @@ import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
 import { SALES_EMAIL, SUPPORT_EMAIL, mailto } from "@/lib/contact";
+import { appendAttributionToQuery, resolveLeadContext } from "@/lib/lead-flow";
 import {
   BRAND_ACCENTS,
   CITY_OPTIONS,
@@ -468,47 +469,55 @@ export default function RequestQuoteWizard() {
     const normalizedCity = state.city.trim() || "Chandigarh";
     const normalizedCompany = state.company.trim();
     const normalizedEmail = state.email.trim();
+    const requirement = [state.category.trim(), state.product.trim()].filter(Boolean).join(" - ") || state.category.trim() || "General requirement";
+    const context = resolveLeadContext({
+      pathname: state.pagePath,
+      sourceContext: "request-quote",
+      brand: state.brandLabel,
+      category: state.category,
+      requirement
+    });
+    const quoteNotes = [
+      state.notes,
+      state.product ? `Plan: ${state.product}` : "",
+      state.deployment ? `Deployment: ${state.deployment}` : "",
+      state.customerType ? `Customer Type: ${state.customerType}` : "",
+      state.tenderGemRef ? `Tender/GeM: ${state.tenderGemRef}` : "",
+      state.documentationRequired ? "Documentation Required: Yes" : "",
+      state.partnerEndCustomer ? `Partner End Customer: ${state.partnerEndCustomer}` : "",
+      state.backToBackBilling ? "Back-to-back Billing: Yes" : ""
+    ]
+      .filter(Boolean)
+      .join(" | ");
 
     const payload = {
-      brand: state.brand,
-      otherBrand: state.brand === "Other" ? state.brandLabel : "",
-      category: state.category,
-      plan: state.product,
-      deployment: state.deployment,
-      usersSeats: state.brand === "Microsoft" ? quantity : "",
-      endpoints: state.brand === "Seqrite" ? quantity : "",
-      servers: state.brand === "Seqrite" && showServers ? toNumber(state.servers) : "",
-      ciscoUsers: state.brand === "Cisco" || state.brand === "Other" ? quantity : "",
-      ciscoSites: "",
-      budgetRange: "",
+      name: state.contactName.trim() || "Website Lead",
+      brand: context.brand,
+      category: context.category,
+      solutionType: state.product || state.category || undefined,
+      requirement,
+      usersDevices: quantity > 0 ? quantity : undefined,
       city: normalizedCity,
       source: state.source,
-      sourcePage: state.sourcePage,
-      utmSource: state.utmSource,
-      utmMedium: state.utmMedium,
-      utmCampaign: state.utmCampaign,
-      utmContent: state.utmContent,
-      utmTerm: state.utmTerm,
+      pageUrl: state.pagePath,
+      landing_page: state.pagePath,
+      utm_source: state.utmSource,
+      utm_medium: state.utmMedium,
+      utm_campaign: state.utmCampaign,
+      utm_content: state.utmContent,
+      utm_term: state.utmTerm,
       gclid: state.gclid,
       gbraid: state.gbraid,
       wbraid: state.wbraid,
-      landingPage: state.pagePath,
-      pagePath: state.pagePath,
       referrer: state.referrer,
       timeline: state.timeline,
-      whatsappOptIn: state.whatsappOptIn,
-      notes: state.notes,
+      notes: quoteNotes,
       website: state.website,
-      contactName: state.contactName,
       company: normalizedCompany || undefined,
       email: normalizedEmail || undefined,
       phone: state.phone,
-      customerType: state.customerType,
-      tenderGemRef: state.customerType === "Govt-PSU" ? state.tenderGemRef : undefined,
-      documentationRequired: state.customerType === "Govt-PSU" ? state.documentationRequired : undefined,
-      partnerEndCustomer: state.customerType === "Partner" ? state.partnerEndCustomer : undefined,
-      backToBackBilling: state.customerType === "Partner" ? state.backToBackBilling : undefined,
-      deviceType:
+      businessType: state.customerType,
+      device_type:
         typeof window !== "undefined" && /mobile|android|iphone|ipod/i.test(window.navigator.userAgent)
           ? "mobile"
           : typeof window !== "undefined" && /ipad|tablet/i.test(window.navigator.userAgent)
@@ -518,25 +527,16 @@ export default function RequestQuoteWizard() {
     };
 
     try {
-      let response: Response;
-      try {
-        response = await fetch("/api/quote", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      } catch {
-        response = await fetch("/api/quote", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-      }
+      const response = await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
 
-      let data: { ok?: boolean; success?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string } | null = null;
+      let data: { ok?: boolean; success?: boolean; queued?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string } | null = null;
       const contentType = response.headers.get("content-type") ?? "";
       if (contentType.includes("application/json")) {
-        data = (await response.json()) as { ok?: boolean; success?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string };
+        data = (await response.json()) as { ok?: boolean; success?: boolean; queued?: boolean; message?: string; error?: string; leadId?: string; rfqId?: string };
       } else {
         const text = await response.text();
         data = {
@@ -552,7 +552,7 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      const isSuccess = response.ok;
+      const isSuccess = response.ok && data?.ok !== false && data?.queued !== true;
 
       if (!isSuccess) {
         setStatus("error");
@@ -583,16 +583,27 @@ export default function RequestQuoteWizard() {
 
       const query = new URLSearchParams({
         formSource: "request-quote",
-        brand: state.brandLabel,
+        brand: context.brand,
         city: normalizedCity,
         qty: String(quantity),
-        category: state.category,
+        category: context.category,
+        requirement,
         plan: state.product,
         timeline: state.timeline
       });
       if (resolvedRfqId) {
         query.set("leadId", resolvedRfqId);
       }
+      appendAttributionToQuery(query, {
+        gclid: state.gclid,
+        gbraid: state.gbraid,
+        wbraid: state.wbraid,
+        utm_source: state.utmSource,
+        utm_medium: state.utmMedium,
+        utm_campaign: state.utmCampaign,
+        utm_term: state.utmTerm,
+        utm_content: state.utmContent
+      });
 
       if (typeof window !== "undefined") {
         window.location.assign(`/thank-you?${query.toString()}`);

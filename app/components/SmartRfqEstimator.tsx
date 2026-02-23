@@ -2,6 +2,10 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { usePathname } from "next/navigation";
+import {
+  appendAttributionToQuery,
+  resolveLeadContext
+} from "@/lib/lead-flow";
 
 type BuyerType = "Government/PSU" | "Enterprise" | "SMB" | "Partner/Reseller" | "Individual";
 type ServiceCategory =
@@ -56,34 +60,12 @@ function parseJsonPayload(value: unknown) {
   }
   return value as {
     ok?: boolean;
+    queued?: boolean;
     error?: string;
     message?: string;
     leadId?: string;
     rfqId?: string;
   };
-}
-
-function resolveBrand(
-  category: ServiceCategory,
-  sourceContext: string,
-  pathname: string
-) {
-  if (category === "Microsoft 365") {
-    return "Microsoft";
-  }
-  if (category === "Endpoint Security") {
-    if (
-      sourceContext.toLowerCase().includes("seqrite") ||
-      pathname.toLowerCase().includes("/seqrite")
-    ) {
-      return "Seqrite";
-    }
-    return "Other";
-  }
-  if (category === "Networking") {
-    return "Cisco";
-  }
-  return "Other";
 }
 
 export default function SmartRfqEstimator({
@@ -187,6 +169,13 @@ export default function SmartRfqEstimator({
         ? `${window.location.pathname}${window.location.search}`
         : pathname;
     const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const requirement = `${category} | ${buyerType}`;
+    const context = resolveLeadContext({
+      pathname,
+      sourceContext,
+      category,
+      requirement
+    });
 
     const payload = {
       name: normalizedName,
@@ -194,7 +183,7 @@ export default function SmartRfqEstimator({
       email: email.trim() || undefined,
       company: company.trim() || undefined,
       city: normalizedCity,
-      requirement: `${category} | ${buyerType}`,
+      requirement,
       businessType: buyerType,
       usersDevices: toPositiveNumber(category === "Microsoft 365" ? usersCount : devicesCount),
       timeline,
@@ -235,14 +224,15 @@ export default function SmartRfqEstimator({
       });
       const data = parseJsonPayload(await response.json().catch(() => ({})));
 
-      if (!response.ok) {
+      const isSuccess = response.ok && data.ok !== false && data.queued !== true;
+
+      if (!isSuccess) {
         setStatus("error");
         setNotice(data.error || data.message || `Unable to submit request (HTTP ${response.status}).`);
         return;
       }
 
       const leadId = data.leadId || data.rfqId;
-      const brand = resolveBrand(category, sourceContext, pathname);
       setStatus("success");
       setNotice("Thank you. Request received. Redirecting to confirmation...");
 
@@ -259,12 +249,25 @@ export default function SmartRfqEstimator({
 
       const query = new URLSearchParams({
         formSource: sourceContext,
-        brand,
+        brand: context.brand,
         city: normalizedCity,
-        category
+        category: context.category,
+        requirement
       });
       if (leadId) {
         query.set("leadId", leadId);
+      }
+      if (searchParams) {
+        appendAttributionToQuery(query, {
+          gclid: searchParams.get("gclid") ?? undefined,
+          gbraid: searchParams.get("gbraid") ?? undefined,
+          wbraid: searchParams.get("wbraid") ?? undefined,
+          utm_source: searchParams.get("utm_source") ?? undefined,
+          utm_medium: searchParams.get("utm_medium") ?? undefined,
+          utm_campaign: searchParams.get("utm_campaign") ?? undefined,
+          utm_term: searchParams.get("utm_term") ?? undefined,
+          utm_content: searchParams.get("utm_content") ?? undefined
+        });
       }
 
       if (typeof window !== "undefined") {
