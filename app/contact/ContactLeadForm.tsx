@@ -115,6 +115,20 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
     return "contact";
   }
 
+  function resolveBrand(requirement: string) {
+    const normalized = requirement.trim().toLowerCase();
+    if (normalized.includes("microsoft")) {
+      return "Microsoft";
+    }
+    if (normalized.includes("seqrite") || normalized.includes("quick heal")) {
+      return "Seqrite";
+    }
+    if (normalized.includes("cisco")) {
+      return "Cisco";
+    }
+    return "Other";
+  }
+
   function detectDeviceType() {
     if (typeof window === "undefined") {
       return "server";
@@ -227,6 +241,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
+      queryParams.set("brand", resolveBrand(normalizedRequirement));
       if (state.city.trim()) {
         queryParams.set("city", state.city.trim());
       }

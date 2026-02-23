@@ -63,6 +63,29 @@ function parseJsonPayload(value: unknown) {
   };
 }
 
+function resolveBrand(
+  category: ServiceCategory,
+  sourceContext: string,
+  pathname: string
+) {
+  if (category === "Microsoft 365") {
+    return "Microsoft";
+  }
+  if (category === "Endpoint Security") {
+    if (
+      sourceContext.toLowerCase().includes("seqrite") ||
+      pathname.toLowerCase().includes("/seqrite")
+    ) {
+      return "Seqrite";
+    }
+    return "Other";
+  }
+  if (category === "Networking") {
+    return "Cisco";
+  }
+  return "Other";
+}
+
 export default function SmartRfqEstimator({
   sourceContext = "smart-rfq",
   title = "Smart RFQ Estimator"
@@ -219,6 +242,7 @@ export default function SmartRfqEstimator({
       }
 
       const leadId = data.leadId || data.rfqId;
+      const brand = resolveBrand(category, sourceContext, pathname);
       setStatus("success");
       setNotice("Thank you. Request received. Redirecting to confirmation...");
 
@@ -235,6 +259,7 @@ export default function SmartRfqEstimator({
 
       const query = new URLSearchParams({
         formSource: sourceContext,
+        brand,
         city: normalizedCity,
         category
       });

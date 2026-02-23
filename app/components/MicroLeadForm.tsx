@@ -44,6 +44,32 @@ function getAttributionParams(search: string) {
   };
 }
 
+function resolveBrand(service: string, sourceContext: string, pathname: string) {
+  const normalizedService = service.trim().toLowerCase();
+  const normalizedContext = sourceContext.trim().toLowerCase();
+  const normalizedPath = pathname.trim().toLowerCase();
+  if (normalizedService.includes("microsoft")) {
+    return "Microsoft";
+  }
+  if (
+    normalizedService.includes("seqrite") ||
+    normalizedService.includes("quick heal") ||
+    normalizedContext.includes("seqrite") ||
+    normalizedPath.includes("/seqrite")
+  ) {
+    return "Seqrite";
+  }
+  if (
+    normalizedService.includes("cisco") ||
+    normalizedService.includes("network") ||
+    normalizedContext.includes("cisco") ||
+    normalizedPath.includes("/cisco")
+  ) {
+    return "Cisco";
+  }
+  return "Other";
+}
+
 export default function MicroLeadForm(props: MicroLeadFormProps) {
   const {
     sourceContext,
@@ -149,10 +175,12 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
       }
 
       const leadId = payload.leadId || payload.rfqId;
+      const brand = resolveBrand(serviceValue, sourceContext, pathname);
       setStatus("success");
       setNotice("Thank you. Our team will contact you shortly.");
       const query = new URLSearchParams({
         formSource: sourceContext,
+        brand,
         city: showCity ? city : "Chandigarh",
         category: serviceValue,
       });

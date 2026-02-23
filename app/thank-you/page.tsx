@@ -39,6 +39,27 @@ type SearchParams = {
   timeline?: string;
 };
 
+function normalizeValue(value: string | null | undefined) {
+  return value?.trim() ?? "";
+}
+
+function inferBrandFromText(value: string | null | undefined) {
+  const normalized = normalizeValue(value).toLowerCase();
+  if (!normalized) {
+    return "";
+  }
+  if (normalized.includes("microsoft")) {
+    return "Microsoft";
+  }
+  if (normalized.includes("seqrite") || normalized.includes("quick heal")) {
+    return "Seqrite";
+  }
+  if (normalized.includes("cisco")) {
+    return "Cisco";
+  }
+  return "";
+}
+
 export default async function ThankYouPage({
   searchParams
 }: {
@@ -47,12 +68,26 @@ export default async function ThankYouPage({
   const params = await searchParams;
   const lead = params.leadId ? await getLeadById(params.leadId) : null;
   const formSource = params.formSource ?? params.form_source ?? "contact";
-  const brand = params.brand ?? String(lead?.brand ?? "IT solution");
+  const leadBrand = typeof lead?.brand === "string" ? normalizeValue(lead.brand) : "";
+  const brand =
+    normalizeValue(params.brand) ||
+    leadBrand ||
+    inferBrandFromText(params.plan) ||
+    inferBrandFromText(typeof lead?.requirement === "string" ? lead.requirement : "") ||
+    "Other";
   const city = params.city ?? lead?.city ?? "Chandigarh";
-  const requirement = params.plan ?? params.category ?? lead?.tier ?? lead?.category ?? "General requirement";
+  const category =
+    normalizeValue(params.category) ||
+    normalizeValue(typeof lead?.category === "string" ? lead.category : "") ||
+    "IT solution";
+  const requirement =
+    normalizeValue(params.plan) ||
+    normalizeValue(typeof lead?.tier === "string" ? lead.tier : "") ||
+    normalizeValue(typeof lead?.requirement === "string" ? lead.requirement : "") ||
+    category;
   const qty = params.qty ?? (typeof lead?.qty === "number" ? String(lead.qty) : "-");
   const timeline = params.timeline ?? lead?.timeline ?? "This Week";
-  const quantityLabel = lead?.brand === "Microsoft" ? "Users / Seats" : lead?.brand === "Seqrite" ? "Endpoints" : "Quantity";
+  const quantityLabel = brand === "Microsoft" ? "Users / Seats" : brand === "Seqrite" ? "Endpoints" : "Quantity";
   const message = `Hi Conjoin, I need a quote for ${brand} - ${requirement}. City: ${city}. Qty: ${qty}. Timeline: ${timeline}.`;
   const whatsappLink = getLeadWhatsAppLink({ message, assignedTo: lead?.assignedTo ?? null });
 
