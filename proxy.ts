@@ -23,7 +23,7 @@ const crmSecurityHeaders = {
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
   "X-DNS-Prefetch-Control": "off",
   "X-Permitted-Cross-Domain-Policies": "none",
-  "Content-Security-Policy":
+  "Content-Security-Policy-Report-Only":
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; upgrade-insecure-requests"
 };
 
