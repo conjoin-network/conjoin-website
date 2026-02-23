@@ -47,6 +47,7 @@ function isCrmHost(hostHeader: string | null) {
 
 function isCrmSurfacePath(pathname: string) {
   return (
+    pathname === "/gateway" ||
     pathname === "/crm" ||
     pathname.startsWith("/crm/") ||
     pathname === "/admin" ||
@@ -104,12 +105,13 @@ export function proxy(request: NextRequest) {
       });
     }
 
-    if (pathname === "/" || pathname === "/index.html") {
+    if (pathname === "/" || pathname === "/index.html" || pathname === "/crm" || pathname === "/gateway") {
       return withHeaders(NextResponse.rewrite(new URL(CRM_GATEWAY_PATH, request.url)), { crm: true });
     }
 
     if (!isCrmSurfacePath(pathname) && !isAssetPath(pathname) && !pathname.startsWith("/api/")) {
-      return withHeaders(NextResponse.rewrite(new URL(CRM_GATEWAY_PATH, request.url)), { crm: true });
+      const destination = new URL(pathname + request.nextUrl.search, "https://conjoinnetwork.com");
+      return withHeaders(NextResponse.redirect(destination, 307), { crm: true });
     }
   }
 
