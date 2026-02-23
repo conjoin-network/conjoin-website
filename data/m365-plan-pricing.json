@@ -1,0 +1,21 @@
+{
+  "currency": "INR",
+  "annualDiscountPercent": 12,
+  "plans": {
+    "m365-business-basic-chandigarh": {
+      "monthlyPerUser": 145
+    },
+    "m365-business-standard-chandigarh": {
+      "monthlyPerUser": 770
+    },
+    "m365-business-premium-chandigarh": {
+      "monthlyPerUser": 1320
+    },
+    "m365-e3-chandigarh": {
+      "monthlyPerUser": 3180
+    },
+    "m365-e5-chandigarh": {
+      "monthlyPerUser": 5140
+    }
+  }
+}
