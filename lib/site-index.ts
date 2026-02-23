@@ -71,6 +71,83 @@ const baseEntries: SiteIndexEntry[] = [
     category: "Guides"
   },
   {
+    title: "M365 Business Basic Chandigarh",
+    description: "High-conversion plan page with instant estimate for Microsoft 365 Business Basic.",
+    url: "/m365-business-basic-chandigarh",
+    tags: ["m365", "business basic", "pricing", "chandigarh"],
+    category: "Guides"
+  },
+  {
+    title: "M365 Business Standard Chandigarh",
+    description: "Plan page for Microsoft 365 Business Standard with instant estimate and RFQ.",
+    url: "/m365-business-standard-chandigarh",
+    tags: ["m365", "business standard", "pricing", "chandigarh"],
+    category: "Guides"
+  },
+  {
+    title: "M365 Business Premium Chandigarh",
+    description: "Microsoft 365 Business Premium page with security-led commercial scope.",
+    url: "/m365-business-premium-chandigarh",
+    tags: ["m365", "business premium", "security", "chandigarh"],
+    category: "Guides"
+  },
+  {
+    title: "M365 E3 Chandigarh",
+    description: "Enterprise-focused Microsoft 365 E3 licensing page for Chandigarh.",
+    url: "/m365-e3-chandigarh",
+    tags: ["m365", "e3", "enterprise", "chandigarh"],
+    category: "Guides"
+  },
+  {
+    title: "M365 E5 Chandigarh",
+    description: "Enterprise-focused Microsoft 365 E5 licensing page for Chandigarh.",
+    url: "/m365-e5-chandigarh",
+    tags: ["m365", "e5", "enterprise", "chandigarh"],
+    category: "Guides"
+  },
+  {
+    title: "Seqrite Endpoint Security",
+    description: "Ad-aligned Seqrite endpoint security landing page with quick RFQ.",
+    url: "/seqrite-endpoint-security",
+    tags: ["seqrite", "endpoint security", "rfq", "chandigarh"],
+    category: "Products"
+  },
+  {
+    title: "Seqrite EDR XDR",
+    description: "Seqrite EDR/XDR landing page with conversion-first lead flow.",
+    url: "/seqrite-edr-xdr",
+    tags: ["seqrite", "edr", "xdr", "rfq"],
+    category: "Products"
+  },
+  {
+    title: "Seqrite Email Security",
+    description: "Seqrite email security procurement and deployment support page.",
+    url: "/seqrite-email-security",
+    tags: ["seqrite", "email security", "procurement"],
+    category: "Products"
+  },
+  {
+    title: "Seqrite Server Security",
+    description: "Server security-focused Seqrite landing page for enterprise teams.",
+    url: "/seqrite-server-security",
+    tags: ["seqrite", "server security", "enterprise"],
+    category: "Products"
+  },
+  {
+    title: "Seqrite Enterprise Suite",
+    description: "Enterprise suite page for unified Seqrite security programs.",
+    url: "/seqrite-enterprise-suite",
+    tags: ["seqrite", "enterprise suite", "security"],
+    category: "Products"
+  },
+  {
+    title: "Seqrite Renewals",
+    description: "Renewal-focused Seqrite page with continuity and add-on planning.",
+    url: "/seqrite-renewals",
+    tags: ["seqrite", "renewal", "support"],
+    category: "Products"
+  },
+  {
     title: "Endpoint Security Chandigarh",
     description: "Endpoint security deployment and renewal support for Chandigarh organizations.",
     url: "/endpoint-security-chandigarh",
