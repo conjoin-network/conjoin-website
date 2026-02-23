@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 const ADMIN_SESSION_COOKIE = "conjoin_admin_session";
+const CRM_HOST = "crm.conjoinnetwork.com";
+const CRM_GATEWAY_PATH = "/crm/gateway";
 
 const adminNoCacheHeaders = {
   "Cache-Control": "no-store, no-cache, must-revalidate",
@@ -11,23 +13,114 @@ const adminNoCacheHeaders = {
   "X-Content-Type-Options": "nosniff"
 };
 
-function withAdminHeaders(response: NextResponse) {
+const crmSecurityHeaders = {
+  "X-Robots-Tag": "noindex, nofollow, noarchive",
+  "Referrer-Policy": "same-origin",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Content-Security-Policy":
+    "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; upgrade-insecure-requests"
+};
+
+function withHeaders(response: NextResponse, options: { admin?: boolean; crm?: boolean }) {
+  if (options.admin) {
+    Object.entries(adminNoCacheHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  if (options.crm) {
+    Object.entries(crmSecurityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
+  return response;
+}
+
+function isCrmHost(hostHeader: string | null) {
+  const host = (hostHeader ?? "").split(":")[0].toLowerCase();
+  return host === CRM_HOST;
+}
+
+function isCrmSurfacePath(pathname: string) {
+  return (
+    pathname === "/crm" ||
+    pathname.startsWith("/crm/") ||
+    pathname === "/admin" ||
+    pathname.startsWith("/admin/") ||
+    pathname === "/api/admin" ||
+    pathname.startsWith("/api/admin/") ||
+    pathname === "/api/health"
+  );
+}
+
+function isAssetPath(pathname: string) {
+  return (
+    pathname.startsWith("/_next/") ||
+    pathname === "/favicon.ico" ||
+    pathname === "/icon.png" ||
+    pathname === "/apple-touch-icon.png" ||
+    pathname.startsWith("/favicon-") ||
+    pathname.startsWith("/brand/") ||
+    pathname.startsWith("/assets/")
+  );
+}
+
+function withAdminHeaders(response: NextResponse, isCrmRequest: boolean) {
   Object.entries(adminNoCacheHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
   });
+
+  if (isCrmRequest) {
+    Object.entries(crmSecurityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+  }
+
   return response;
 }
 
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const crmRequest = isCrmHost(request.headers.get("host"));
+
+  if (crmRequest) {
+    if (pathname === "/robots.txt") {
+      return withHeaders(
+        new NextResponse("User-agent: *\nDisallow: /", {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" }
+        }),
+        { crm: true }
+      );
+    }
+
+    if (pathname === "/sitemap.xml") {
+      return withHeaders(NextResponse.json({ ok: false, message: "Not available on this host." }, { status: 404 }), {
+        crm: true
+      });
+    }
+
+    if (pathname === "/" || pathname === "/index.html") {
+      return withHeaders(NextResponse.rewrite(new URL(CRM_GATEWAY_PATH, request.url)), { crm: true });
+    }
+
+    if (!isCrmSurfacePath(pathname) && !isAssetPath(pathname) && !pathname.startsWith("/api/")) {
+      return withHeaders(NextResponse.rewrite(new URL(CRM_GATEWAY_PATH, request.url)), { crm: true });
+    }
+  }
+
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
   if (!isAdminPage && !isAdminApi) {
-    return NextResponse.next();
+    return withHeaders(NextResponse.next(), { crm: crmRequest });
   }
 
   if (pathname === "/admin/login" || pathname === "/api/admin/login") {
-    return withAdminHeaders(NextResponse.next());
+    return withAdminHeaders(NextResponse.next(), crmRequest);
   }
 
   const hasConfiguredOwner = Boolean(
@@ -41,29 +134,32 @@ export function proxy(request: NextRequest) {
         NextResponse.json(
           { ok: false, message: "Admin portal is not configured. Set OWNER_USER and OWNER_PASS." },
           { status: 503 }
-        )
+        ),
+        crmRequest
       );
     }
 
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return withAdminHeaders(NextResponse.redirect(loginUrl));
+    return withAdminHeaders(NextResponse.redirect(loginUrl), crmRequest);
   }
 
   const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value;
   if (!token) {
     if (isAdminApi) {
-      return withAdminHeaders(NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 }));
+      return withAdminHeaders(NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 }), crmRequest);
     }
 
     const loginUrl = new URL("/admin/login", request.url);
     loginUrl.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-    return withAdminHeaders(NextResponse.redirect(loginUrl));
+    return withAdminHeaders(NextResponse.redirect(loginUrl), crmRequest);
   }
 
-  return withAdminHeaders(NextResponse.next());
+  return withAdminHeaders(NextResponse.next(), crmRequest);
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"]
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-touch-icon.png|favicon-16x16.png|favicon-32x32.png).*)"
+  ]
 };
