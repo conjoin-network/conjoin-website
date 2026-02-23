@@ -15,7 +15,7 @@ const adminNoCacheHeaders = {
 
 const crmSecurityHeaders = {
   "X-Robots-Tag": "noindex, nofollow",
-  "Referrer-Policy": "same-origin",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Cross-Origin-Opener-Policy": "same-origin",
