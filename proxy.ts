@@ -109,7 +109,7 @@ export function proxy(request: NextRequest) {
     }
 
     if (pathname === "/" || pathname === "/index.html" || pathname === "/crm" || pathname === "/gateway") {
-      return withHeaders(NextResponse.rewrite(new URL(CRM_GATEWAY_PATH, request.url)), { crm: true });
+      return withHeaders(NextResponse.redirect(new URL(CRM_GATEWAY_PATH, request.url), 307), { crm: true });
     }
 
     if (!isCrmSurfacePath(pathname) && !isAssetPath(pathname) && !pathname.startsWith("/api/")) {
