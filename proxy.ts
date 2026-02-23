@@ -14,12 +14,15 @@ const adminNoCacheHeaders = {
 };
 
 const crmSecurityHeaders = {
-  "X-Robots-Tag": "noindex, nofollow, noarchive",
+  "X-Robots-Tag": "noindex, nofollow",
   "Referrer-Policy": "same-origin",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Embedder-Policy": "unsafe-none",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "X-DNS-Prefetch-Control": "off",
+  "X-Permitted-Cross-Domain-Policies": "none",
   "Content-Security-Policy":
     "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob:; font-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:; upgrade-insecure-requests"
 };
