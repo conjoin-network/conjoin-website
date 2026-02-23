@@ -73,6 +73,22 @@ function isAssetPath(pathname: string) {
   );
 }
 
+function withRequestContextHeaders(request: NextRequest, pathname = request.nextUrl.pathname) {
+  const requestHeaders = new Headers(request.headers);
+  const host = request.headers.get("host") ?? "";
+  requestHeaders.set("x-conjoin-host", host);
+  requestHeaders.set("x-conjoin-path", pathname);
+  return requestHeaders;
+}
+
+function nextWithContext(request: NextRequest, pathname = request.nextUrl.pathname) {
+  return NextResponse.next({
+    request: {
+      headers: withRequestContextHeaders(request, pathname),
+    },
+  });
+}
+
 function withAdminHeaders(response: NextResponse, isCrmRequest: boolean) {
   Object.entries(adminNoCacheHeaders).forEach(([key, value]) => {
     response.headers.set(key, value);
@@ -121,11 +137,11 @@ export function proxy(request: NextRequest) {
   const isAdminPage = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
   if (!isAdminPage && !isAdminApi) {
-    return withHeaders(NextResponse.next(), { crm: crmRequest });
+    return withHeaders(nextWithContext(request), { crm: crmRequest });
   }
 
   if (pathname === "/admin/login" || pathname === "/api/admin/login") {
-    return withAdminHeaders(NextResponse.next(), crmRequest);
+    return withAdminHeaders(nextWithContext(request), crmRequest);
   }
 
   const hasConfiguredOwner = Boolean(
@@ -160,7 +176,7 @@ export function proxy(request: NextRequest) {
     return withAdminHeaders(NextResponse.redirect(loginUrl), crmRequest);
   }
 
-  return withAdminHeaders(NextResponse.next(), crmRequest);
+  return withAdminHeaders(nextWithContext(request), crmRequest);
 }
 
 export const config = {

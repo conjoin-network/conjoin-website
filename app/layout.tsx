@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import Container from "@/app/components/Container";
 import AdsTrackedLink from "@/app/components/AdsTrackedLink";
@@ -22,6 +23,7 @@ import EnterpriseTrustBar from "@/app/components/EnterpriseTrustBar";
 import EstimatorBar from "@/app/components/EstimatorBar";
 import { ADS_ID } from "@/lib/ads";
 import { GA_ID, isGAEnabled } from "@/lib/ga";
+import { isCrmHost } from "@/lib/server/host";
 import {
   ORG_OFFICE_BLOCK,
   COVERAGE,
@@ -96,11 +98,17 @@ export const viewport: Viewport = {
   colorScheme: "dark"
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const headerStore = await headers();
+  const requestHost = headerStore.get("x-conjoin-host") ?? headerStore.get("x-forwarded-host") ?? headerStore.get("host");
+  const requestPath = headerStore.get("x-conjoin-path") ?? "";
+  const crmHost = isCrmHost(requestHost);
+  const crmShellPath = requestPath.startsWith("/admin") || requestPath.startsWith("/crm");
+  const showMarketingChrome = !(crmHost && crmShellPath);
   const adsId = ADS_ID;
   const gaId = GA_ID;
   const primaryTagId = gaId || adsId;
@@ -174,62 +182,17 @@ export default function RootLayout({
       >
         <HeaderScrollState />
         <div className="flex min-h-screen flex-col bg-[var(--color-page-bg)] text-[var(--color-text-primary)]">
-          <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
-            <EstimatorBar />
-            <Container className="min-h-[66px] py-2 lg:min-h-[96px] lg:py-4">
-              <div className="hidden items-center justify-between gap-3 lg:flex">
-                <Link
-                  href="/"
-                  aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex min-w-0 shrink items-center gap-2.5 rounded-xl px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)] md:max-w-[240px]"
-                >
-                  <span className="brand-mark shrink-0" aria-hidden>
-                    <Image
-                      src="/brand/conjoin-logo.png"
-                      alt=""
-                      width={258}
-                      height={113}
-                      className="brand-image"
-                      priority
-                    />
-                  </span>
-                  <span className="hidden truncate text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)] min-[1100px]:inline">
-                    Procurement-led IT. Delivered with clarity.
-                  </span>
-                </Link>
-                <div className="flex min-w-0 flex-1 justify-center px-2">
-                  <MainNav className="justify-center flex-nowrap text-xs lg:text-sm" />
-                </div>
-                <div className="flex shrink-0 items-center justify-end gap-1.5 lg:gap-3">
+          {showMarketingChrome ? (
+            <header className="site-header sticky top-0 z-50 border-b bg-[var(--color-surface)]">
+              <EstimatorBar />
+              <Container className="min-h-[66px] py-2 lg:min-h-[96px] lg:py-4">
+                <div className="hidden items-center justify-between gap-3 lg:flex">
                   <Link
-                    href="/search"
-                    aria-label="Search"
-                    className="header-icon-btn inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    href="/"
+                    aria-label="ConjoinNetwork Home"
+                    className="brand-link group inline-flex min-w-0 shrink items-center gap-2.5 rounded-xl px-2 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)] md:max-w-[240px]"
                   >
-                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
-                      <path
-                        d="M9 15a6 6 0 1 1 4.243-1.757L17 17"
-                        stroke="currentColor"
-                        strokeWidth="1.7"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </Link>
-                  <ButtonLink href="/request-quote" variant="primary" className="min-h-11 whitespace-nowrap px-4 text-xs lg:px-5 lg:text-sm">
-                    Request Quote
-                  </ButtonLink>
-                </div>
-              </div>
-
-              <div className="lg:hidden">
-                <div className="flex flex-nowrap items-center justify-between gap-2">
-                <Link
-                  href="/"
-                  aria-label="ConjoinNetwork Home"
-                  className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
-                >
-                    <span className="brand-mark" aria-hidden>
+                    <span className="brand-mark shrink-0" aria-hidden>
                       <Image
                         src="/brand/conjoin-logo.png"
                         alt=""
@@ -239,20 +202,68 @@ export default function RootLayout({
                         priority
                       />
                     </span>
+                    <span className="hidden truncate text-xs font-medium tracking-[0.02em] text-[var(--color-text-secondary)] min-[1100px]:inline">
+                      Procurement-led IT. Delivered with clarity.
+                    </span>
                   </Link>
-                  <div className="flex min-w-0 items-center justify-end gap-2">
-                    <ButtonLink href="/request-quote?source=mobile-header" variant="primary" className="min-h-10 px-3 text-[11px] whitespace-nowrap max-[360px]:px-2">
+                  <div className="flex min-w-0 flex-1 justify-center px-2">
+                    <MainNav className="justify-center flex-nowrap text-xs lg:text-sm" />
+                  </div>
+                  <div className="flex shrink-0 items-center justify-end gap-1.5 lg:gap-3">
+                    <Link
+                      href="/search"
+                      aria-label="Search"
+                      className="header-icon-btn inline-flex h-11 w-11 items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                    >
+                      <svg viewBox="0 0 20 20" fill="none" aria-hidden="true" className="h-4 w-4">
+                        <path
+                          d="M9 15a6 6 0 1 1 4.243-1.757L17 17"
+                          stroke="currentColor"
+                          strokeWidth="1.7"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </Link>
+                    <ButtonLink href="/request-quote" variant="primary" className="min-h-11 whitespace-nowrap px-4 text-xs lg:px-5 lg:text-sm">
                       Request Quote
                     </ButtonLink>
-                    <MobileNavMenu />
                   </div>
                 </div>
-              </div>
-            </Container>
-          </header>
-          <EnterpriseTrustBar />
-          <main className="flex-1 bg-[var(--color-page-bg)] pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] text-[var(--color-text-primary)] lg:pb-0">{children}</main>
-          <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
+
+                <div className="lg:hidden">
+                  <div className="flex flex-nowrap items-center justify-between gap-2">
+                    <Link
+                      href="/"
+                      aria-label="ConjoinNetwork Home"
+                      className="brand-link group inline-flex items-center gap-2 rounded-xl px-1.5 py-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary)]/35 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-page-bg)]"
+                    >
+                      <span className="brand-mark" aria-hidden>
+                        <Image
+                          src="/brand/conjoin-logo.png"
+                          alt=""
+                          width={258}
+                          height={113}
+                          className="brand-image"
+                          priority
+                        />
+                      </span>
+                    </Link>
+                    <div className="flex min-w-0 items-center justify-end gap-2">
+                      <ButtonLink href="/request-quote?source=mobile-header" variant="primary" className="min-h-10 px-3 text-[11px] whitespace-nowrap max-[360px]:px-2">
+                        Request Quote
+                      </ButtonLink>
+                      <MobileNavMenu />
+                    </div>
+                  </div>
+                </div>
+              </Container>
+            </header>
+          ) : null}
+          {showMarketingChrome ? <EnterpriseTrustBar /> : null}
+          <main className={`flex-1 bg-[var(--color-page-bg)] text-[var(--color-text-primary)] ${showMarketingChrome ? "pb-[calc(env(safe-area-inset-bottom,0px)+5rem)] lg:pb-0" : "pb-0"}`}>{children}</main>
+          {showMarketingChrome ? (
+            <footer className="mt-16 border-t border-[var(--color-border)] bg-[var(--color-alt-bg)]">
             <Container className="space-y-6 pb-24 pt-10 text-sm text-[var(--color-text-secondary)] md:py-10">
               <div className="grid gap-6 md:grid-cols-3">
                 <div className="space-y-2">
@@ -397,11 +408,12 @@ export default function RootLayout({
               <PartnerDisclaimer />
               <p className="text-xs">© {year} Conjoin Network Pvt. Ltd. All rights reserved.</p>
             </Container>
-          </footer>
+            </footer>
+          ) : null}
         </div>
-        <MobileBottomCtaBar />
-        <FloatingCallButton />
-        <FloatingWhatsApp />
+        {showMarketingChrome ? <MobileBottomCtaBar /> : null}
+        {showMarketingChrome ? <FloatingCallButton /> : null}
+        {showMarketingChrome ? <FloatingWhatsApp /> : null}
         {primaryTagId ? (
           <>
             <Script
