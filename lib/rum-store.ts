@@ -2,7 +2,8 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 
 const isProductionRuntime = Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
-const dataDir = isProductionRuntime ? "/tmp/conjoinnetwork" : path.join(process.cwd(), "data");
+const tmpRoot = process.env.TMPDIR || "/tmp";
+const dataDir = isProductionRuntime ? "/tmp/conjoinnetwork" : path.join(tmpRoot, "conjoinnetwork-dev");
 const rumFilePath = path.join(dataDir, "rum-events.json");
 const maxEvents = 5000;
 const maxAgeMs = 7 * 24 * 60 * 60 * 1000;
