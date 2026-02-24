@@ -45,31 +45,38 @@ export function serviceToBrand(service: EstimatorServiceOption) {
 type BuildEstimatorQuoteHrefInput = {
   service: EstimatorServiceOption;
   source: string;
+  city?: string;
   m365Plan?: string;
   seqriteQty?: string;
   details?: string;
 };
 
 export function buildEstimatorQuoteHref(input: BuildEstimatorQuoteHrefInput) {
+  const brand = serviceToBrand(input.service);
+  const category =
+    input.service === "Microsoft 365"
+      ? "Microsoft 365"
+      : input.service === "Seqrite"
+        ? "Endpoint Security"
+        : input.service === "Networking" || input.service === "Security"
+          ? input.service
+          : "General IT Requirement";
   const params = new URLSearchParams({
     source: input.source,
-    brand: serviceToBrand(input.service)
+    formSource: input.source,
+    brand,
+    category,
+    city: input.city?.trim() || "Chandigarh"
   });
 
   if (input.service === "Microsoft 365" && input.m365Plan) {
     params.set("plan", input.m365Plan);
-    params.set("category", "Microsoft 365");
   }
 
   if (input.service === "Seqrite") {
-    params.set("category", "Endpoint Security");
     if (input.seqriteQty) {
       params.set("qty", input.seqriteQty);
     }
-  }
-
-  if (input.service === "Networking" || input.service === "Security") {
-    params.set("category", input.service);
   }
 
   if (input.details?.trim()) {

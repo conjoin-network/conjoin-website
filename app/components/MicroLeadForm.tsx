@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   appendAttributionToQuery,
   resolveLeadContext
 } from "@/lib/lead-flow";
 
 const serviceOptions = ["Microsoft 365", "Seqrite", "Networking", "Surveillance", "Other"] as const;
-const cityOptions = ["Chandigarh", "Mohali", "Panchkula", "Other"] as const;
+const cityOptions = ["Chandigarh", "Panchkula", "Mohali", "Punjab", "Haryana", "Himachal Pradesh", "Uttarakhand", "J&K", "Other"] as const;
 
 type MicroLeadFormProps = {
   sourceContext: string;
@@ -59,6 +59,7 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
     showServiceSelect = true,
     showCity = true
   } = props;
+  const router = useRouter();
   const pathname = usePathname() ?? "/";
   const [step, setStep] = useState<1 | 2>(1);
   const [service, setService] = useState(presetService || "Microsoft 365");
@@ -84,19 +85,6 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
     }
     return chips;
   }, [serviceValue]);
-
-  function resetForm() {
-    setStep(1);
-    if (!presetService) {
-      setService("Microsoft 365");
-    }
-    setUsers("25");
-    setCity("Chandigarh");
-    setName("");
-    setPhone("");
-    setEmail("");
-    setNotes("");
-  }
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -160,7 +148,7 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
       }
 
       const leadId = payload.leadId || payload.rfqId;
-      const isSuccess = response.ok && payload.ok !== false && payload.queued !== true;
+      const isSuccess = response.ok && payload.ok !== false;
       if (!isSuccess) {
         setStatus("error");
         setNotice(payload.error || payload.message || `Unable to submit request (HTTP ${response.status}).`);
@@ -171,6 +159,7 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
       setNotice("Thank you. Our team will contact you shortly.");
       const query = new URLSearchParams({
         formSource: sourceContext,
+        landingPath: pagePath,
         brand: context.brand,
         city: showCity ? city : "Chandigarh",
         category: context.category,
@@ -189,10 +178,8 @@ export default function MicroLeadForm(props: MicroLeadFormProps) {
             timestamp: Date.now()
           })
         );
-        window.location.assign(`/thank-you?${query.toString()}`);
-      } else {
-        resetForm();
       }
+      router.replace(`/thank-you?${query.toString()}`);
     } catch (error) {
       setStatus("error");
       setNotice(

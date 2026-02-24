@@ -183,22 +183,31 @@ type LeadConversionInput = {
   leadId?: string;
   pagePath: string;
   formSource: string;
+  brand?: string;
+  category?: string;
   city?: string;
   leadType?: string;
 };
 
 export function trackLeadConversion(input: LeadConversionInput) {
+  const transactionId = input.leadId || undefined;
   const payload = {
-    lead_id: input.leadId || undefined,
+    lead_id: transactionId,
     page_path: input.pagePath,
     form_source: input.formSource,
+    brand: input.brand || undefined,
+    category: input.category || undefined,
     lead_type: input.leadType || input.formSource,
     city: input.city || undefined,
     value: 1,
     currency: "INR"
   };
 
-  trackAdsConversionOncePerSession("form_submit_success", payload, "form_submit_success");
+  trackAdsConversionOncePerSession(
+    "form_submit_success",
+    payload,
+    transactionId ? `form_submit_success:${transactionId}` : `form_submit_success:${input.formSource}:${input.pagePath}`
+  );
   trackAdsConversion("generate_lead", payload);
 
   // Prevent double-counting when Google Ads imports GA4 key events by default.

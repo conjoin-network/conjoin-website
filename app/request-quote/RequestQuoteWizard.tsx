@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useRouter } from "next/navigation";
 import Card from "@/app/components/Card";
 import Section from "@/app/components/Section";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
@@ -27,6 +28,7 @@ type WizardState = {
   servers: string;
   deployment: DeploymentType | "";
   city: string;
+  region: string;
   timeline: string;
   contactName: string;
   company: string;
@@ -57,6 +59,16 @@ type WizardState = {
 const steps = ["Brand", "Product", "Users / Devices", "Deployment", "Contact"] as const;
 const timelineOptions = ["Today", "This Week", "This Month", "Planned Window"] as const;
 const customerTypeOptions: Array<WizardState["customerType"]> = ["Enterprise", "Partner", "Govt-PSU", "SMB"];
+const REGION_OPTIONS = [
+  "Chandigarh",
+  "Panchkula",
+  "Mohali",
+  "Punjab",
+  "Haryana",
+  "Himachal Pradesh",
+  "Uttarakhand",
+  "J&K"
+] as const;
 const DRAFT_KEY = "conjoin_rfq_draft_v2";
 const DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 const primaryBrands: LeadBrand[] = ["Microsoft", "Seqrite", "Cisco", "Other"];
@@ -170,13 +182,14 @@ function validationMessageForStep(currentStep: number, brand: LeadBrand | "") {
   }
 
   if (currentStep === 5) {
-    return "Enter phone before submit.";
+    return "Enter name, phone or email, and city before submit.";
   }
 
   return "Please complete required fields to continue.";
 }
 
 export default function RequestQuoteWizard() {
+  const router = useRouter();
   const formStartTracked = useRef(false);
   const [step, setStep] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -195,15 +208,45 @@ export default function RequestQuoteWizard() {
 
   const [state, setState] = useState<WizardState>(() => {
     const params = typeof window === "undefined" ? new URLSearchParams() : new URLSearchParams(window.location.search);
+    const legacySource = (params.get("source") ?? "").trim();
+    const sourcePath =
+      (params.get("landingPath") ?? "").trim() ||
+      (legacySource.startsWith("/") ? legacySource : "") ||
+      (typeof document !== "undefined"
+        ? (() => {
+            try {
+              const parsed = new URL(document.referrer);
+              return parsed.pathname || "/";
+            } catch {
+              return "/";
+            }
+          })()
+        : "/");
+    const formSource =
+      (params.get("formSource") ?? "").trim() ||
+      (legacySource && !legacySource.startsWith("/") ? legacySource : "") ||
+      "request-quote";
 
     const incomingBrand = normalizeBrand(params.get("brand") ?? "");
     const incomingProduct = (params.get("product") ?? params.get("plan") ?? "").trim();
     const incomingCategory = (params.get("category") ?? "").trim();
-    let category = incomingCategory || (incomingBrand.brand ? getCategoryForPlan(incomingBrand.brand, incomingProduct) : "");
+    const inferredContext = resolveLeadContext({
+      pathname: sourcePath,
+      sourceContext: formSource,
+      brand: incomingBrand.brandLabel,
+      category: incomingCategory,
+      requirement: incomingProduct
+    });
+    const resolvedBrand = incomingBrand.brand || inferredContext.brand;
+    const resolvedBrandLabel = incomingBrand.brandLabel || inferredContext.brand;
+    let category =
+      incomingCategory ||
+      (resolvedBrand ? getCategoryForPlan(resolvedBrand, incomingProduct) : "") ||
+      inferredContext.category;
     let product = incomingProduct;
 
-    if (incomingBrand.brand && category && product) {
-      const exists = getProductOptions(incomingBrand.brand).some(
+    if (resolvedBrand && category && product) {
+      const exists = getProductOptions(resolvedBrand).some(
         (item) => item.category === category && item.product === product
       );
       if (!exists) {
@@ -213,14 +256,15 @@ export default function RequestQuoteWizard() {
     }
 
     const defaultState: WizardState = {
-      brand: incomingBrand.brand,
-      brandLabel: incomingBrand.brandLabel,
+      brand: resolvedBrand,
+      brandLabel: resolvedBrandLabel,
       category,
       product,
       quantity: "",
       servers: "",
       deployment: (params.get("deployment") ?? "") as DeploymentType | "",
-      city: (params.get("city") ?? "").trim(),
+      city: (params.get("city") ?? "").trim() || "Chandigarh",
+      region: (params.get("region") ?? params.get("state") ?? "").trim(),
       timeline: "This Week",
       contactName: "",
       company: "",
@@ -234,8 +278,8 @@ export default function RequestQuoteWizard() {
       whatsappOptIn: true,
       notes: "",
       website: "",
-      sourcePage: (params.get("source") ?? "/request-quote").trim() || "/request-quote",
-      source: (params.get("source") ?? "/request-quote").trim() || "/request-quote",
+      sourcePage: sourcePath,
+      source: formSource,
       utmSource: (params.get("utm_source") ?? "").trim(),
       utmMedium: (params.get("utm_medium") ?? "").trim(),
       utmCampaign: (params.get("utm_campaign") ?? "").trim(),
@@ -367,6 +411,7 @@ export default function RequestQuoteWizard() {
       [quantityLabel, quantityText],
       ["Deployment", state.deployment || "-"],
       ["City", state.city || "-"],
+      ["Region", state.region || "-"],
       ["Timeline", state.timeline || "-"]
     ];
 
@@ -428,7 +473,7 @@ export default function RequestQuoteWizard() {
     }
 
     if (currentStep === 5) {
-      return Boolean(state.phone.trim());
+      return Boolean(state.contactName.trim()) && Boolean(state.phone.trim() || state.email.trim()) && Boolean(state.city.trim());
     }
 
     return true;
@@ -467,6 +512,7 @@ export default function RequestQuoteWizard() {
 
     const quantity = toNumber(state.quantity);
     const normalizedCity = state.city.trim() || "Chandigarh";
+    const normalizedRegion = state.region.trim();
     const normalizedCompany = state.company.trim();
     const normalizedEmail = state.email.trim();
     const requirement = [state.category.trim(), state.product.trim()].filter(Boolean).join(" - ") || state.category.trim() || "General requirement";
@@ -482,6 +528,7 @@ export default function RequestQuoteWizard() {
       state.product ? `Plan: ${state.product}` : "",
       state.deployment ? `Deployment: ${state.deployment}` : "",
       state.customerType ? `Customer Type: ${state.customerType}` : "",
+      normalizedRegion ? `Region: ${normalizedRegion}` : "",
       state.tenderGemRef ? `Tender/GeM: ${state.tenderGemRef}` : "",
       state.documentationRequired ? "Documentation Required: Yes" : "",
       state.partnerEndCustomer ? `Partner End Customer: ${state.partnerEndCustomer}` : "",
@@ -499,8 +546,8 @@ export default function RequestQuoteWizard() {
       usersDevices: quantity > 0 ? quantity : undefined,
       city: normalizedCity,
       source: state.source,
-      pageUrl: state.pagePath,
-      landing_page: state.pagePath,
+      pageUrl: state.sourcePage || state.pagePath,
+      landing_page: state.sourcePage || state.pagePath,
       utm_source: state.utmSource,
       utm_medium: state.utmMedium,
       utm_campaign: state.utmCampaign,
@@ -552,7 +599,7 @@ export default function RequestQuoteWizard() {
         };
       }
 
-      const isSuccess = response.ok && data?.ok !== false && data?.queued !== true;
+      const isSuccess = response.ok && data?.ok !== false;
 
       if (!isSuccess) {
         setStatus("error");
@@ -575,6 +622,7 @@ export default function RequestQuoteWizard() {
           "conjoin_submit_success",
           JSON.stringify({
             formSource: "request-quote",
+            sourcePage: state.sourcePage || null,
             leadId: resolvedRfqId || null,
             timestamp: Date.now()
           })
@@ -582,9 +630,11 @@ export default function RequestQuoteWizard() {
       }
 
       const query = new URLSearchParams({
-        formSource: "request-quote",
+        formSource: state.source || "request-quote",
+        landingPath: state.sourcePage || "/request-quote",
         brand: context.brand,
         city: normalizedCity,
+        region: normalizedRegion,
         qty: String(quantity),
         category: context.category,
         requirement,
@@ -605,9 +655,7 @@ export default function RequestQuoteWizard() {
         utm_content: state.utmContent
       });
 
-      if (typeof window !== "undefined") {
-        window.location.assign(`/thank-you?${query.toString()}`);
-      }
+      router.replace(`/thank-you?${query.toString()}`);
     } catch (error) {
       setStatus("error");
       setNotice(
@@ -979,14 +1027,14 @@ export default function RequestQuoteWizard() {
               <div className="space-y-5">
                 <div className="grid gap-4 md:grid-cols-2">
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
-                    Name (optional)
+                    Name
                     <input
                       type="text"
                       value={state.contactName}
                       onChange={(event) => patch({ contactName: event.target.value })}
                       className={formFieldClass}
                       autoComplete="name"
-                      placeholder="Optional"
+                      required
                     />
                   </label>
                   <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
@@ -1053,6 +1101,7 @@ export default function RequestQuoteWizard() {
                       onChange={(event) => patch({ city: event.target.value })}
                       className={formFieldClass}
                       placeholder="Chandigarh"
+                      required
                     />
                     <datalist id="city-options">
                       {CITY_OPTIONS.map((city) => (
@@ -1061,6 +1110,21 @@ export default function RequestQuoteWizard() {
                         </option>
                       ))}
                     </datalist>
+                  </label>
+                  <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">
+                    Service Region
+                    <select
+                      value={state.region}
+                      onChange={(event) => patch({ region: event.target.value })}
+                      className={formFieldClass}
+                    >
+                      <option value="">Select region</option>
+                      {REGION_OPTIONS.map((region) => (
+                        <option key={region} value={region}>
+                          {region}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   {state.customerType !== "SMB" ? (
                     <label className="space-y-2 text-sm font-medium text-[var(--color-text-primary)]">

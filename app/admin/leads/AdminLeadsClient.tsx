@@ -333,14 +333,6 @@ export default function AdminLeadsClient() {
   const activeLeadEmailDraft = activeLead ? emailDrafts[activeLead.leadId] ?? null : null;
   const activeLeadObjectionReply = activeLead ? objectionReplies[activeLead.leadId] ?? null : null;
 
-  function getAdminPass() {
-    try {
-      return sessionStorage.getItem("crm_admin_pass") || "";
-    } catch {
-      return "";
-    }
-  }
-
   async function checkBackendHealth() {
     try {
       const response = await fetch("/api/health", { credentials: "same-origin" });
@@ -360,11 +352,7 @@ export default function AdminLeadsClient() {
     if (!silent) setLoading(true);
     if (!silent) setError("");
     try {
-      const headers: Record<string, string> = {};
-      const adminPass = getAdminPass();
-      if (adminPass) headers["x-admin-pass"] = adminPass;
-
-      const response = await fetch(`/api/admin/leads?${query}`, { credentials: "same-origin", headers });
+      const response = await fetch(`/api/admin/leads?${query}`, { credentials: "same-origin" });
       const payload = (await response.json().catch(() => ({}))) as ApiResponse;
       if (!response.ok) {
         throw new Error((payload as { message?: string }).message ?? `Unable to load leads (${response.status})`);
@@ -419,13 +407,9 @@ export default function AdminLeadsClient() {
         assignedAgent: addForm.assignedAgent
       };
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const ap = getAdminPass();
-      if (ap) headers['x-admin-pass'] = ap;
-
       const res = await fetch('/api/leads', {
         method: 'POST',
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
         credentials: 'same-origin'
       });
@@ -481,14 +465,10 @@ export default function AdminLeadsClient() {
   }
 
   async function patchLead(leadId: string, body: Record<string, unknown>) {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    const ap = getAdminPass();
-    if (ap) headers["x-admin-pass"] = ap;
-
     const response = await fetch(`/api/leads/${leadId}`, {
       method: "PATCH",
       credentials: "same-origin",
-      headers,
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
 
@@ -573,14 +553,10 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const ap = getAdminPass();
-      if (ap) headers["x-admin-pass"] = ap;
-
       const response = await fetch("/api/ai/lead-summary", {
         method: "POST",
         credentials: "same-origin",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadId })
       });
       const payload = (await response.json().catch(() => ({}))) as { ok?: boolean; message?: string };
@@ -602,14 +578,10 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const ap = getAdminPass();
-      if (ap) headers["x-admin-pass"] = ap;
-
       const response = await fetch("/api/ai/email-draft", {
         method: "POST",
         credentials: "same-origin",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadId })
       });
       const payload = (await response.json().catch(() => ({}))) as {
@@ -636,14 +608,10 @@ export default function AdminLeadsClient() {
     setNotice("");
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      const ap = getAdminPass();
-      if (ap) headers["x-admin-pass"] = ap;
-
       const response = await fetch("/api/ai/objection-reply", {
         method: "POST",
         credentials: "same-origin",
-        headers,
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ leadId, objection })
       });
       const payload = (await response.json().catch(() => ({}))) as {

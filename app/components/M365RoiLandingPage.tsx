@@ -23,6 +23,17 @@ function formatINR(value: number) {
 export default function M365RoiLandingPage({ plan }: { plan: M365RoiPlan }) {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>("monthly");
   const [users, setUsers] = useState(25);
+  const requestQuoteHref = useMemo(() => {
+    const params = new URLSearchParams({
+      formSource: "microsoft365-page",
+      landingPath: `/${plan.slug}`,
+      brand: "Microsoft",
+      category: "Microsoft 365",
+      city: "Chandigarh",
+      plan: plan.h1
+    });
+    return `/request-quote?${params.toString()}`;
+  }, [plan.h1, plan.slug]);
   const callHref = tel(`+91${SALES_PHONE_NUMBER}`);
   const whatsappHref = getWhatsAppLink(
     buildQuoteMessage({
@@ -104,17 +115,18 @@ export default function M365RoiLandingPage({ plan }: { plan: M365RoiPlan }) {
               </Card>
             </div>
             <div className="flex flex-wrap gap-3">
-              <a
-                href="#rfq-form"
+              <AdsTrackedLink
+                href={requestQuoteHref}
+                eventName="request_quote_click"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-5 text-sm font-semibold text-white"
               >
                 Request Quote
-              </a>
+              </AdsTrackedLink>
               <AdsTrackedLink
                 href={whatsappHref}
                 eventName="whatsapp_click"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--brand-whatsapp)] bg-[var(--brand-whatsapp)] px-5 text-sm font-semibold text-white"
               >
                 WhatsApp Now

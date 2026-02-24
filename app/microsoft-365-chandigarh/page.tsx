@@ -162,17 +162,17 @@ export default function Microsoft365ChandigarhPage() {
               Punjab, Haryana, Himachal Pradesh, Jammu and Kashmir, and Uttarakhand.
             </p>
             <div className="flex flex-wrap gap-3">
-              <a
-                href="#lead-form"
+              <Link
+                href="/request-quote?formSource=microsoft365-page&landingPath=/microsoft-365-chandigarh&brand=Microsoft&category=Microsoft%20365&city=Chandigarh"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-blue-700/20 bg-gradient-to-r from-[#2563EB] to-[#1E40AF] px-5 text-sm font-semibold text-white"
               >
                 Request Quote
-              </a>
+              </Link>
               <AdsTrackedLink
                 href={whatsappHref}
                 eventName="whatsapp_click"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-white/20 bg-[var(--brand-whatsapp)] px-5 text-sm font-semibold text-white hover:bg-[#0b4b45] focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--color-surface)]"
               >
                 WhatsApp Now

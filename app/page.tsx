@@ -231,10 +231,13 @@ export default function Home() {
       <Section className="pb-9 pt-6 md:pb-11 md:pt-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-stretch">
           <header className="space-y-4 py-2 md:py-3">
-            <h1 className="text-[clamp(1.75rem,7vw,2.75rem)] font-semibold leading-[1.1] tracking-[-0.02em] text-[var(--color-text-primary)]">
+            <p className="inline-flex w-fit rounded-full border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_88%,transparent)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-secondary)]">
+              Procurement-led IT Partner
+            </p>
+            <h1 className="text-[clamp(1.9rem,7vw,3rem)] font-semibold leading-[1.05] tracking-[-0.03em] text-[var(--color-text-primary)]">
               Partner-led IT service lines for modern business operations.
             </h1>
-            <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)] md:text-base md:leading-7">
+            <p className="max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)] md:text-[1.05rem] md:leading-7">
               Conjoin Network Pvt. Ltd. delivers procurement-led IT programs across workspace, security, networking, surveillance, and access, with commercial clarity.
             </p>
             <div className="grid gap-3 sm:flex sm:flex-wrap">
@@ -253,6 +256,13 @@ export default function Home() {
                 </li>
               ))}
             </ul>
+            <div className="grid gap-2 text-xs font-semibold text-[var(--color-text-primary)] sm:grid-cols-3">
+              {["GST invoice ready", "SLA-backed response", "OEM-aligned commercials"].map((item) => (
+                <span key={item} className="rounded-lg border border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-surface)_88%,transparent)] px-2.5 py-1.5 text-center">
+                  {item}
+                </span>
+              ))}
+            </div>
           </header>
 
           <Carousel

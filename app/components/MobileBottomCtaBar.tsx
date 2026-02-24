@@ -8,10 +8,10 @@ import { SALES_PHONE_NUMBER, tel } from "@/lib/contact";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
 function inferBrandFromPath(pathname: string) {
-  if (pathname.includes("microsoft")) return "Microsoft 365";
+  if (pathname.includes("microsoft")) return "Microsoft";
   if (pathname.includes("seqrite")) return "Seqrite";
   if (pathname.includes("cisco")) return "Cisco";
-  return "IT Solutions";
+  return "General IT requirement";
 }
 
 export default function MobileBottomCtaBar() {

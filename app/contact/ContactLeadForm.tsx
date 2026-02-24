@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
+import { CITY_OPTIONS } from "@/lib/quote-catalog";
 import {
   appendAttributionToQuery,
   resolveLeadContext,
@@ -78,6 +79,7 @@ type ContactLeadFormProps = {
 };
 
 export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormProps) {
+  const router = useRouter();
   const pathname = usePathname() ?? "/contact";
   const isMinimal = mode === "minimal";
   const [state, setState] = useState<FormState>(initialState);
@@ -236,7 +238,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       queued?: boolean;
     };
 
-    const isSuccess = response.ok && payload.ok !== false && !payload.queued;
+    const isSuccess = response.ok && payload.ok !== false;
 
     if (isSuccess) {
       setStatus("success");
@@ -257,6 +259,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       const queryParams = new URLSearchParams();
       queryParams.set("formSource", formSource);
+      queryParams.set("landingPath", pathname || "/contact");
       queryParams.set("brand", context.brand);
       if (state.city.trim()) {
         queryParams.set("city", state.city.trim());
@@ -268,9 +271,7 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
       }
       appendAttributionToQuery(queryParams, attribution);
       const query = queryParams.toString();
-      if (typeof window !== "undefined") {
-        window.location.assign(`/thank-you?${query}`);
-      }
+      router.replace(`/thank-you?${query}`);
       return;
     }
 
@@ -396,10 +397,17 @@ export default function ContactLeadForm({ mode = "minimal" }: ContactLeadFormPro
         <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">
           City
           <input
+            list="contact-city-options"
             value={state.city}
             onChange={(event) => patch({ city: event.target.value })}
             className={fieldClass}
+            placeholder="Chandigarh"
           />
+          <datalist id="contact-city-options">
+            {CITY_OPTIONS.map((city) => (
+              <option key={city} value={city} />
+            ))}
+          </datalist>
         </label>
         {!isMinimal ? (
           <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)]">

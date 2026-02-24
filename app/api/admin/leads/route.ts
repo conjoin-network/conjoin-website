@@ -104,22 +104,7 @@ function classifyLeadSource(lead: {
 export async function GET(request: Request) {
   const requestId = crypto.randomUUID();
   const session = getPortalSessionFromRequest(request);
-  const adminPass = request.headers.get("x-admin-pass") || "";
-  const headerAuthorized = Boolean(process.env.ADMIN_PASSWORD && adminPass === process.env.ADMIN_PASSWORD);
-  const effectiveSession =
-    session ??
-    (headerAuthorized
-      ? {
-          username: "header-admin",
-          role: "OWNER" as const,
-          crmRole: "SUPER_ADMIN" as const,
-          displayName: "Owner",
-          assignee: null,
-          canExport: true,
-          canAssign: true,
-          isManagement: true
-        }
-      : null);
+  const effectiveSession = session;
 
   if (!effectiveSession) {
     return NextResponse.json({ ok: false, requestId, message: "Unauthorized" }, { status: 401 });

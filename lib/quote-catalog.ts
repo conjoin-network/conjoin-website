@@ -14,7 +14,17 @@ export type LeadPriority = "HOT" | "WARM" | "COLD";
 export const LEAD_STATUSES: LeadStatus[] = ["NEW", "IN_PROGRESS", "QUOTED", "WON", "LOST"];
 export const LEAD_PRIORITIES: LeadPriority[] = ["HOT", "WARM", "COLD"];
 
-export const CITY_OPTIONS = ["Chandigarh", "Panchkula", "Mohali", "Haryana", "Punjab", "Other"] as const;
+export const CITY_OPTIONS = [
+  "Chandigarh",
+  "Panchkula",
+  "Mohali",
+  "Punjab",
+  "Haryana",
+  "Himachal Pradesh",
+  "Uttarakhand",
+  "J&K",
+  "Other"
+] as const;
 
 export const BRAND_ACCENTS: Record<LeadBrand, string> = {
   Microsoft: "var(--brand-microsoft)",

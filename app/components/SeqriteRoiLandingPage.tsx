@@ -11,6 +11,16 @@ import { absoluteUrl } from "@/lib/seo";
 import { buildQuoteMessage, getWhatsAppLink } from "@/lib/whatsapp";
 
 export default function SeqriteRoiLandingPage({ page }: { page: SeqriteRoiPageData }) {
+  const requestQuoteHref = (() => {
+    const params = new URLSearchParams({
+      formSource: "seqrite-page",
+      landingPath: `/${page.slug}`,
+      brand: "Seqrite",
+      category: "Endpoint Security",
+      city: "Chandigarh"
+    });
+    return `/request-quote?${params.toString()}`;
+  })();
   const callHref = tel(`+91${SALES_PHONE_NUMBER}`);
   const whatsappHref = getWhatsAppLink(
     buildQuoteMessage({
@@ -66,17 +76,18 @@ export default function SeqriteRoiLandingPage({ page }: { page: SeqriteRoiPageDa
               ))}
             </div>
             <div className="flex flex-wrap gap-3">
-              <a
-                href="#rfq-form"
+              <AdsTrackedLink
+                href={requestQuoteHref}
+                eventName="request_quote_click"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-5 text-sm font-semibold text-white"
               >
                 Request Quote
-              </a>
+              </AdsTrackedLink>
               <AdsTrackedLink
                 href={whatsappHref}
                 eventName="whatsapp_click"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--brand-whatsapp)] bg-[var(--brand-whatsapp)] px-5 text-sm font-semibold text-white"
               >
                 WhatsApp
@@ -165,12 +176,13 @@ export default function SeqriteRoiLandingPage({ page }: { page: SeqriteRoiPageDa
         </div>
       </Section>
 
-      <a
-        href="#rfq-form"
+      <AdsTrackedLink
+        href={requestQuoteHref}
+        eventName="request_quote_click"
         className="fixed bottom-5 right-4 z-40 inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--color-primary)] px-4 text-sm font-semibold text-white shadow-lg md:bottom-6 md:right-6"
       >
         Request Quote
-      </a>
+      </AdsTrackedLink>
 
       <JsonLd id={`${page.slug}-faq`} data={faqJsonLd} />
       <JsonLd id={`${page.slug}-service`} data={serviceJsonLd} />

@@ -44,7 +44,7 @@ export default function ContactPage() {
   };
 
   const whatsappHref = getWhatsAppLink(
-    buildQuoteMessage({ brand: "IT solution", city: "Chandigarh", requirement: "Sales support" })
+    buildQuoteMessage({ brand: "General IT requirement", city: "Chandigarh", requirement: "Sales support" })
   );
 
   return (

@@ -59,9 +59,9 @@ export default function EstimatorBar() {
   );
 
   return (
-    <div className="border-b border-[var(--color-border)] bg-[color:color-mix(in_srgb,var(--color-alt-bg)_92%,black_8%)]">
+    <div className="border-b border-[var(--color-border)] bg-[linear-gradient(90deg,color-mix(in_srgb,var(--color-alt-bg)_92%,#030814),color-mix(in_srgb,var(--color-surface)_88%,#030814))]">
       <div className="mx-auto max-w-[1280px] px-3 py-1.5 lg:hidden">
-        <p className="truncate text-[11px] font-semibold text-[var(--color-text-primary)]">
+        <p className="truncate text-[11px] font-semibold tracking-[0.02em] text-[var(--color-text-primary)]">
           Instant Quote • GST Invoice • Local Support
         </p>
       </div>
@@ -80,7 +80,7 @@ export default function EstimatorBar() {
             id="estimator-service"
             value={service}
             onChange={(event) => setService(event.target.value as EstimatorServiceOption)}
-            className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
+            className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
           >
             {ESTIMATOR_SERVICE_OPTIONS.map((option) => (
               <option key={option} value={option}>
@@ -93,7 +93,7 @@ export default function EstimatorBar() {
             <select
               value={m365Plan}
               onChange={(event) => setM365Plan(event.target.value as (typeof ESTIMATOR_M365_PLANS)[number])}
-              className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
+              className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
               aria-label="Microsoft 365 plan"
             >
               {ESTIMATOR_M365_PLANS.map((plan) => (
@@ -106,7 +106,7 @@ export default function EstimatorBar() {
             <select
               value={seqriteQty}
               onChange={(event) => setSeqriteQty(event.target.value as (typeof ESTIMATOR_SEQRITE_QTY)[number])}
-              className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)]"
+              className="min-h-10 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3 text-xs text-[var(--color-text-primary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]"
               aria-label="Seqrite endpoints"
             >
               {ESTIMATOR_SEQRITE_QTY.map((qty) => (
@@ -126,7 +126,7 @@ export default function EstimatorBar() {
           <AdsTrackedLink
             href={requestQuoteHref}
             eventName="request_quote_click"
-            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-[var(--color-primary)] px-3 text-xs font-semibold text-white"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-blue-600/30 bg-gradient-to-r from-[#2b6fff] via-[#2a62ef] to-[#1d47bc] px-3 text-xs font-semibold text-white shadow-[0_14px_26px_-20px_rgba(33,91,230,0.95)]"
           >
             Request Quote
           </AdsTrackedLink>

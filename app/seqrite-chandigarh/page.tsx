@@ -162,17 +162,17 @@ export default function SeqriteChandigarhPage() {
                 href={whatsappHref}
                 eventName="whatsapp_click"
                 target="_blank"
-                rel="noreferrer"
+                rel="noopener noreferrer"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-slate-900 px-5 text-sm font-semibold text-white"
               >
                 WhatsApp
               </AdsTrackedLink>
-              <a
-                href="#lead-form"
+              <Link
+                href="/request-quote?formSource=seqrite-page&landingPath=/seqrite-chandigarh&brand=Seqrite&category=Endpoint%20Security&city=Chandigarh"
                 className="interactive-btn inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-300/90 bg-transparent px-5 text-sm font-semibold text-[var(--color-text-primary)]"
               >
                 Get Quote
-              </a>
+              </Link>
             </div>
             <p className="text-xs text-[var(--color-text-secondary)]">
               Coverage: Chandigarh, Mohali, Panchkula, Punjab, Haryana, Himachal Pradesh, Jammu and Kashmir, Uttarakhand.

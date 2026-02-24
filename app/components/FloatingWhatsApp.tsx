@@ -15,7 +15,7 @@ function inferBrand(pathname: string) {
   if (pathname.includes("cisco")) {
     return "Cisco";
   }
-  return "IT solutions";
+  return "General IT requirement";
 }
 
 function inferCity(pathname: string) {
@@ -95,7 +95,7 @@ export default function FloatingWhatsApp() {
     <a
       href={href}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       aria-label="Chat on WhatsApp"
       data-ads-tracked="1"
       onClick={() => {

@@ -63,7 +63,7 @@ export function buildQuoteMessage(input: {
   qty?: string | number;
   timeline?: string;
 }) {
-  const brand = input.brand?.trim() || "IT solution";
+  const brand = input.brand?.trim() || "General IT requirement";
   const city = input.city?.trim() || "Chandigarh";
   const requirement = input.requirement?.trim() || "General requirement";
   const qty = String(input.qty ?? "-").trim() || "-";

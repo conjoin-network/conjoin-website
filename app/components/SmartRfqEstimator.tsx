@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   appendAttributionToQuery,
   resolveLeadContext
@@ -38,6 +38,7 @@ const TIMELINES: Timeline[] = ["Urgent", "This Week", "This Month", "Planning"];
 const PURCHASE_PROCESSES: PurchaseProcess[] = ["Tender", "Direct", "Rate Contract"];
 const M365_NEEDS = ["Email", "Teams", "SharePoint", "Security", "Intune"] as const;
 const ENDPOINT_NEEDS = ["AV", "EDR", "Email Security", "DLP"] as const;
+const SERVICE_REGION_OPTIONS = ["Chandigarh", "Panchkula", "Mohali", "Punjab", "Haryana", "Himachal Pradesh", "Uttarakhand", "J&K", "Other"] as const;
 
 function defaultCategoryFromPath(pathname: string): ServiceCategory {
   if (pathname.includes("/microsoft-365")) {
@@ -72,6 +73,7 @@ export default function SmartRfqEstimator({
   sourceContext = "smart-rfq",
   title = "Smart RFQ Estimator"
 }: SmartRfqEstimatorProps) {
+  const router = useRouter();
   const pathname = usePathname() ?? "/";
   const [step, setStep] = useState(1);
   const [buyerType, setBuyerType] = useState<BuyerType>("Enterprise");
@@ -224,7 +226,7 @@ export default function SmartRfqEstimator({
       });
       const data = parseJsonPayload(await response.json().catch(() => ({})));
 
-      const isSuccess = response.ok && data.ok !== false && data.queued !== true;
+      const isSuccess = response.ok && data.ok !== false;
 
       if (!isSuccess) {
         setStatus("error");
@@ -249,6 +251,7 @@ export default function SmartRfqEstimator({
 
       const query = new URLSearchParams({
         formSource: sourceContext,
+        landingPath: pagePath,
         brand: context.brand,
         city: normalizedCity,
         category: context.category,
@@ -270,9 +273,7 @@ export default function SmartRfqEstimator({
         });
       }
 
-      if (typeof window !== "undefined") {
-        window.location.assign(`/thank-you?${query.toString()}`);
-      }
+      router.replace(`/thank-you?${query.toString()}`);
     } catch (error) {
       setStatus("error");
       setNotice(
@@ -562,10 +563,16 @@ export default function SmartRfqEstimator({
               City
               <input
                 required
+                list="smart-rfq-city-options"
                 value={city}
                 onChange={(event) => setCity(event.target.value)}
                 className="form-field-surface w-full rounded-xl border border-[var(--color-border)] px-3 py-2"
               />
+              <datalist id="smart-rfq-city-options">
+                {SERVICE_REGION_OPTIONS.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
             </label>
             <label className="space-y-1 text-sm font-medium text-[var(--color-text-primary)] md:col-span-2">
               Notes (optional)

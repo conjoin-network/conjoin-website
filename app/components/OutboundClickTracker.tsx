@@ -3,18 +3,15 @@
 import { useEffect } from "react";
 import { trackAdsConversionOncePerSession } from "@/lib/ads";
 
-function getHref(target: EventTarget | null) {
+function getAnchor(target: EventTarget | null) {
   if (!(target instanceof Element)) {
-    return "";
+    return null;
   }
   const anchor = target.closest("a");
-  if (!anchor) {
-    return "";
+  if (!(anchor instanceof HTMLAnchorElement)) {
+    return null;
   }
-  if (anchor.getAttribute("data-ads-tracked") === "1") {
-    return "";
-  }
-  return anchor.getAttribute("href") || "";
+  return anchor;
 }
 
 function isRequestQuoteHref(href: string) {
@@ -34,11 +31,68 @@ function isRequestQuoteHref(href: string) {
   }
 }
 
+function inferQuoteContext(pathname: string) {
+  const path = pathname.toLowerCase();
+  if (path.includes("/microsoft-365-chandigarh")) {
+    return { formSource: "microsoft365-page", brand: "Microsoft", category: "Microsoft 365" };
+  }
+  if (path.includes("/seqrite-chandigarh")) {
+    return { formSource: "seqrite-page", brand: "Seqrite", category: "Endpoint Security" };
+  }
+  if (path.includes("/contact")) {
+    return { formSource: "contact-page", brand: "Other", category: "General IT Requirement" };
+  }
+  if (path.includes("/request-quote")) {
+    return { formSource: "request-quote", brand: "Other", category: "General IT Requirement" };
+  }
+  return { formSource: "nav", brand: "Other", category: "General IT Requirement" };
+}
+
+function applyQuotePrefill(anchor: HTMLAnchorElement) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const href = anchor.getAttribute("href") || "";
+  if (!isRequestQuoteHref(href)) {
+    return;
+  }
+
+  try {
+    const url = new URL(href, window.location.origin);
+    const context = inferQuoteContext(window.location.pathname);
+    if (!url.searchParams.get("formSource")) {
+      url.searchParams.set("formSource", context.formSource);
+    }
+    if (!url.searchParams.get("brand")) {
+      url.searchParams.set("brand", context.brand);
+    }
+    if (!url.searchParams.get("category")) {
+      url.searchParams.set("category", context.category);
+    }
+    if (!url.searchParams.get("city")) {
+      url.searchParams.set("city", "Chandigarh");
+    }
+    if (!url.searchParams.get("landingPath")) {
+      url.searchParams.set("landingPath", window.location.pathname);
+    }
+    anchor.setAttribute("href", `${url.pathname}${url.search}${url.hash}`);
+  } catch {
+    // no-op
+  }
+}
+
 export default function OutboundClickTracker() {
   useEffect(() => {
     const onClick = (event: MouseEvent) => {
-      const href = getHref(event.target);
-      if (!href) {
+      const anchor = getAnchor(event.target);
+      if (!anchor) {
+        return;
+      }
+      applyQuotePrefill(anchor);
+
+      const href = anchor.getAttribute("href") || "";
+      if (!href || anchor.getAttribute("data-ads-tracked") === "1") {
         return;
       }
 

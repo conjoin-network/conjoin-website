@@ -90,6 +90,25 @@ function contextFromPath(pathname: string) {
   return { brand: "" as const, category: "" };
 }
 
+function contextFromSource(sourceContext: string) {
+  const source = normalizeLower(sourceContext);
+  if (!source) {
+    return { brand: "" as const, category: "" };
+  }
+
+  if (source.includes("microsoft") || source.includes("m365")) {
+    return { brand: "Microsoft" as const, category: "Microsoft 365" };
+  }
+  if (source.includes("seqrite") || source.includes("endpoint")) {
+    return { brand: "Seqrite" as const, category: "Endpoint Security" };
+  }
+  if (source.includes("cisco") || source.includes("network")) {
+    return { brand: "Cisco" as const, category: "Networking" };
+  }
+
+  return { brand: "" as const, category: "" };
+}
+
 function fallbackCategoryForBrand(brand: CanonicalLeadBrand) {
   if (brand === "Microsoft") {
     return "Microsoft 365";
@@ -100,16 +119,45 @@ function fallbackCategoryForBrand(brand: CanonicalLeadBrand) {
   if (brand === "Cisco") {
     return "Networking";
   }
-  return "IT solution";
+  return "General IT Requirement";
+}
+
+function inferBrandFromCategory(category: string, sourceContext: string, pathname: string) {
+  const normalizedCategory = normalizeLower(category);
+  const source = normalizeLower(sourceContext);
+  const path = normalizeLower(pathname);
+
+  if (normalizedCategory === "microsoft 365") {
+    return "Microsoft";
+  }
+  if (normalizedCategory === "endpoint security") {
+    if (source.includes("seqrite") || path.includes("/seqrite")) {
+      return "Seqrite";
+    }
+  }
+  if (normalizedCategory === "networking") {
+    if (source.includes("cisco") || path.includes("/cisco")) {
+      return "Cisco";
+    }
+  }
+  return "";
 }
 
 export function resolveLeadContext(input: ResolveLeadContextInput) {
   const pathContext = contextFromPath(input.pathname ?? "");
+  const sourceContext = contextFromSource(input.sourceContext ?? "");
+  const inferredCategory =
+    detectCategory(input.category ?? "") ||
+    detectCategory(input.requirement ?? "") ||
+    sourceContext.category ||
+    pathContext.category;
 
   const detectedBrand =
     detectBrand(input.brand ?? "") ||
     detectBrand(input.requirement ?? "") ||
     detectBrand(input.category ?? "") ||
+    inferBrandFromCategory(inferredCategory, input.sourceContext ?? "", input.pathname ?? "") ||
+    sourceContext.brand ||
     pathContext.brand ||
     "Other";
 
@@ -117,6 +165,7 @@ export function resolveLeadContext(input: ResolveLeadContextInput) {
   const category =
     normalize(input.category) ||
     detectCategory(input.requirement ?? "") ||
+    sourceContext.category ||
     pathContext.category ||
     fallbackCategoryForBrand(brand);
 

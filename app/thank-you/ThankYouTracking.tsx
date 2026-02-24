@@ -7,9 +7,12 @@ import { trackLeadConversion } from "@/lib/ads";
 type ThankYouTrackingProps = {
   leadId?: string;
   formSource: string;
+  brand: string;
+  category: string;
+  city: string;
 };
 
-export default function ThankYouTracking({ leadId, formSource }: ThankYouTrackingProps) {
+export default function ThankYouTracking({ leadId, formSource, brand, category, city }: ThankYouTrackingProps) {
   const pathname = usePathname() ?? "/thank-you";
   const firedRef = useRef(false);
 
@@ -26,10 +29,6 @@ export default function ThankYouTracking({ leadId, formSource }: ThankYouTrackin
       }
 
       const markerRaw = window.sessionStorage.getItem("conjoin_submit_success");
-      if (!markerRaw) {
-        return;
-      }
-
       let marker:
         | {
             formSource?: string;
@@ -37,14 +36,16 @@ export default function ThankYouTracking({ leadId, formSource }: ThankYouTrackin
             timestamp?: number;
           }
         | null = null;
-      try {
-        marker = JSON.parse(markerRaw) as {
-          formSource?: string;
-          leadId?: string | null;
-          timestamp?: number;
-        };
-      } catch {
-        marker = null;
+      if (markerRaw) {
+        try {
+          marker = JSON.parse(markerRaw) as {
+            formSource?: string;
+            leadId?: string | null;
+            timestamp?: number;
+          };
+        } catch {
+          marker = null;
+        }
       }
 
       const markerTimestamp = typeof marker?.timestamp === "number" ? marker.timestamp : 0;
@@ -52,21 +53,30 @@ export default function ThankYouTracking({ leadId, formSource }: ThankYouTrackin
       const markerSourceMatches = !marker?.formSource || marker.formSource === formSource;
       const markerLeadMatches = !leadId || !marker?.leadId || marker.leadId === leadId;
 
-      if (!markerFresh || !markerSourceMatches || !markerLeadMatches) {
+      if (!leadId) {
+        if (!markerFresh || !markerSourceMatches || !markerLeadMatches) {
+          return;
+        }
+      } else if (markerRaw && (!markerFresh || !markerSourceMatches || !markerLeadMatches)) {
         return;
       }
 
       window.sessionStorage.setItem("conjoin_generate_lead_key", dedupeKey);
-      window.sessionStorage.removeItem("conjoin_submit_success");
+      if (markerRaw) {
+        window.sessionStorage.removeItem("conjoin_submit_success");
+      }
     }
 
     firedRef.current = true;
     trackLeadConversion({
       leadId,
       pagePath: pathname,
-      formSource
+      formSource,
+      brand,
+      category,
+      city
     });
-  }, [formSource, leadId, pathname]);
+  }, [brand, category, city, formSource, leadId, pathname]);
 
   return null;
 }

@@ -16,9 +16,8 @@ export default function Section({
   id,
   tone = "default",
 }: SectionProps) {
-  const toneClass =
-    tone === "alt" ? "bg-[var(--color-alt-bg)]" : "bg-transparent";
-  const sectionClass = `py-16 md:py-24 ${toneClass} section-revealed${
+  const toneClass = tone === "alt" ? "section-alt" : "";
+  const sectionClass = `section-shell py-14 md:py-20 ${toneClass} section-revealed${
     className ? ` ${className}` : ""
   }`;
 

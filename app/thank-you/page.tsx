@@ -4,7 +4,7 @@ import Section from "@/app/components/Section";
 import Card from "@/app/components/Card";
 import ThankYouTracking from "@/app/thank-you/ThankYouTracking";
 import { getLeadById } from "@/lib/leads";
-import { SALES_EMAIL, mailto } from "@/lib/contact";
+import { SALES_EMAIL, SALES_PHONE_DISPLAY, SALES_PHONE_NUMBER, mailto, tel } from "@/lib/contact";
 import { resolveLeadContext } from "@/lib/lead-flow";
 import { absoluteUrl } from "@/lib/seo";
 import { getLeadWhatsAppLink } from "@/lib/whatsapp";
@@ -36,6 +36,7 @@ type SearchParams = {
   city?: string;
   qty?: string;
   category?: string;
+  region?: string;
   requirement?: string;
   plan?: string;
   timeline?: string;
@@ -62,6 +63,7 @@ export default async function ThankYouPage({
   const brand = context.brand;
   const category = context.category;
   const city = params.city ?? lead?.city ?? "Chandigarh";
+  const region = params.region ?? "Chandigarh Tricity";
   const requirement =
     (params.requirement ?? "").trim() ||
     (params.plan ?? "").trim() ||
@@ -73,11 +75,12 @@ export default async function ThankYouPage({
   const quantityLabel = brand === "Microsoft" ? "Users / Seats" : brand === "Seqrite" ? "Endpoints" : "Quantity";
   const message = `Hi Conjoin, I need a quote for ${brand} - ${requirement}. City: ${city}. Qty: ${qty}. Timeline: ${timeline}.`;
   const whatsappLink = getLeadWhatsAppLink({ message, assignedTo: lead?.assignedTo ?? null });
+  const callLink = tel(SALES_PHONE_NUMBER);
 
   return (
     <Section tone="alt" className="py-10 md:py-14">
       <div className="mx-auto max-w-3xl space-y-6">
-        <ThankYouTracking leadId={params.leadId} formSource={formSource} />
+        <ThankYouTracking leadId={params.leadId} formSource={formSource} brand={brand} category={category} city={city} />
         <header className="space-y-2 text-center">
           <h1 className="text-3xl font-semibold text-[var(--color-text-primary)] md:text-5xl">We received your request</h1>
           <p className="text-sm md:text-base">We received your request. Our team will contact you.</p>
@@ -103,16 +106,18 @@ export default async function ThankYouPage({
             <a
               href={whatsappLink}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[var(--brand-whatsapp)] px-5 text-sm font-semibold text-white"
             >
               Continue on WhatsApp
             </a>
             <a
-              href="#"
+              href={callLink}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[var(--color-border)] px-5 text-sm font-semibold text-[var(--color-text-primary)]"
             >
-              Book a 10-min call
+              Call {SALES_PHONE_DISPLAY}
             </a>
           </div>
 
@@ -129,6 +134,8 @@ export default async function ThankYouPage({
               <dd>{qty}</dd>
               <dt className="font-medium text-[var(--color-text-primary)]">City</dt>
               <dd>{city}</dd>
+              <dt className="font-medium text-[var(--color-text-primary)]">Region</dt>
+              <dd>{region}</dd>
               <dt className="font-medium text-[var(--color-text-primary)]">Timeline</dt>
               <dd>{timeline}</dd>
             </dl>
